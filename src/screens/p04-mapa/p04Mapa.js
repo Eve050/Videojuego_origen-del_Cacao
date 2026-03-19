@@ -1,7 +1,11 @@
 import { ensureAmbientAudioState } from "../../modules/audioManager.js";
 import {
+  EXPEDITION_MISSION_TOTAL,
+  getActiveStopIndexForMissions,
   getGameState,
+  getPostRestartRoute,
   markScreenVisited,
+  restartExpedition,
   setSelectedStopIndex,
 } from "../../modules/gameState.js";
 
@@ -72,7 +76,7 @@ const ROUTE_STOPS = [
   },
 ];
 
-const TOTAL_MISSIONS = 3;
+const TOTAL_MISSIONS = EXPEDITION_MISSION_TOTAL;
 
 function getStopState(index, activeIndex) {
   if (index < activeIndex) {
@@ -96,7 +100,7 @@ export function renderP04(container) {
   }
 
   const missionsCompleted = Math.max(0, Math.min(TOTAL_MISSIONS, state.missionsCompleted || 0));
-  const activeStopIndex = Math.min(missionsCompleted, ROUTE_STOPS.length - 1);
+  const activeStopIndex = getActiveStopIndexForMissions(missionsCompleted);
   const progressPercent = (missionsCompleted / TOTAL_MISSIONS) * 100;
   const activeStop = ROUTE_STOPS[activeStopIndex];
 
@@ -131,7 +135,8 @@ export function renderP04(container) {
                 data-stop-index="${index}"
                 style="left: ${stop.x}%; top: ${stop.y}%;"
                 type="button"
-                ${stopState === "active" ? "" : "disabled"}
+                aria-label="Parada ${stop.label}: ${stopState}"
+                ${stopState === "locked" ? "disabled" : ""}
               >
                 <span class="p04-stop-pin"></span>
                 <span class="p04-stop-label">${stop.label}</span>
@@ -205,6 +210,7 @@ export function renderP04(container) {
   const modalCountry = container.querySelector("#p04ModalCountry");
   const modalDescription = container.querySelector("#p04ModalDescription");
   const exploreZoneButton = container.querySelector("#p04ExploreZoneButton");
+
   const getMissionRouteForProgress = () => {
     if (missionsCompleted <= 0) {
       return "#/p06";
@@ -237,9 +243,16 @@ export function renderP04(container) {
             : "PARADA BLOQUEADA";
     }
     if (startButton) {
-      const isActive = stopState === "active";
-      startButton.disabled = !isActive;
-      startButton.textContent = isActive ? "Iniciar mision" : "Mision bloqueada";
+      if (stopState === "locked") {
+        startButton.disabled = true;
+        startButton.textContent = "Mision bloqueada";
+      } else if (stopState === "completed") {
+        startButton.disabled = false;
+        startButton.textContent = "Repetir expedicion";
+      } else {
+        startButton.disabled = false;
+        startButton.textContent = "Iniciar mision";
+      }
     }
     if (modalTitle) {
       modalTitle.textContent = stop.label;
@@ -259,8 +272,9 @@ export function renderP04(container) {
             : "BLOQUEADO";
       modalStateChip.className = `p04-stop-modal-chip p04-stop-modal-chip--${stopState}`;
     }
+
     if (exploreZoneButton) {
-      const isActive = stopState === "active";
+      const isActive = stopState === "active" && selectedStopIndex === activeStopIndex;
       exploreZoneButton.disabled = !isActive;
       exploreZoneButton.textContent = isActive
         ? `Explorar zona (Mision ${Math.min(missionsCompleted + 1, 3)})`
@@ -300,7 +314,20 @@ export function renderP04(container) {
   });
 
   startButton?.addEventListener("click", () => {
-    if (selectedStopIndex !== activeStopIndex) {
+    const stopState = getStopState(selectedStopIndex, activeStopIndex);
+    if (stopState === "completed") {
+      if (
+        !window.confirm(
+          "¿Repetir la expedicion desde el principio?\n\nSe borrara el progreso de las misiones. Conservamos tu nombre; luego acepta la mision otra vez en la introduccion.",
+        )
+      ) {
+        return;
+      }
+      restartExpedition({ clearPlayerName: false });
+      window.location.hash = getPostRestartRoute();
+      return;
+    }
+    if (selectedStopIndex !== activeStopIndex || stopState !== "active") {
       return;
     }
     openStopModal();
@@ -310,16 +337,18 @@ export function renderP04(container) {
     if (selectedStopIndex !== activeStopIndex) {
       return;
     }
+    closeStopModal();
     window.location.hash = getMissionRouteForProgress();
   });
 
-  container.querySelector("#p04ModalClose")?.addEventListener("click", closeStopModal);
-  container.querySelector("#p04ModalBackToMap")?.addEventListener("click", closeStopModal);
   stopModal?.addEventListener("click", (event) => {
     if (event.target === stopModal) {
       closeStopModal();
     }
   });
+
+  container.querySelector("#p04ModalClose")?.addEventListener("click", closeStopModal);
+  container.querySelector("#p04ModalBackToMap")?.addEventListener("click", closeStopModal);
 
   container.querySelector("#p04HelpButton")?.addEventListener("click", () => {
     window.location.hash = "#/p01";

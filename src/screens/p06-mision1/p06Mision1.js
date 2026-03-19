@@ -1,5 +1,9 @@
 import { ensureAmbientAudioState } from "../../modules/audioManager.js";
-import { completeActiveMission, getGameState } from "../../modules/gameState.js";
+import {
+  completeMissionByNumber,
+  getGameState,
+  isMissionUnlocked,
+} from "../../modules/gameState.js";
 
 const PASS_SCORE = 3;
 
@@ -69,7 +73,16 @@ function playFeedbackSound(isCorrect) {
 export function renderP06(container) {
   ensureAmbientAudioState();
   const state = getGameState();
-  const missionsCompleted = Math.max(0, Math.min(3, state.missionsCompleted || 0));
+
+  if (!state.missionAccepted) {
+    window.location.hash = "#/p03";
+    return;
+  }
+  if (!isMissionUnlocked(1)) {
+    window.location.hash = "#/p04";
+    return;
+  }
+
   const stopNames = [
     "Loja",
     "Vilcabamba",
@@ -116,31 +129,7 @@ export function renderP06(container) {
   let answeredCurrent = false;
   let correctCount = 0;
 
-  if (missionsCompleted >= 1) {
-    if (progressElement) {
-      progressElement.textContent = "Mision 1 ya completada";
-    }
-    if (questionElement) {
-      questionElement.textContent = "Ya superaste este quiz. Puedes volver al mapa para continuar.";
-    }
-    if (optionsElement) {
-      optionsElement.innerHTML = "";
-    }
-    if (feedbackElement) {
-      feedbackElement.textContent = "";
-    }
-    if (factElement) {
-      factElement.textContent = "";
-    }
-    if (nextButton) {
-      nextButton.disabled = false;
-      nextButton.textContent = "Ir al mapa";
-      nextButton.addEventListener("click", () => {
-        window.location.hash = "#/p04";
-      });
-    }
-  } else {
-    const renderQuestion = () => {
+  const renderQuestion = () => {
       const questionData = QUESTIONS[currentIndex];
       answeredCurrent = false;
 
@@ -225,13 +214,17 @@ export function renderP06(container) {
 
     const finishQuiz = () => {
       const passed = correctCount >= PASS_SCORE;
+      const prevDone = getGameState().missionsCompleted || 0;
+      const isReplay = passed && prevDone >= 1;
 
       if (progressElement) {
         progressElement.textContent = `Resultado final: ${correctCount} de ${QUESTIONS.length}`;
       }
       if (questionElement) {
         questionElement.textContent = passed
-          ? "Mision completada. Has desbloqueado la siguiente parada."
+          ? isReplay
+            ? "Excelente repaso."
+            : "Mision completada. Has desbloqueado la siguiente parada."
           : "No alcanzaste el puntaje minimo. Necesitas al menos 3 respuestas correctas.";
       }
       if (optionsElement) {
@@ -239,7 +232,9 @@ export function renderP06(container) {
       }
       if (factElement) {
         factElement.textContent = passed
-          ? "Excelente trabajo. La siguiente parada ya esta disponible en el mapa."
+          ? isReplay
+            ? "Puedes volver al mapa o practicar otra mision cuando quieras."
+            : "Excelente trabajo. La siguiente parada ya esta disponible en el mapa."
           : "Revisa las pistas y vuelve a intentarlo para desbloquear la siguiente parada.";
       }
       if (feedbackElement) {
@@ -252,7 +247,7 @@ export function renderP06(container) {
         nextButton.textContent = passed ? "Regresar al mapa" : "Reintentar quiz";
         nextButton.onclick = () => {
           if (passed) {
-            completeActiveMission();
+            completeMissionByNumber(1);
             window.location.hash = "#/p04";
             return;
           }
@@ -279,8 +274,7 @@ export function renderP06(container) {
       renderQuestion();
     });
 
-    renderQuestion();
-  }
+  renderQuestion();
 
   container.querySelector("#goBackP04")?.addEventListener("click", () => {
     window.location.hash = "#/p04";

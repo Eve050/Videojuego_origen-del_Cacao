@@ -1,7 +1,18 @@
 import { ensureAmbientAudioState } from "../../modules/audioManager.js";
+import { getGameState, isMissionUnlocked } from "../../modules/gameState.js";
 
 export function renderP08(container) {
   ensureAmbientAudioState();
+
+  const state = getGameState();
+  if (!state.missionAccepted) {
+    window.location.hash = "#/p03";
+    return;
+  }
+  if (!isMissionUnlocked(3)) {
+    window.location.hash = "#/p04";
+    return;
+  }
 
   container.innerHTML = `
     <section class="screen screen--form">
