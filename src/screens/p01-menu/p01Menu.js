@@ -76,19 +76,12 @@ export function renderP01(container) {
         <article class="p01-actions-box">
           <button class="btn btn--p01-primary" id="playButton" type="button">${playLabel}</button>
           <button class="btn btn--p01-secondary" id="helpButton" type="button">AYUDA</button>
-          ${
-            showRestart
-              ? `<button class="btn btn--p01-secondary p01-restart-btn" id="p01RestartButton" type="button">NUEVA EXPEDICION</button>`
-              : ""
-          }
+          <button class="btn btn--p01-phaser" id="phaserMinigamesButton" type="button">
+            Minijuegos Phaser (propuesta PDF)
+          </button>
+          <p class="p01-phaser-hint">Aquí está el demo del documento: quiz 3 objetos, viaje 5 zonas, laberinto. No es la misma pantalla que JUGAR.</p>
           <p class="audio-hint" id="audioStatus">Cargando musica ambiental...</p>
         </article>
-
-        ${
-          hasPlayerName
-            ? `<p class="p01-reset-name"><button type="button" class="p01-reset-name-link" id="p01RestartFullButton">Usar otro nombre / borrar mi registro</button></p>`
-            : ""
-        }
 
         <footer class="screen-footer">VERSION 0.3.0 - PROTOTIPO P01</footer>
       </div>
@@ -120,6 +113,10 @@ export function renderP01(container) {
 
   playButton?.addEventListener("click", () => {
     window.location.hash = "#/p02";
+  });
+
+  container.querySelector("#phaserMinigamesButton")?.addEventListener("click", () => {
+    window.location.hash = "#/phaser";
   });
 
   helpButton?.addEventListener("click", () => {

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "palanda",
+    "name": "Palanda 5.500 AP",
+    "subtitle": "Origen en la Amazonía",
+    "order": 0,
+    "scrollSpeed": 180,
+    "backgroundTint": "0x1a3d2e",
+    "obstacleTypes": ["roca", "raiz"],
+    "itemSpawnRate": 1.2,
+    "bannerText": "Palanda, Ecuador – Origen Mundial del Cacao – 5.500 AP",
+    "zoneFact": "El cacao nació en la selva amazónica ecuatoriana, cerca de los ríos Valladolid y Palanda, a 1.100 msnm."
+  },
+  {
+    "id": "andes",
+    "name": "Andes · Cultura Valdivia",
+    "subtitle": "Hacia el Pacífico",
+    "order": 1,
+    "scrollSpeed": 220,
+    "backgroundTint": "0x2d4a5c",
+    "obstacleTypes": ["roca", "artefacto"],
+    "itemSpawnRate": 1,
+    "bannerText": "Cruzando los Andes… El cacao llega a la cultura Valdivia",
+    "zoneFact": "El cacao cruzó los Andes y llegó a la costa del Pacífico ecuatoriano."
+  },
+  {
+    "id": "colombia-panama",
+    "name": "Colombia y Panamá",
+    "subtitle": "Rutas al norte",
+    "order": 2,
+    "scrollSpeed": 260,
+    "backgroundTint": "0x3d2e1a",
+    "obstacleTypes": ["roca", "vaina"],
+    "itemSpawnRate": 0.95,
+    "bannerText": "Colombia y Panamá – El cacao viaja hacia el norte",
+    "zoneFact": "El cacao recorrió más de 3.000 km hacia el norte a lo largo de siglos."
+  },
+  {
+    "id": "mesoamerica",
+    "name": "Mesoamérica",
+    "subtitle": "Aztecas y mayas",
+    "order": 3,
+    "scrollSpeed": 300,
+    "backgroundTint": "0x4a2c1a",
+    "obstacleTypes": ["piramide", "vaina"],
+    "itemSpawnRate": 0.9,
+    "bannerText": "Mesoamérica – Los aztecas y mayas, guardianes del cacao",
+    "zoneFact": "Los aztecas y mayas entregaron el cacao a los conquistadores españoles."
+  },
+  {
+    "id": "europa",
+    "name": "Europa, siglo XVI",
+    "subtitle": "El cacao cruza el Atlántico",
+    "order": 4,
+    "scrollSpeed": 340,
+    "backgroundTint": "0x2a1a2e",
+    "obstacleTypes": ["barco", "caja"],
+    "itemSpawnRate": 0.85,
+    "bannerText": "Europa, Siglo XVI – El cacao conquista el mundo",
+    "zoneFact": "Desde Palanda, el cacao conquistó el mundo. Todo empezó aquí."
+  }
+]

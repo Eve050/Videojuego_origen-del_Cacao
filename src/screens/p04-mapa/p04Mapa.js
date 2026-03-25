@@ -17,6 +17,10 @@ const ROUTE_STOPS = [
     x: 14,
     y: 12,
     description: "Inicio de la expedicion en la sierra sur del Ecuador.",
+    tagline: "Sierra sur y origenes del cacao",
+    difficulty: "Explorador",
+    mystery: "Reliquia I",
+    image: "",
   },
   {
     id: "vilcabamba",
@@ -24,7 +28,12 @@ const ROUTE_STOPS = [
     country: "Ecuador",
     x: 26,
     y: 23,
-    description: "Parada cultural para reunir pistas sobre el cacao ancestral.",
+    description:
+      "Conocido como el valle de la longevidad: clima suave y pistas ancestrales del cacao en la cordillera.",
+    tagline: "Valle de la longevidad",
+    difficulty: "Explorador",
+    mystery: "Reliquia II",
+    image: "",
   },
   {
     id: "valladolid",
@@ -33,6 +42,10 @@ const ROUTE_STOPS = [
     x: 36,
     y: 38,
     description: "Zona intermedia con glifos antiguos y coordenadas ocultas.",
+    tagline: "Glifos y coordenadas",
+    difficulty: "Explorador",
+    mystery: "Reliquia III",
+    image: "",
   },
   {
     id: "palanda",
@@ -41,6 +54,10 @@ const ROUTE_STOPS = [
     x: 47,
     y: 52,
     description: "Epicentro arqueologico vinculado al origen del cacao.",
+    tagline: "Epicentro del cacao",
+    difficulty: "Explorador",
+    mystery: "Reliquia IV",
+    image: "",
   },
   {
     id: "santa-ana",
@@ -49,6 +66,10 @@ const ROUTE_STOPS = [
     x: 59,
     y: 64,
     description: "Lugar clave para encontrar el rastro de la reliquia.",
+    tagline: "Sitio Mayo-Chinchipe",
+    difficulty: "Explorador",
+    mystery: "Reliquia V",
+    image: "",
   },
   {
     id: "zumba",
@@ -57,6 +78,10 @@ const ROUTE_STOPS = [
     x: 70,
     y: 75,
     description: "Conexion fronteriza antes del tramo binacional final.",
+    tagline: "Antes de la frontera",
+    difficulty: "Explorador",
+    mystery: "Reliquia VI",
+    image: "",
   },
   {
     id: "san-ignacio",
@@ -65,6 +90,10 @@ const ROUTE_STOPS = [
     x: 81,
     y: 84,
     description: "Parada binacional con pistas de intercambio cultural.",
+    tagline: "Intercambio binacional",
+    difficulty: "Explorador",
+    mystery: "Reliquia VII",
+    image: "",
   },
   {
     id: "jaen",
@@ -73,6 +102,10 @@ const ROUTE_STOPS = [
     x: 91,
     y: 90,
     description: "Destino final de la ruta. Aqui culmina la expedicion.",
+    tagline: "Cierre de la expedicion",
+    difficulty: "Explorador",
+    mystery: "Reliquia VIII",
+    image: "",
   },
 ];
 
@@ -117,6 +150,23 @@ export function renderP04(container) {
 
         <button class="p04-help-button" id="p04HelpButton" type="button">?</button>
       </header>
+
+      ${
+        missionsCompleted >= TOTAL_MISSIONS
+          ? `
+      <article class="p04-finale-banner" aria-label="Expedicion completada">
+        <div class="p04-finale-copy">
+          <p class="p04-finale-kicker">Mision cumplida</p>
+          <p class="p04-finale-title">Tres misiones completadas</p>
+          <p class="p04-finale-sub">Descubre la revelacion final y descarga tu certificado.</p>
+        </div>
+        <button class="btn btn--primary p04-finale-btn" id="p04FinaleBtn" type="button">
+          Ver revelacion
+        </button>
+      </article>
+      `
+          : ""
+      }
 
       <div class="p04-layout">
         <article class="p04-map-board">
@@ -179,19 +229,36 @@ export function renderP04(container) {
         }).join("")}
       </article>
 
-      <div class="p04-stop-modal is-hidden" id="p04StopModal" role="dialog" aria-label="Panel de parada">
+      <div class="p04-stop-modal is-hidden" id="p04StopModal" role="dialog" aria-modal="true" aria-label="Panel de parada">
         <article class="p04-stop-modal-card">
-          <button class="p04-stop-modal-close" id="p04ModalClose" type="button">✕</button>
-          <p class="p04-stop-modal-chip" id="p04ModalStateChip">DISPONIBLE</p>
-          <h3 class="p04-stop-modal-title" id="p04ModalTitle">${activeStop.label}</h3>
-          <p class="p04-stop-modal-country" id="p04ModalCountry">${activeStop.country}</p>
-          <p class="p04-stop-modal-description" id="p04ModalDescription">${activeStop.description}</p>
-          <button class="btn btn--primary p04-modal-action" id="p04ExploreZoneButton" type="button">
-            Explorar zona
-          </button>
-          <button class="btn btn--secondary p04-modal-back" id="p04ModalBackToMap" type="button">
-            Cerrar
-          </button>
+          <button class="p04-stop-modal-close" id="p04ModalClose" type="button" aria-label="Cerrar panel">✕</button>
+          <div class="p04-stop-modal-hero" id="p04ModalHero">
+            <img class="p04-stop-modal-img" id="p04ModalHeroImg" alt="" loading="lazy" hidden />
+            <span class="p04-stop-modal-chip p04-stop-modal-chip--active" id="p04ModalStateChip">DISPONIBLE</span>
+          </div>
+          <div class="p04-stop-modal-body">
+            <p class="p04-stop-modal-kicker" id="p04ModalKicker">PARADA ACTIVA</p>
+            <h3 class="p04-stop-modal-title" id="p04ModalTitle">${activeStop.label}</h3>
+            <p class="p04-stop-modal-country" id="p04ModalCountry">${activeStop.country}</p>
+            <p class="p04-stop-modal-description" id="p04ModalDescription">${activeStop.description}</p>
+            <div class="p04-stop-modal-stats" aria-label="Datos de la parada">
+              <div class="p04-stop-stat">
+                <span class="p04-stop-stat-icon" aria-hidden="true">🧭</span>
+                <span class="p04-stop-stat-label">Dificultad</span>
+                <span class="p04-stop-stat-value" id="p04ModalDifficulty">Explorador</span>
+              </div>
+              <div class="p04-stop-stat">
+                <span class="p04-stop-stat-icon" aria-hidden="true">📜</span>
+                <span class="p04-stop-stat-label">Misterio</span>
+                <span class="p04-stop-stat-value" id="p04ModalMystery">Reliquia I</span>
+              </div>
+            </div>
+            <button class="p04-modal-explore" id="p04ExploreZoneButton" type="button">
+              Explorar zona
+            </button>
+            <button type="button" class="p04-modal-later" id="p04ModalMaybeLater">Tal vez luego</button>
+            <button type="button" class="p04-modal-dismiss" id="p04ModalBackToMap">Cerrar</button>
+          </div>
         </article>
       </div>
     </section>
@@ -209,6 +276,11 @@ export function renderP04(container) {
   const modalTitle = container.querySelector("#p04ModalTitle");
   const modalCountry = container.querySelector("#p04ModalCountry");
   const modalDescription = container.querySelector("#p04ModalDescription");
+  const modalKicker = container.querySelector("#p04ModalKicker");
+  const modalDifficulty = container.querySelector("#p04ModalDifficulty");
+  const modalMystery = container.querySelector("#p04ModalMystery");
+  const modalHero = container.querySelector("#p04ModalHero");
+  const modalHeroImg = container.querySelector("#p04ModalHeroImg");
   const exploreZoneButton = container.querySelector("#p04ExploreZoneButton");
 
   const getMissionRouteForProgress = () => {
@@ -258,10 +330,41 @@ export function renderP04(container) {
       modalTitle.textContent = stop.label;
     }
     if (modalCountry) {
-      modalCountry.textContent = stop.country;
+      modalCountry.textContent = stop.country.toUpperCase();
     }
     if (modalDescription) {
       modalDescription.textContent = stop.description;
+    }
+    if (modalKicker) {
+      const prefix =
+        stopState === "active"
+          ? "PARADA ACTIVA"
+          : stopState === "completed"
+            ? "PARADA COMPLETADA"
+            : "PARADA BLOQUEADA";
+      const tag = stop.tagline?.trim() || "";
+      modalKicker.textContent = tag ? `${prefix} — ${tag}` : prefix;
+    }
+    if (modalDifficulty) {
+      modalDifficulty.textContent = stop.difficulty || "Explorador";
+    }
+    if (modalMystery) {
+      modalMystery.textContent = stop.mystery || `Pista ${selectedStopIndex + 1}`;
+    }
+    if (modalHero && modalHeroImg) {
+      const src = typeof stop.image === "string" ? stop.image.trim() : "";
+      if (src) {
+        modalHeroImg.src = src;
+        modalHeroImg.alt = `Imagen de la parada ${stop.label}`;
+        modalHeroImg.hidden = false;
+        modalHero.classList.add("p04-stop-modal-hero--has-img");
+      } else {
+        modalHeroImg.removeAttribute("src");
+        modalHeroImg.alt = "";
+        modalHeroImg.hidden = true;
+        modalHero.classList.remove("p04-stop-modal-hero--has-img");
+      }
+      modalHero.dataset.stopId = stop.id;
     }
     if (modalStateChip) {
       modalStateChip.textContent =
@@ -277,7 +380,7 @@ export function renderP04(container) {
       const isActive = stopState === "active" && selectedStopIndex === activeStopIndex;
       exploreZoneButton.disabled = !isActive;
       exploreZoneButton.textContent = isActive
-        ? `Explorar zona (Mision ${Math.min(missionsCompleted + 1, 3)})`
+        ? `Explorar zona (Misión ${Math.min(missionsCompleted + 1, 3)})`
         : "Zona bloqueada";
     }
 
@@ -349,9 +452,14 @@ export function renderP04(container) {
 
   container.querySelector("#p04ModalClose")?.addEventListener("click", closeStopModal);
   container.querySelector("#p04ModalBackToMap")?.addEventListener("click", closeStopModal);
+  container.querySelector("#p04ModalMaybeLater")?.addEventListener("click", closeStopModal);
 
   container.querySelector("#p04HelpButton")?.addEventListener("click", () => {
     window.location.hash = "#/p01";
+  });
+
+  container.querySelector("#p04FinaleBtn")?.addEventListener("click", () => {
+    window.location.hash = "#/p09";
   });
 
   renderSelection();

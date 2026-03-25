@@ -1,0 +1,26 @@
+[
+  {
+    "id": "salf-intro",
+    "title": "Santa Ana – La Florida",
+    "description": "Yacimiento arqueológico a unos 5 km de Palanda, Zamora Chinchipe, ~1.100 msnm. Investigaciones del INPC e IRD Francia.",
+    "source": "Proyecto Palanda; Zarrillo et al. (2018), Nature Ecology & Evolution"
+  },
+  {
+    "id": "zona-plaza",
+    "title": "Plaza circular hundida",
+    "description": "Área progresiva del minijuego 1: plaza circular hundida (~40 m de diámetro).",
+    "source": "Documento de diseño minijuegos v1.0"
+  },
+  {
+    "id": "zona-estructuras",
+    "title": "Estructuras circulares de piedra",
+    "description": "Segunda área progresiva del recorrido por el yacimiento.",
+    "source": "Documento de diseño minijuegos v1.0"
+  },
+  {
+    "id": "zona-plataforma",
+    "title": "Plataforma ceremonial oriental",
+    "description": "Tercera área: plataforma con espiral de piedra.",
+    "source": "Documento de diseño minijuegos v1.0"
+  }
+]

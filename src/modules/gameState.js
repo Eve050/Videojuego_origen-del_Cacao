@@ -22,6 +22,7 @@ const DEFAULT_STATE = {
   playerName: "",
   missionsCompleted: 0,
   selectedStopIndex: 0,
+  certificateDownloaded: false,
   progress: {
     p01Visited: false,
     p02Completed: false,
@@ -54,6 +55,7 @@ function sanitizeState(rawState) {
       p03Completed: Boolean(safeProgress.p03Completed),
     },
     missionAccepted: Boolean(safeState.missionAccepted),
+    certificateDownloaded: Boolean(safeState.certificateDownloaded),
   };
 }
 
@@ -113,6 +115,17 @@ export function acceptMission() {
       p03Completed: true,
     },
   };
+  saveGameState(nextState);
+  return nextState;
+}
+
+export function areAllMissionsComplete() {
+  return getGameState().missionsCompleted >= EXPEDITION_MISSION_TOTAL;
+}
+
+export function markCertificateDownloaded() {
+  const state = getGameState();
+  const nextState = { ...state, certificateDownloaded: true };
   saveGameState(nextState);
   return nextState;
 }
@@ -192,6 +205,7 @@ export function restartExpedition(options = {}) {
     missionsCompleted: 0,
     selectedStopIndex: 0,
     missionAccepted: false,
+    certificateDownloaded: false,
     progress: {
       ...state.progress,
       p03Completed: false,

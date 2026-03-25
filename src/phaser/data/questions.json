@@ -1,0 +1,45 @@
+[
+  {
+    "id": "objeto-1-botella",
+    "game": 1,
+    "objectKey": "botella",
+    "discoveryText": "Has hallado la botella cerámica con asa de estribo. Esta vasija fue analizada por científicos de cuatro países. Sus residuos orgánicos cambiaron la historia del cacao en el mundo.",
+    "question": "¿Qué sustancia fue identificada en los residuos orgánicos de esta botella cerámica?",
+    "options": [
+      "Chicha de yuca",
+      "Almidón de Theobroma cacao",
+      "Miel de abeja",
+      "Pigmento vegetal"
+    ],
+    "correctIndex": 1,
+    "fact": "Esta botella es la evidencia más antigua del uso del cacao en el mundo. Con 5.500 años de antigüedad, supera los registros previos de Mesoamérica en más de 1.500 años.",
+    "source": "Zarrillo et al., Nature Ecology & Evolution, 2018"
+  },
+  {
+    "id": "objeto-2-vasija",
+    "game": 1,
+    "objectKey": "vasija",
+    "discoveryText": "Has hallado una vasija ceremonial. Es un recipiente ritual de la cultura Mayo Chinchipe – Marañón. Formó parte de los bienes funerarios de las tumbas de élite del sitio.",
+    "question": "¿Cuántos años de antigüedad tienen las evidencias de cacao encontradas en Santa Ana – La Florida?",
+    "options": [
+      "3.000 años antes del presente",
+      "4.000 años antes del presente",
+      "5.500 años antes del presente",
+      "2.000 años antes del presente"
+    ],
+    "correctIndex": 2,
+    "fact": "La fecha de 5.500 años antes del presente fue confirmada por 32 fechamientos radiocarbónicos (C14) en laboratorios internacionales. Es la evidencia científica más sólida del origen mundial del cacao.",
+    "source": "Zarrillo et al., Nature Ecology & Evolution, 2018"
+  },
+  {
+    "id": "objeto-3-turquesa",
+    "game": 1,
+    "objectKey": "turquesa",
+    "discoveryText": "«Ornamento de las tumbas de élite. Evidencia del comercio a larga distancia con la costa del Pacífico ecuatoriano hace 5.500 años.»",
+    "question": "¿Cómo se llama la cultura que habitó Santa Ana – La Florida hace 5.500 años?",
+    "options": ["Cañari", "Valdivia", "Inca", "Mayo Chinchipe – Marañón"],
+    "correctIndex": 3,
+    "fact": "La cultura Mayo Chinchipe – Marañón construyó una plaza ceremonial circular de 40 metros de diámetro y mantuvo contacto a larga distancia con la costa del Pacífico. Es una de las civilizaciones más antiguas del Formativo temprano amazónico.",
+    "source": "Proyecto Palanda; Zarrillo et al. (2018)"
+  }
+]
