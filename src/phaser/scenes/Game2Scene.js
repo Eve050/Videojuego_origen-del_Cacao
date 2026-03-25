@@ -3,8 +3,13 @@ import { LAYOUT } from "../layout.js";
 import zonesConfig from "../data/zonesConfig.json";
 import { exitToMainMap } from "../data/introCopy.js";
 
+/** Suelo según doc técnico (superficie caminable en Y). */
+const GROUND_TOP_Y = 450;
+const INVULN_MS = 1500;
+const START_LIVES = 3;
+
 /**
- * Minijuego 2 — Auto-runner (propuesta: espacio o toque para saltar, 5 zonas, vainas y datos).
+ * Minijuego 2 — Auto-runner (doc: gravedad 1200, salto -620, 3 vidas, barra de ruta 5 zonas).
  */
 export default class Game2Scene extends Phaser.Scene {
   constructor() {
@@ -14,7 +19,7 @@ export default class Game2Scene extends Phaser.Scene {
   create() {
     this.drawChrome();
     this.physics.world.setBounds(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH, LAYOUT.GAME_H);
-    this.physics.world.gravity.y = 1800;
+    this.physics.world.gravity.y = 1200;
 
     this.zoneIndex = 0;
     this.zones = zonesConfig;
@@ -22,6 +27,8 @@ export default class Game2Scene extends Phaser.Scene {
     this.points = 0;
     this.unlockedFacts = new Set();
     this.runActive = true;
+    this.lives = START_LIVES;
+    this.invulnerableMs = 0;
 
     const tint0 = parseInt(String(this.zones[0].backgroundTint).replace("0x", ""), 16);
     this.bgTile = this.add.tileSprite(
@@ -43,11 +50,11 @@ export default class Game2Scene extends Phaser.Scene {
     this.parallax.setTint(0x1a3028);
     this.parallax.tilePositionX = 0;
 
-    const groundY = LAYOUT.GAME_TOP + LAYOUT.GAME_H - 28;
-    const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundY, LAYOUT.WIDTH, 56, 0x3d2e22);
+    const groundCenterY = GROUND_TOP_Y + 28;
+    const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x3d2e22);
     this.physics.add.existing(ground, true);
 
-    this.player = this.physics.add.sprite(220, groundY - 80, "ph_runner");
+    this.player = this.physics.add.sprite(220, 400, "ph_runner");
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(28, 44);
     this.physics.add.collider(this.player, ground);
@@ -55,10 +62,13 @@ export default class Game2Scene extends Phaser.Scene {
     this.obstacles = this.physics.add.group();
     this.pods = this.physics.add.group();
 
+    this.lastObstacleSpawnTime = 0;
+    this.minObstacleIntervalMs = () => Math.max(320, Math.min(900, (320 / this.scrollSpeed) * 1000));
+
     this.time.addEvent({
       delay: 1400,
       loop: true,
-      callback: () => this.spawnObstacle(groundY),
+      callback: () => this.spawnObstacle(groundCenterY),
     });
 
     this.physics.add.overlap(this.player, this.pods, (_p, pod) => {
@@ -77,21 +87,44 @@ export default class Game2Scene extends Phaser.Scene {
       }
     });
 
-    this.physics.add.overlap(this.player, this.obstacles, () => {
-      if (!this.runActive) return;
-      this.runActive = false;
+    this.physics.add.overlap(this.player, this.obstacles, (_player, obs) => {
+      if (!this.runActive || this.invulnerableMs > 0) return;
+      obs.destroy();
+      this.lives -= 1;
+      this.invulnerableMs = INVULN_MS;
       this.flashMessage("", "Cuidado, el camino del cacao no es fácil");
-      this.scene.start("ResultScene", {
-        game: "runner_fail",
-        score: this.points,
-        vainas: this.vainasCount,
-        datos: this.unlockedFacts.size,
+      this.tweens.add({
+        targets: this.player,
+        alpha: { from: 1, to: 0.35 },
+        duration: 120,
+        yoyo: true,
+        repeat: 4,
       });
+      if (this.lives <= 0) {
+        this.runActive = false;
+        this.scene.start("ResultScene", {
+          game: "runner_fail",
+          score: this.points,
+          vainas: this.vainasCount,
+          datos: this.unlockedFacts.size,
+        });
+      } else {
+        this.updateHud();
+      }
     });
 
-    this.scrollSpeed = this.zones[0].scrollSpeed || 200;
+    this.scrollSpeed = this.zones[0].scrollSpeed || 280;
 
-    this.hud = this.add.text(24, 14, "", { fontSize: "14px", color: "#f9f2dd" });
+    this.hud = this.add.text(24, 10, "", { fontSize: "13px", color: "#f9f2dd", lineSpacing: 4 });
+    this.hudLives = this.add.text(LAYOUT.WIDTH - 24, 10, "", {
+      fontSize: "14px",
+      color: "#ff6b6b",
+    }).setOrigin(1, 0);
+
+    this.routeBarY = LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36;
+    this.routeNodes = [];
+    this.buildRouteBar();
+
     this.zoneLabel = this.add.text(LAYOUT.WIDTH / 2, LAYOUT.HINT_TOP + 18, "", {
       fontSize: "13px",
       color: "#c8921a",
@@ -99,22 +132,26 @@ export default class Game2Scene extends Phaser.Scene {
       wordWrap: { width: 1100 },
     }).setOrigin(0.5);
 
-    this.bannerText = this.add.text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + 80, "", {
-      fontSize: "16px",
-      color: "#fff8e8",
-      fontStyle: "bold",
-      align: "center",
-      wordWrap: { width: 1000 },
-      backgroundColor: "#00000088",
-      padding: { x: 12, y: 8 },
-    }).setOrigin(0.5).setAlpha(0);
+    this.bannerText = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + 80, "", {
+        fontSize: "16px",
+        color: "#fff8e8",
+        fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: 1000 },
+        backgroundColor: "#00000088",
+        padding: { x: 12, y: 8 },
+      })
+      .setOrigin(0.5)
+      .setAlpha(0);
 
     this.space = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyUp = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
     this.input.on("pointerdown", () => this.doJump());
 
     this.add
-      .text(LAYOUT.WIDTH - 24, 14, "[ VOLVER AL MAPA ]", { fontSize: "11px", color: "#c8921a" })
+      .text(LAYOUT.WIDTH - 24, 44, "[ VOLVER AL MAPA ]", { fontSize: "11px", color: "#c8921a" })
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
@@ -123,6 +160,36 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.flashBanner(this.zones[0].bannerText);
     this.updateHud();
+    this.updateRouteBar();
+  }
+
+  buildRouteBar() {
+    const labels = ["I", "II", "III", "IV", "V"];
+    const totalW = 520;
+    const startX = (LAYOUT.WIDTH - totalW) / 2;
+    const line = this.add
+      .rectangle(LAYOUT.WIDTH / 2, this.routeBarY, totalW, 4, 0x3a3530)
+      .setOrigin(0.5);
+    this.routeLine = line;
+    const step = totalW / (labels.length - 1);
+    for (let i = 0; i < labels.length; i += 1) {
+      const x = startX + i * step;
+      const dot = this.add.circle(x, this.routeBarY, 10, 0x2a2824, 1).setStrokeStyle(2, 0x6a5a40);
+      const lbl = this.add
+        .text(x, this.routeBarY + 22, labels[i], { fontSize: "10px", color: "#8a8578" })
+        .setOrigin(0.5);
+      this.routeNodes.push({ dot, lbl, x });
+    }
+  }
+
+  updateRouteBar() {
+    this.routeNodes.forEach((n, i) => {
+      const active = i <= this.zoneIndex;
+      const current = i === this.zoneIndex;
+      n.dot.setFillStyle(current ? 0xffcc33 : active ? 0x4a8c5c : 0x2a2824);
+      n.dot.setStrokeStyle(2, current ? 0xfff0aa : active ? 0x6cfc9a : 0x4a4035);
+      n.lbl.setColor(current ? "#ffcc66" : active ? "#a8e0b8" : "#6a6558");
+    });
   }
 
   drawChrome() {
@@ -132,12 +199,17 @@ export default class Game2Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.9).setOrigin(0);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.92).setOrigin(0);
     this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 48, "PANTALLA: DURANTE EL RECORRIDO — [ESPACIO] o tocar para SALTAR. TIP: vainas doradas desbloquean datos históricos.", {
-        fontSize: "11px",
-        color: "#777777",
-        align: "center",
-        wordWrap: { width: 1100 },
-      })
+      .text(
+        LAYOUT.WIDTH / 2,
+        LAYOUT.CONTROLS_TOP + 48,
+        "PANTALLA: DURANTE EL RECORRIDO — [ESPACIO] o [↑] o tocar para SALTAR. TIP: vainas doradas desbloquean datos históricos.",
+        {
+          fontSize: "11px",
+          color: "#777777",
+          align: "center",
+          wordWrap: { width: 1100 },
+        },
+      )
       .setOrigin(0.5);
   }
 
@@ -171,22 +243,27 @@ export default class Game2Scene extends Phaser.Scene {
     });
   }
 
-  spawnObstacle(groundY) {
+  spawnObstacle(groundCenterY) {
     if (!this.runActive) return;
+    const now = this.time.now;
+    if (now - this.lastObstacleSpawnTime < this.minObstacleIntervalMs()) return;
+
     const x = LAYOUT.WIDTH + 40;
     if (Math.random() > 0.42) {
-      const o = this.physics.add.sprite(x, groundY - 40, "ph_obstacle");
+      const o = this.physics.add.sprite(x, groundCenterY - 40, "ph_obstacle");
       o.setVelocityX(-this.scrollSpeed);
       o.body.setAllowGravity(false);
       this.obstacles.add(o);
+      this.lastObstacleSpawnTime = now;
     } else {
-      const isGold = Math.random() < 0.2;
+      const isGold = Math.random() < 0.125;
       const key = isGold ? "ph_pod_gold" : "ph_pod";
-      const p = this.physics.add.sprite(x, groundY - 70, key);
+      const p = this.physics.add.sprite(x, groundCenterY - 70, key);
       p.setData("isGolden", isGold);
       p.setVelocityX(-this.scrollSpeed);
       p.body.setAllowGravity(false);
       this.pods.add(p);
+      this.lastObstacleSpawnTime = now;
     }
   }
 
@@ -200,6 +277,7 @@ export default class Game2Scene extends Phaser.Scene {
       this.bgTile.setTint(tint);
       this.flashBanner(z.bannerText);
       this.updateHud();
+      this.updateRouteBar();
     } else {
       this.runActive = false;
       this.scene.start("ResultScene", {
@@ -212,15 +290,24 @@ export default class Game2Scene extends Phaser.Scene {
     }
   }
 
+  heartsLine() {
+    return "♥".repeat(Math.max(0, this.lives)) + "♡".repeat(Math.max(0, START_LIVES - this.lives));
+  }
+
   updateHud() {
     const z = this.zones[this.zoneIndex];
     this.hud.setText(
-      `Vainas: ${this.vainasCount}  ·  Datos desbloqueados: ${this.unlockedFacts.size} / 5  ·  Zona: ${z.name}`,
+      `Vainas: ${this.vainasCount}  ·  Datos desbloqueados: ${this.unlockedFacts.size} / 5\nZona: ${z.name}`,
     );
+    this.hudLives.setText(`Vidas: ${this.heartsLine()}`);
     this.zoneLabel.setText(`${z.bannerText}`);
   }
 
   update(_t, dt) {
+    if (this.invulnerableMs > 0) {
+      this.invulnerableMs -= dt;
+    }
+
     this.parallax.tilePositionX += (this.scrollSpeed * dt) / 1000 * 0.3;
 
     this.obstacles.getChildren().forEach((o) => {
@@ -234,7 +321,7 @@ export default class Game2Scene extends Phaser.Scene {
       }
     });
 
-    if (Phaser.Input.Keyboard.JustDown(this.space)) {
+    if (Phaser.Input.Keyboard.JustDown(this.space) || Phaser.Input.Keyboard.JustDown(this.keyUp)) {
       this.doJump();
     }
   }

@@ -1,8 +1,7 @@
 import Phaser from "phaser";
 
 /**
- * Guardián del minijuego 3 — comportamiento KUNKU | SUMAK | ALLPA | WASI (stub hasta pathfinding).
- * @see documento técnico: IA por tipo.
+ * Guardián del minijuego 3 — movimiento lo calcula Game3Scene (BFS / patrulla / aleatorio).
  */
 export default class Guardian extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -23,28 +22,15 @@ export default class Guardian extends Phaser.Physics.Arcade.Sprite {
   tintForType(type) {
     switch (type) {
       case "KUNKU":
-        return 0xff6666;
+        return 0xdc3232;
       case "SUMAK":
-        return 0x7ec8e8;
+        return 0x3290dc;
       case "ALLPA":
-        return 0x5cb85c;
+        return 0x32aa50;
       case "WASI":
-        return 0xd4af37;
+        return 0xdcb432;
       default:
         return 0xffffff;
     }
-  }
-
-  /**
-   * Movimiento simple de prueba (reemplazar por chase / intercept / random / protect).
-   */
-  /**
-   * @param {number} time
-   * @param {number} [speedMult=1] — Nivel laberinto (propuesta: 1–3).
-   */
-  updateStub(time, speedMult = 1) {
-    const t = time * speedMult;
-    const wobble = Math.sin(t / 400) * 40 * speedMult;
-    this.setVelocity(wobble, Math.cos(t / 500) * 60 * speedMult);
   }
 }
