@@ -18,6 +18,30 @@ export default class Game2Scene extends Phaser.Scene {
 
   create() {
     this.drawChrome();
+
+    /** Mismo fondo que P01/P02/P03: selva nocturna, desplazado en scroll (parallax). */
+    if (this.textures.exists("bg_selva_run")) {
+      this.bgJungle = this.add
+        .tileSprite(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH * 2 + 400, LAYOUT.GAME_H + 40, "bg_selva_run")
+        .setDepth(0)
+        .setTint(0xb8c8b8);
+
+      this.add
+        .rectangle(
+          LAYOUT.WIDTH / 2,
+          LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2,
+          LAYOUT.WIDTH,
+          LAYOUT.GAME_H,
+          0x050a08,
+          0.42,
+        )
+        .setDepth(1);
+    } else {
+      this.add
+        .rectangle(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH, LAYOUT.GAME_H, 0x0d1210)
+        .setDepth(0);
+    }
+
     this.physics.world.setBounds(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH, LAYOUT.GAME_H);
     this.physics.world.gravity.y = 1200;
 
@@ -30,31 +54,13 @@ export default class Game2Scene extends Phaser.Scene {
     this.lives = START_LIVES;
     this.invulnerableMs = 0;
 
-    const tint0 = parseInt(String(this.zones[0].backgroundTint).replace("0x", ""), 16);
-    this.bgTile = this.add.tileSprite(
-      LAYOUT.WIDTH / 2,
-      LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2,
-      LAYOUT.WIDTH * 2,
-      LAYOUT.GAME_H,
-      "ph_floor",
-    );
-    this.bgTile.setTint(tint0);
-
-    this.parallax = this.add.tileSprite(
-      LAYOUT.WIDTH / 2,
-      LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2,
-      LAYOUT.WIDTH * 3,
-      LAYOUT.GAME_H,
-      "ph_floor",
-    );
-    this.parallax.setTint(0x1a3028);
-    this.parallax.tilePositionX = 0;
-
     const groundCenterY = GROUND_TOP_Y + 28;
-    const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x3d2e22);
+    const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 0.92);
+    ground.setDepth(2);
     this.physics.add.existing(ground, true);
 
     this.player = this.physics.add.sprite(220, 400, "ph_runner");
+    this.player.setDepth(5);
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(28, 44);
     this.physics.add.collider(this.player, ground);
@@ -115,11 +121,13 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.scrollSpeed = this.zones[0].scrollSpeed || 280;
 
-    this.hud = this.add.text(24, 10, "", { fontSize: "13px", color: "#f9f2dd", lineSpacing: 4 });
+    this.hud = this.add.text(24, 10, "", { fontSize: "13px", color: "#f9f2dd", lineSpacing: 4 }).setDepth(20);
     this.hudLives = this.add.text(LAYOUT.WIDTH - 24, 10, "", {
       fontSize: "14px",
       color: "#ff6b6b",
-    }).setOrigin(1, 0);
+    })
+      .setOrigin(1, 0)
+      .setDepth(20);
 
     this.routeBarY = LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36;
     this.routeNodes = [];
@@ -130,7 +138,9 @@ export default class Game2Scene extends Phaser.Scene {
       color: "#c8921a",
       align: "center",
       wordWrap: { width: 1100 },
-    }).setOrigin(0.5);
+    })
+      .setOrigin(0.5)
+      .setDepth(20);
 
     this.bannerText = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + 80, "", {
@@ -143,7 +153,8 @@ export default class Game2Scene extends Phaser.Scene {
         padding: { x: 12, y: 8 },
       })
       .setOrigin(0.5)
-      .setAlpha(0);
+      .setAlpha(0)
+      .setDepth(20);
 
     this.space = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.keyUp = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
@@ -153,6 +164,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.add
       .text(LAYOUT.WIDTH - 24, 44, "[ VOLVER AL MAPA ]", { fontSize: "11px", color: "#c8921a" })
       .setOrigin(1, 0)
+      .setDepth(20)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
 
@@ -167,17 +179,16 @@ export default class Game2Scene extends Phaser.Scene {
     const labels = ["I", "II", "III", "IV", "V"];
     const totalW = 520;
     const startX = (LAYOUT.WIDTH - totalW) / 2;
-    const line = this.add
-      .rectangle(LAYOUT.WIDTH / 2, this.routeBarY, totalW, 4, 0x3a3530)
-      .setOrigin(0.5);
+    const line = this.add.rectangle(LAYOUT.WIDTH / 2, this.routeBarY, totalW, 4, 0x3a3530).setOrigin(0.5).setDepth(6);
     this.routeLine = line;
     const step = totalW / (labels.length - 1);
     for (let i = 0; i < labels.length; i += 1) {
       const x = startX + i * step;
-      const dot = this.add.circle(x, this.routeBarY, 10, 0x2a2824, 1).setStrokeStyle(2, 0x6a5a40);
+      const dot = this.add.circle(x, this.routeBarY, 10, 0x2a2824, 1).setStrokeStyle(2, 0x6a5a40).setDepth(6);
       const lbl = this.add
         .text(x, this.routeBarY + 22, labels[i], { fontSize: "10px", color: "#8a8578" })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(6);
       this.routeNodes.push({ dot, lbl, x });
     }
   }
@@ -194,10 +205,10 @@ export default class Game2Scene extends Phaser.Scene {
 
   drawChrome() {
     this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH, LAYOUT.GAME_H, 0x0d1210).setOrigin(0);
-    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.95).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.9).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.92).setOrigin(0);
+    /* Área de juego: fondo la selva (se añade después) o rectángulo en fallback */
+    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.95).setOrigin(0).setDepth(15);
+    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.9).setOrigin(0).setDepth(15);
+    this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.92).setOrigin(0).setDepth(15);
     this.add
       .text(
         LAYOUT.WIDTH / 2,
@@ -210,7 +221,8 @@ export default class Game2Scene extends Phaser.Scene {
           wordWrap: { width: 1100 },
         },
       )
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setDepth(15);
   }
 
   doJump() {
@@ -251,6 +263,7 @@ export default class Game2Scene extends Phaser.Scene {
     const x = LAYOUT.WIDTH + 40;
     if (Math.random() > 0.42) {
       const o = this.physics.add.sprite(x, groundCenterY - 40, "ph_obstacle");
+      o.setDepth(4);
       o.setVelocityX(-this.scrollSpeed);
       o.body.setAllowGravity(false);
       this.obstacles.add(o);
@@ -259,6 +272,7 @@ export default class Game2Scene extends Phaser.Scene {
       const isGold = Math.random() < 0.125;
       const key = isGold ? "ph_pod_gold" : "ph_pod";
       const p = this.physics.add.sprite(x, groundCenterY - 70, key);
+      p.setDepth(4);
       p.setData("isGolden", isGold);
       p.setVelocityX(-this.scrollSpeed);
       p.body.setAllowGravity(false);
@@ -273,8 +287,8 @@ export default class Game2Scene extends Phaser.Scene {
       this.zoneIndex += 1;
       const z = this.zones[this.zoneIndex];
       this.scrollSpeed = z.scrollSpeed;
-      const tint = parseInt(String(z.backgroundTint).replace("0x", ""), 16);
-      this.bgTile.setTint(tint);
+      const jungleTints = [0xc8d4c8, 0xb8cce8, 0xc0e8c8, 0xe8d8c0, 0xd4c8e8];
+      this.bgJungle?.setTint(jungleTints[this.zoneIndex] ?? 0xc8d4c8);
       this.flashBanner(z.bannerText);
       this.updateHud();
       this.updateRouteBar();
@@ -308,7 +322,9 @@ export default class Game2Scene extends Phaser.Scene {
       this.invulnerableMs -= dt;
     }
 
-    this.parallax.tilePositionX += (this.scrollSpeed * dt) / 1000 * 0.3;
+    if (this.bgJungle) {
+      this.bgJungle.tilePositionX += (this.scrollSpeed * dt) / 1000 * 0.22;
+    }
 
     this.obstacles.getChildren().forEach((o) => {
       if (o.body && o.x < -60) {

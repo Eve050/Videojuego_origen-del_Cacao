@@ -5,7 +5,10 @@ const GAME1_ORDER = ["objeto-1-botella", "objeto-2-vasija", "objeto-3-turquesa"]
 
 /**
  * PANTALLA DE QUIZ — propuesta: 3 preguntas, 4 opciones (A–D), 3 intentos, +100 por acierto (máx. 300).
+ * Cada respuesta incorrecta resta puntos (no puede bajar de 0).
  */
+const PUNTOS_RESTADOS_POR_ERROR = 30;
+
 export default class QuizScene extends Phaser.Scene {
   constructor() {
     super({ key: "QuizScene" });
@@ -122,6 +125,14 @@ export default class QuizScene extends Phaser.Scene {
     this.header?.setText(`PREGUNTA ${this.qIndex} / 3     ·     Puntos: ${score}`);
   }
 
+  aplicarPenalizacionPorError() {
+    const prev = this.registry.get("game1Score") ?? 0;
+    const next = Math.max(0, prev - PUNTOS_RESTADOS_POR_ERROR);
+    this.registry.set("game1Score", next);
+    this.refreshHeaderScore();
+    return next;
+  }
+
   setOptionsInteractive(on) {
     this.optionZones.forEach(({ zone }) => {
       if (on) {
@@ -153,11 +164,15 @@ export default class QuizScene extends Phaser.Scene {
     }
 
     this.attemptsRemaining -= 1;
+    this.aplicarPenalizacionPorError();
+
     if (this.attemptsRemaining > 0) {
       this.lastCorrect = false;
       this.lastExhausted = false;
       this.feedback.setColor("#ffcccc");
-      this.feedback.setText(`Respuesta incorrecta. Te quedan ${this.attemptsRemaining} intentos.`);
+      this.feedback.setText(
+        `Respuesta incorrecta. −${PUNTOS_RESTADOS_POR_ERROR} puntos. Te quedan ${this.attemptsRemaining} intentos.`,
+      );
       this.sourceLine.setText("");
       this.time.delayedCall(900, () => this.setOptionsInteractive(true));
       return;
@@ -166,9 +181,10 @@ export default class QuizScene extends Phaser.Scene {
     this.lastCorrect = false;
     this.lastExhausted = true;
     const letter = String.fromCharCode(65 + q.correctIndex);
+    const total = this.registry.get("game1Score") ?? 0;
     this.feedback.setColor("#ffddaa");
     this.feedback.setText(
-      `La respuesta correcta era: ${letter}. No te preocupes, el conocimiento se construye paso a paso.`,
+      `La respuesta correcta era: ${letter}. −${PUNTOS_RESTADOS_POR_ERROR} puntos.\nNo te preocupes, el conocimiento se construye paso a paso.\nTotal actual: ${total} puntos.`,
     );
     this.sourceLine.setText(q.fact);
     this.time.delayedCall(3800, () => this.close());

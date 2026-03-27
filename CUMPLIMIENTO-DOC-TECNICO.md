@@ -42,6 +42,7 @@ Comparación del código en `enigma-santa-ana` con lo descrito en el **documento
 | Instrucciones: misión + máx 300 + 3 intentos | ⚠️ | Mismo contenido; doc une línea con `\|`; aquí dos bullets |
 | Objetos: botella, vasija, turquesa + quiz | ✅ | `questions.json` + `Game1Scene` + `QuizScene` |
 | 3 intentos, +100 acierto, mensajes error / 3 fallos | ✅ | `QuizScene.js` |
+| Penalización por error (puntaje baja) | ⚠️ | Doc no fija número: **−30 pts** por intento fallido, mínimo 0 (`PUNTOS_RESTADOS_POR_ERROR`) |
 | Textos resultado por tramos 300 / 200–299 / 100–199 / &lt;100 | ✅ | `ResultScene.tierExplore` |
 | Prompt objeto (E + tocar) | ⚠️ | Cerca; salto de línea; overlap abre quiz sin pulsar E (rápido) |
 | Textos narrativos botella / vasija / turquesa literales | ⚠️ | JSON usa “Has hallado…”; doc a veces «Has encontrado…»; turquesa con comillas tipo doc |
@@ -113,6 +114,6 @@ Comparación del código en `enigma-santa-ana` con lo descrito en el **documento
 
 **Ya alineado con el documento:** resolución y escala Phaser, estructura de escenas, copy principal de intros/instrucciones J1–J3, preguntas y datos del quiz J1, lógica de intentos y resultados J1, banners y hechos por zona J2 a nivel de texto, flujo de resultados J2/J3 y botones en modo laboratorio, enlace Netlify SPA.
 
-**Brechas mayores:** assets 2D y audio del §5.1; **J2** sin vidas/invulnerabilidad y sin física/velocidades/barra de ruta del doc; **J3** sin laberinto oficial, sin poder vaina dorada, sin IA real ni recuentos 80/72/64; **controles táctiles** como en la figura; **checklist entrega** (analytics, headers, pruebas multi-navegador documentadas).
+**Brechas mayores:** **assets 2D** y **audio BGM/SFX** del §5.1; **J2**: progreso por tiempo (10 s) vs recorrido/distancia del doc, sin piezas culturales por zona ni spawn exacto en px; **fondos por zona** y parallax 3 capas; **J3**: laberinto 21×13 / tile 44 / Tiled JSON, paleta morada, **vaina dorada + guardianes asustados + “¡PODER ANCESTRAL!”**, granos 80/72/64; **Joystick** dedicado en zona inferior; **expedición** sin pantallas intro/instrucciones Phaser; **entrega** (analytics, headers Netlify, iframe/CORS, carga &lt;5 s comprobada, README).
 
 Para actualizar este archivo: repetir revisión tras cambios en `Game*Scene`, `QuizScene`, `ResultScene`, `zonesConfig.json`, `questions.json`, `Guardian.js`.

@@ -76,10 +76,14 @@ export default class ResultScene extends Phaser.Scene {
       }
     } else if (game === "mazeWin") {
       title = "¡Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón!";
-      body = `Todos los granos de cacao han sido recolectados.\n\nPiezas arqueológicas desbloqueadas: ${this.payload.pieces ?? 0} / 4 | Puntos: ${score}`;
+      const pt = this.payload.piecesTotal ?? 4;
+      body = `Completaste el ritual del laberinto y la vasija ceremonial.\n\nPiezas sagradas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
     } else if (game === "mazeLose") {
       title = "Los guardianes han protegido el laberinto sagrado…";
       body = `El cacao ancestral de 5.500 años sigue esperando ser descubierto.\n\nPuntos: ${score} | Mejor puntaje: ${this.payload.highScore ?? score}`;
+      if (this.payload.detail) {
+        body += `\n\n${this.payload.detail}`;
+      }
     }
 
     this.add
