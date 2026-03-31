@@ -3,7 +3,8 @@
     "id": "objeto-1-botella",
     "game": 1,
     "objectKey": "botella",
-    "discoveryText": "Has hallado la botella cerámica con asa de estribo. Esta vasija fue analizada por científicos de cuatro países. Sus residuos orgánicos cambiaron la historia del cacao en el mundo.",
+    "objectLabel": "Botella Cerámica con Asa de Estribo",
+    "discoveryText": "«Has encontrado la botella cerámica con asa de estribo. Este recipiente fue analizado por científicos de cuatro países. Sus residuos orgánicos cambiaron la historia del cacao en el mundo.»",
     "question": "¿Qué sustancia fue identificada en los residuos orgánicos de esta botella cerámica?",
     "options": [
       "Chicha de yuca",
@@ -19,7 +20,8 @@
     "id": "objeto-2-vasija",
     "game": 1,
     "objectKey": "vasija",
-    "discoveryText": "Has hallado una vasija ceremonial. Es un recipiente ritual de la cultura Mayo Chinchipe – Marañón. Formó parte de los bienes funerarios de las tumbas de élite del sitio.",
+    "objectLabel": "Vasija Ceremonial",
+    "discoveryText": "«Una vasija ritual de la cultura Mayo Chinchipe – Marañón. Formaba parte del ajuar funerario de las tumbas de élite del sitio.»",
     "question": "¿Cuántos años de antigüedad tienen las evidencias de cacao encontradas en Santa Ana – La Florida?",
     "options": [
       "3.000 años antes del presente",
@@ -35,9 +37,15 @@
     "id": "objeto-3-turquesa",
     "game": 1,
     "objectKey": "turquesa",
+    "objectLabel": "Cuenta de Turquesa",
     "discoveryText": "«Ornamento de las tumbas de élite. Evidencia del comercio a larga distancia con la costa del Pacífico ecuatoriano hace 5.500 años.»",
     "question": "¿Cómo se llama la cultura que habitó Santa Ana – La Florida hace 5.500 años?",
-    "options": ["Cañari", "Valdivia", "Inca", "Mayo Chinchipe – Marañón"],
+    "options": [
+      "Cañari",
+      "Valdivia",
+      "Inca",
+      "Mayo Chinchipe – Marañón"
+    ],
     "correctIndex": 3,
     "fact": "La cultura Mayo Chinchipe – Marañón construyó una plaza ceremonial circular de 40 metros de diámetro y mantuvo contacto a larga distancia con la costa del Pacífico. Es una de las civilizaciones más antiguas del Formativo temprano amazónico.",
     "source": "Proyecto Palanda; Zarrillo et al. (2018)"

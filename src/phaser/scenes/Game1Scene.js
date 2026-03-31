@@ -3,9 +3,23 @@ import { LAYOUT } from "../layout.js";
 import Player from "../entities/Player.js";
 import { exitToMainMap } from "../data/introCopy.js";
 
+/** Doc §2.7 — prompt exacto */
+const TXT_PROMPT = "¡Objeto arqueológico encontrado! Presiona [E] o toca para examinar";
+
+const WORLD_W = 1920;
+/** Radio exterior de la plaza hundida (más grande que el boceto inicial). */
+const PLAZA_OUTER_R = 338;
+/** Radio mínimo del anillo de empedrado / tierra clara. */
+const PLAZA_INNER_R = 48;
+/** Distancia al centro de las casas con colisión (anillo habitacional). */
+const HOUSE_RING_R = PLAZA_OUTER_R - 76;
+/** Área de juego documentada */
+const AREA_LABEL = "PLAZA CIRCULAR HUNDIDA";
+
 /**
- * Minijuego 1 — Exploración + quiz (propuesta: top-down / lateral + Phaser).
- * Objetos: botella, vasija, turquesa. Interacción: acercarse (solape) o [E].
+ * Minijuego 1 — El Origen del Cacao (doc §2.x).
+ * Mapa amplio, cámara, colisiones, minimapa, joystick/action en móvil,
+ * examen solo con [E] / botón ACCIÓN / toque sobre objeto en radio.
  */
 export default class Game1Scene extends Phaser.Scene {
   constructor() {
@@ -14,6 +28,11 @@ export default class Game1Scene extends Phaser.Scene {
 
   create() {
     this.registry.set("game1Score", 0);
+    this.pendingCollectible = null;
+    this.joystickActive = false;
+    this.stickCx = 0;
+    this.stickCy = 0;
+    this.stickR = 60;
 
     this.events.off("quiz-finished");
     this.events.on("quiz-finished", (data) => {
@@ -29,102 +48,709 @@ export default class Game1Scene extends Phaser.Scene {
       }
     });
 
-    this.pendingCollectible = null;
     this.drawChrome();
 
-    this.physics.world.setBounds(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH, LAYOUT.GAME_H);
+    this.physics.world.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
 
-    this.add
-      .tileSprite(
-        LAYOUT.WIDTH / 2,
-        LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2,
-        LAYOUT.WIDTH,
-        LAYOUT.GAME_H,
-        "ph_floor",
-      )
-      .setTint(0x3d5c45);
+    this.buildScenery();
+    this.buildObstacles();
 
-    this.player = new Player(this, LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2);
+    const startX = 960;
+    const startY = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 + 20;
+    this.player = new Player(this, startX, startY);
     this.player.setTexture("ph_player");
+    this.player.setDepth(8);
 
-    const spots = [
-      { x: 220, y: LAYOUT.GAME_TOP + 120, qid: "objeto-1-botella" },
-      { x: 960, y: LAYOUT.GAME_TOP + 200, qid: "objeto-2-vasija" },
-      { x: 640, y: LAYOUT.GAME_TOP + 380, qid: "objeto-3-turquesa" },
-    ];
+    this.physics.add.collider(this.player, this.obstacles);
 
-    this.collectibles = this.physics.add.group();
-    for (const s of spots) {
-      const c = this.physics.add.sprite(s.x, s.y, "ph_collect");
-      c.setData("questionId", s.qid);
-      c.setData("quizBusy", false);
-      this.collectibles.add(c);
-    }
+    this.collectibles = this.add.group();
+    this.buildCollectibles();
 
-    this.physics.add.overlap(this.player, this.collectibles, (_p, item) => {
-      if (item.getData("quizBusy")) return;
-      if (item.getData("overlapLock")) return;
-      item.setData("quizBusy", true);
-      this.pendingCollectible = item;
-      this.scene.pause();
-      this.scene.launch("QuizScene", {
-        questionId: item.getData("questionId"),
-        returnScene: "Game1Scene",
-      });
-    });
+    this.cameras.main.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
+    this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    this.cameras.main.setZoom(1);
+    this.cameras.main.setBackgroundColor(0x1a2e22);
 
-    this.hud = this.add.text(24, 18, "", {
-      fontSize: "15px",
-      color: "#f9f2dd",
-    });
-
-    this.add
-      .text(LAYOUT.WIDTH - 24, 18, "[ VOLVER AL MAPA ]", {
-        fontSize: "12px",
-        color: "#c8921a",
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => exitToMainMap());
+    this.setupHudAndMinimap();
+    this.setupTouchControls();
 
     this.keyE = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
+    this.add
+      .text(18, 40, "VOLVER AL MAPA", {
+        fontSize: "11px",
+        color: "#c8921a",
+        fontStyle: "bold",
+        fontFamily: "Segoe UI, Tahoma, sans-serif",
+      })
+      .setOrigin(0, 0)
+      .setScrollFactor(0)
+      .setDepth(120)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => exitToMainMap());
+
     this.hint = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HINT_TOP + 20, "", {
-        fontSize: "14px",
+        fontSize: "13px",
         color: "#dddddd",
         align: "center",
-        wordWrap: { width: 1100 },
+        wordWrap: { width: 1050 },
+        fontFamily: "Segoe UI, Tahoma, sans-serif",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(115);
 
     this.resultPrompt = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 24, "", {
+      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 22, "", {
         fontSize: "14px",
         color: "#c8921a",
         align: "center",
+        fontStyle: "bold",
         wordWrap: { width: 900 },
+        fontFamily: "Segoe UI, Tahoma, sans-serif",
       })
       .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(115)
       .setInteractive({ useHandCursor: true });
 
     this.resultPrompt.on("pointerdown", () => this.tryShowResults());
-
     this.input.keyboard?.on("keydown-ENTER", () => this.tryShowResults());
   }
 
   drawChrome() {
-    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH, LAYOUT.GAME_H, 0x0f1f16).setOrigin(0);
-    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.95).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.9).setOrigin(0);
-    this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.92).setOrigin(0);
+    /**
+     * Solo bandas HUD / pista / controles (scrollFactor 0). Nunca tapar la zona de juego (60–540):
+     * un rectángulo a pantalla completa por encima del mundo dejaba el mapa en negro.
+     */
+    const z = 40;
+    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.96).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
+    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.94).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
+    this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
+
     this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 78, "PANTALLA: DURANTE LA EXPLORACIÓN — acércate a los objetos o usa [E] / toque.", {
-        fontSize: "11px",
-        color: "#666666",
+      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 96, "Presiona [E] o toca ACCIÓN para examinar los objetos · CONTROLES TÁCTILES (solo en móvil)", {
+        fontSize: "10px",
+        color: "#5a6068",
+        fontFamily: "Segoe UI, Tahoma, sans-serif",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(z + 2);
+  }
+
+  buildScenery() {
+    const midY = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
+    const cx = 960;
+    const cy = midY;
+
+    if (this.textures.exists("bg_selva_run")) {
+      this.atmosphereTile = this.add
+        .tileSprite(WORLD_W / 2, midY, WORLD_W + 240, LAYOUT.GAME_H + 100, "bg_selva_run")
+        .setDepth(-6)
+        .setTint(0x5a7a68)
+        .setAlpha(0.38)
+        .setBlendMode(Phaser.BlendModes.MULTIPLY);
+    }
+
+    this.add
+      .rectangle(WORLD_W / 2, midY, WORLD_W + 180, LAYOUT.GAME_H + 100, 0x152820, 1)
+      .setDepth(-5);
+
+    this.sceneryTile = this.add
+      .tileSprite(WORLD_W / 2, midY, WORLD_W + 100, LAYOUT.GAME_H + 40, "ph_floor")
+      .setTint(0x4a6654)
+      .setAlpha(0.65)
+      .setDepth(0);
+
+    const grad = [
+      0x101810, 0x141c14, 0x18241c, 0x1e2c22, 0x24362a, 0x2c4234, 0x34503e, 0x3d5c48,
+      0x4a6a54, 0x587a60, 0x688c6c, 0x789e78, 0x8cb084, 0x9ec090, 0xb0d09c,
+    ];
+    const steps = 14;
+    const radii = [];
+    for (let i = 0; i <= steps; i += 1) {
+      radii.push(
+        Math.round(PLAZA_OUTER_R - ((PLAZA_OUTER_R - PLAZA_INNER_R) * i) / steps),
+      );
+    }
+    const plaza = this.add.graphics().setDepth(1);
+    for (let i = 0; i < radii.length; i += 1) {
+      plaza.fillStyle(grad[Math.min(i, grad.length - 1)], 1);
+      plaza.fillCircle(cx, cy, radii[i]);
+    }
+
+    plaza.lineStyle(2, 0xe8c878, 0.5);
+    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 18);
+    plaza.lineStyle(3, 0x8a6020, 0.35);
+    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 42);
+    plaza.lineStyle(1, 0x4a3020, 0.45);
+    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 92);
+
+    const cobInner = PLAZA_INNER_R + 20;
+    const cobOuter = PLAZA_OUTER_R - 10;
+    const cob = this.add.graphics().setDepth(1);
+    for (let i = 0; i < 145; i += 1) {
+      const ang = Math.random() * Math.PI * 2;
+      const rad = cobInner + Math.sqrt(Math.random()) * (cobOuter - cobInner);
+      const px = cx + Math.cos(ang) * rad;
+      const py = cy + Math.sin(ang) * rad;
+      cob.fillStyle(Phaser.Math.RND.pick([0x3a4830, 0x4a5840, 0x5a6850]), Phaser.Math.FloatBetween(0.2, 0.45));
+      cob.fillEllipse(px, py, Phaser.Math.Between(3, 8), Phaser.Math.Between(2, 6));
+    }
+
+    const glow = this.add.graphics().setDepth(1);
+    for (let i = 10; i >= 1; i -= 1) {
+      glow.fillStyle(0xfff8d0, 0.018 + (11 - i) * 0.016);
+      glow.fillCircle(cx, cy - 10, 12 + i * 9);
+    }
+
+    this.add
+      .text(cx, cy + 6, "Plaza circular ceremonial  ·  ~40 m", {
+        fontSize: "13px",
+        color: "#c4b898",
+        fontFamily: "Georgia, 'Palatino Linotype', serif",
+        fontStyle: "italic",
+      })
+      .setOrigin(0.5)
+      .setDepth(2)
+      .setAlpha(0.48);
+
+    const bushAt = (bx, by, sc) => {
+      const g = this.add.graphics().setDepth(1);
+      const cols = [0x1a4828, 0x246038, 0x2e7844];
+      for (let k = 0; k < 7; k += 1) {
+        g.fillStyle(Phaser.Math.RND.pick(cols), Phaser.Math.FloatBetween(0.75, 1));
+        const ox = Phaser.Math.Between(-12, 12) * sc;
+        const oy = Phaser.Math.Between(-7, 7) * sc;
+        g.fillEllipse(bx + ox, by + oy, (16 + Phaser.Math.Between(0, 10)) * sc, (11 + Phaser.Math.Between(0, 8)) * sc);
+      }
+    };
+
+    const grassTuftAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      const greens = [0x2a6040, 0x348050, 0x1e4830, 0x3a7050];
+      for (let i = 0; i < 8; i += 1) {
+        const t = (i / 7 - 0.5) * 1.1;
+        g.fillStyle(Phaser.Math.RND.pick(greens), 1);
+        g.beginPath();
+        g.moveTo(bx, by + 5 * sc);
+        g.lineTo(bx + Math.sin(t) * 4 * sc, by - (11 + i * 0.4) * sc);
+        g.lineTo(bx + Math.sin(t + 0.18) * 4 * sc, by + 5 * sc);
+        g.closePath();
+        g.fillPath();
+      }
+    };
+
+    const fernAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      for (let frond = 0; frond < 6; frond += 1) {
+        const ang = -Math.PI / 2 + (frond - 2.5) * 0.32;
+        const len = (20 + Phaser.Math.Between(0, 8)) * sc;
+        g.fillStyle(Phaser.Math.RND.pick([0x246038, 0x2e8850, 0x1a5830]), 0.92);
+        g.fillEllipse(
+          bx + Math.cos(ang) * len * 0.48,
+          by + Math.sin(ang) * len * 0.48,
+          9 * sc,
+          len * 0.52,
+        );
+      }
+    };
+
+    const flowerClusterAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      for (let p = 0; p < 6; p += 1) {
+        const a = (p / 6) * Math.PI * 2;
+        g.fillStyle(Phaser.Math.RND.pick([0xc87098, 0xffc860, 0xe89840, 0xf0e8a0]), 0.92);
+        g.fillCircle(bx + Math.cos(a) * 5.5 * sc, by + Math.sin(a) * 5.5 * sc, 3.2 * sc);
+      }
+      g.fillStyle(0xfff8c8, 1);
+      g.fillCircle(bx, by, 2.6 * sc);
+    };
+
+    const palmAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      g.fillStyle(0x4a3020, 1);
+      g.fillRoundedRect(bx - 2 * sc, by - 6 * sc, 4 * sc, 20 * sc, 2);
+      const fr = [0x2a6040, 0x348858, 0x2a7850];
+      for (let u = 0; u < 5; u += 1) {
+        const a = -Math.PI / 2 + (u - 2) * 0.35;
+        g.fillStyle(Phaser.Math.RND.pick(fr), 0.95);
+        g.fillEllipse(
+          bx + Math.cos(a) * 14 * sc,
+          by - 8 * sc + Math.sin(a) * 7 * sc,
+          22 * sc,
+          10 * sc,
+        );
+      }
+    };
+
+    const broadleafAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      g.fillStyle(0x1a4830, 1);
+      g.fillEllipse(bx, by + 2 * sc, 28 * sc, 14 * sc);
+      g.fillStyle(0x2a7050, 0.92);
+      g.fillEllipse(bx - 10 * sc, by - 4 * sc, 13 * sc, 19 * sc);
+      g.fillEllipse(bx + 11 * sc, by - 2 * sc, 12 * sc, 16 * sc);
+      g.fillStyle(0x3a8860, 0.5);
+      g.fillEllipse(bx + 2 * sc, by - 8 * sc, 17 * sc, 9 * sc);
+    };
+
+    const reedClusterAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      const cols = [0x3a5848, 0x2a4838, 0x4a6860];
+      for (let i = -3; i <= 3; i += 1) {
+        g.lineStyle(Phaser.Math.Between(2, 3), Phaser.Math.RND.pick(cols), 0.9);
+        g.beginPath();
+        const ox = i * 2.2 * sc;
+        const sway = i * 0.35 * sc;
+        g.moveTo(bx + ox, by + 10 * sc);
+        g.lineTo(bx + ox + sway, by - (15 + Math.abs(i)) * sc);
+        g.strokePath();
+      }
+    };
+
+    const bambooClumpAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      for (let j = 0; j < 6; j += 1) {
+        const ox = (j - 2.5) * 2.8 * sc;
+        g.fillStyle(Phaser.Math.RND.pick([0x3a5040, 0x2e4030]), 1);
+        g.fillRoundedRect(bx + ox - 1.2 * sc, by - (20 + j * 0.35) * sc, 2.8 * sc, 28 * sc, 2);
+        g.fillStyle(0x4a9060, 0.33);
+        g.fillEllipse(bx + ox, by - 22 * sc, 8 * sc, 4 * sc);
+      }
+    };
+
+    const vineTangleAt = (bx, by, sc = 1) => {
+      const g = this.add.graphics().setDepth(1);
+      g.lineStyle(2, 0x2a5038, 0.85);
+      g.beginPath();
+      g.moveTo(bx - 8 * sc, by + 6 * sc);
+      g.lineTo(bx - 2 * sc, by - 2 * sc);
+      g.lineTo(bx + 6 * sc, by + 4 * sc);
+      g.lineTo(bx + 10 * sc, by - 6 * sc);
+      g.strokePath();
+      g.fillStyle(0x348050, 0.7);
+      for (let v = 0; v < 4; v += 1) {
+        g.fillCircle(bx + (v - 1.5) * 5 * sc, by - v * 2 * sc, 3.2 * sc);
+      }
+    };
+
+    const scatterFloraWild = (avoidFn) => {
+      for (let n = 0; n < 95; n += 1) {
+        const x = Phaser.Math.Between(55, WORLD_W - 55);
+        const y = Phaser.Math.Between(LAYOUT.GAME_TOP + 18, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 18);
+        const d = Math.hypot(x - cx, y - cy);
+        if (d < PLAZA_OUTER_R + 5) continue;
+        if (avoidFn && avoidFn(x, y)) continue;
+        const sc = Phaser.Math.FloatBetween(0.65, 1.22);
+        const pick = Phaser.Math.Between(0, 99);
+        if (pick < 16) grassTuftAt(x, y, sc);
+        else if (pick < 31) bushAt(x, y, sc);
+        else if (pick < 45) fernAt(x, y, sc);
+        else if (pick < 56) flowerClusterAt(x, y, sc);
+        else if (pick < 66) palmAt(x, y, sc);
+        else if (pick < 76) broadleafAt(x, y, sc);
+        else if (pick < 86) reedClusterAt(x, y, sc);
+        else if (pick < 93) bambooClumpAt(x, y, sc);
+        else vineTangleAt(x, y, sc);
+      }
+    };
+
+    const decoHouseAt = (bx, by, sc, rot) => {
+      this.add
+        .sprite(bx, by, "ph_g1_house")
+        .setScale(sc)
+        .setDepth(2)
+        .setAlpha(0.93)
+        .setRotation(rot);
+    };
+
+    const cellW = 74;
+    const cellH = 96;
+    const settleCols = 3;
+    const settleRows = 3;
+    const leftX0 = 54;
+    const gridY0 = LAYOUT.GAME_TOP + 128;
+    const rightBase = WORLD_W - leftX0 - (settleCols - 1) * cellW;
+    const settlePad = 26;
+    const settleL = {
+      l: leftX0 - settlePad,
+      r: leftX0 + (settleCols - 1) * cellW + settlePad,
+      t: gridY0 - settlePad,
+      b: gridY0 + (settleRows - 1) * cellH + settlePad,
+    };
+    const settleRR = {
+      l: rightBase - settlePad,
+      r: rightBase + (settleCols - 1) * cellW + settlePad,
+      t: gridY0 - settlePad,
+      b: gridY0 + (settleRows - 1) * cellH + settlePad,
+    };
+    const inSettle = (px, py) =>
+      (px >= settleL.l && px <= settleL.r && py >= settleL.t && py <= settleL.b) ||
+      (px >= settleRR.l && px <= settleRR.r && py >= settleRR.t && py <= settleRR.b);
+
+    for (let n = 0; n < 64; n += 1) {
+      let x = 0;
+      let y = 0;
+      let tries = 0;
+      while (tries < 45) {
+        tries += 1;
+        const edge = Phaser.Math.Between(0, 3);
+        if (edge === 0) {
+          x = Phaser.Math.Between(24, 130);
+          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 36, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36);
+        } else if (edge === 1) {
+          x = Phaser.Math.Between(WORLD_W - 130, WORLD_W - 24);
+          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 36, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36);
+        } else if (edge === 2) {
+          x = Phaser.Math.Between(80, WORLD_W - 80);
+          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 14, LAYOUT.GAME_TOP + 52);
+        } else {
+          x = Phaser.Math.Between(80, WORLD_W - 80);
+          y = Phaser.Math.Between(LAYOUT.GAME_TOP + LAYOUT.GAME_H - 52, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 14);
+        }
+        if (!inSettle(x, y)) break;
+      }
+      if (tries >= 45) continue;
+      const roll = Phaser.Math.Between(0, 99);
+      const sc = Phaser.Math.FloatBetween(0.82, 1.28);
+      if (roll < 16) grassTuftAt(x, y, sc);
+      else if (roll < 32) bushAt(x, y, sc);
+      else if (roll < 49) fernAt(x, y, sc);
+      else if (roll < 60) flowerClusterAt(x, y, sc);
+      else if (roll < 69) palmAt(x, y, sc);
+      else if (roll < 77) broadleafAt(x, y, sc);
+      else if (roll < 86) reedClusterAt(x, y, sc);
+      else if (roll < 93) bambooClumpAt(x, y, sc);
+      else vineTangleAt(x, y, sc);
+    }
+
+    const decoRingR = PLAZA_OUTER_R + 38;
+    const nRing = 28;
+    const ringPhase = 0;
+    for (let i = 0; i < nRing; i += 1) {
+      const t = ((i + ringPhase) / nRing) * Math.PI * 2;
+      const x = cx + Math.cos(t) * decoRingR;
+      const y = cy + Math.sin(t) * decoRingR;
+      if (x < 46 || x > WORLD_W - 46) continue;
+      if (y < LAYOUT.GAME_TOP + 34 || y > LAYOUT.GAME_TOP + LAYOUT.GAME_H - 34) continue;
+      if (x > cx - 140 && x < cx + 140 && y < LAYOUT.GAME_TOP + 215) continue;
+      decoHouseAt(x, y, 0.51, t + Math.PI / 2);
+    }
+
+    for (let r = 0; r < settleRows; r += 1) {
+      for (let c = 0; c < settleCols; c += 1) {
+        decoHouseAt(leftX0 + c * cellW, gridY0 + r * cellH, 0.49, 0);
+      }
+    }
+    for (let r = 0; r < settleRows; r += 1) {
+      for (let c = 0; c < settleCols; c += 1) {
+        decoHouseAt(rightBase + c * cellW, gridY0 + r * cellH, 0.49, 0);
+      }
+    }
+    for (let n = 0; n < 60; n += 1) {
+      const ang = Math.random() * Math.PI * 2;
+      const rad = PLAZA_OUTER_R + Phaser.Math.Between(16, 98);
+      const px = cx + Math.cos(ang) * rad;
+      const py = cy + Math.sin(ang) * rad;
+      if (inSettle(px, py)) continue;
+      const r = Phaser.Math.Between(0, 99);
+      const sc = Phaser.Math.FloatBetween(0.72, 1.12);
+      if (r < 30) grassTuftAt(px, py, sc);
+      else if (r < 54) fernAt(px, py, sc);
+      else if (r < 72) flowerClusterAt(px, py, sc * 0.85);
+      else if (r < 82) palmAt(px, py, sc * 0.72);
+      else if (r < 90) broadleafAt(px, py, sc * 0.88);
+      else if (r < 96) reedClusterAt(px, py, sc * 0.78);
+      else bambooClumpAt(px, py, sc * 0.7);
+    }
+
+    scatterFloraWild(inSettle);
+  }
+
+  buildObstacles() {
+    this.obstacles = this.physics.add.staticGroup();
+    const cx = 960;
+    const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
+    const anglesOuter = Array.from({ length: 7 }, (_, i) => (i / 7) * 2);
+    const anglesInner = Array.from({ length: 6 }, (_, i) => ((i + 0.5) / 6) * 2);
+    const rOuter = HOUSE_RING_R;
+    const rInner = HOUSE_RING_R - 34;
+
+    const placeHouse = (a, ringR) => {
+      const hx = cx + Math.cos(a * Math.PI) * ringR;
+      const hy = cy + Math.sin(a * Math.PI) * ringR;
+      const h = this.physics.add.staticSprite(hx, hy, "ph_g1_house");
+      h.setScale(0.82);
+      h.setDepth(3);
+      h.refreshBody();
+      if (h.body) {
+        const bw = 50;
+        const bh = 44;
+        h.body.setSize(bw, bh);
+        h.body.setOffset((h.width - bw) / 2, (h.height - bh) * 0.52);
+      }
+      this.obstacles.add(h);
+    };
+
+    anglesOuter.forEach((a) => placeHouse(a, rOuter));
+    anglesInner.forEach((a) => placeHouse(a, rInner));
+
+    const thick = 18;
+    const borders = [
+      [WORLD_W / 2, LAYOUT.GAME_TOP + thick / 2, WORLD_W + 80, thick],
+      [WORLD_W / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H - thick / 2, WORLD_W + 80, thick],
+      [thick / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, thick, LAYOUT.GAME_H + 40],
+      [WORLD_W - thick / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, thick, LAYOUT.GAME_H + 40],
+    ];
+    for (const [bx, by, bw, bh] of borders) {
+      const wall = this.add.rectangle(bx, by, bw, bh, 0x000000, 0);
+      this.physics.add.existing(wall, true);
+      this.obstacles.add(wall);
+    }
+  }
+
+  buildCollectibles() {
+    const cx = 960;
+    const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
+
+    this.add.ellipse(cx - 125, cy + 28, 52, 16, 0x081210, 0.42).setDepth(4);
+    const bottle = this.add.sprite(cx - 125, cy + 0, "ph_g1_bottle");
+    bottle.setScale(1.42);
+    bottle.setDepth(5);
+    this.decorateCollectible(bottle, "objeto-1-botella", 72, 92, "bottle");
+
+    this.add.ellipse(cx, LAYOUT.GAME_TOP + 180, 58, 18, 0x081210, 0.42).setDepth(4);
+    const vasija = this.add.sprite(cx, LAYOUT.GAME_TOP + 148, "ph_vessel");
+    vasija.setScale(1.52);
+    vasija.setDepth(6);
+    this.decorateCollectible(vasija, "objeto-2-vasija", 72, 92, "vasija");
+
+    this.add.ellipse(cx + 138, cy + 34, 46, 15, 0x081210, 0.42).setDepth(4);
+    const turq = this.add.container(cx + 138, cy + 6);
+    const bead = this.add.sprite(0, 0, "ph_g1_turquoise");
+    bead.setScale(1.48);
+    turq.add(bead);
+    for (let i = 0; i < 4; i += 1) {
+      const a = (i / 4) * Math.PI * 2;
+      turq.add(this.add.circle(Math.cos(a) * 19, Math.sin(a) * 19, 2.8, 0xccffff, 0.95));
+    }
+    turq.setDepth(5);
+    turq.setData("questionId", "objeto-3-turquesa");
+    turq.setData("quizBusy", false);
+    turq.setData("overlapLock", false);
+    turq.setData("interactR", 60);
+    turq.setData("promptR", 78);
+    turq.setInteractive(new Phaser.Geom.Circle(0, 0, 30), Phaser.Geom.Circle.Contains);
+    turq.on("pointerdown", () => this.pointerExamine(turq));
+    this.collectibles.add(turq);
+    this.tweens.add({
+      targets: turq,
+      angle: 360,
+      duration: 7000,
+      repeat: -1,
+    });
+  }
+
+  decorateCollectible(sprite, qid, interactR, promptR, kind) {
+    sprite.setData("questionId", qid);
+    sprite.setData("quizBusy", false);
+    sprite.setData("overlapLock", false);
+    sprite.setData("interactR", interactR);
+    sprite.setData("promptR", promptR);
+    sprite.setInteractive({ useHandCursor: true });
+    sprite.on("pointerdown", () => this.pointerExamine(sprite));
+
+    if (kind === "bottle") {
+      this.tweens.add({
+        targets: sprite,
+        alpha: { from: 0.82, to: 1 },
+        duration: 550,
+        yoyo: true,
+        repeat: -1,
+      });
+    } else if (kind === "vasija") {
+      this.tweens.add({
+        targets: sprite,
+        angle: 360,
+        duration: 12000,
+        repeat: -1,
+      });
+    }
+    this.collectibles.add(sprite);
+  }
+
+  setupHudAndMinimap() {
+    const hudFont = "Segoe UI, Tahoma, sans-serif";
+    this.hudPts = this.add
+      .text(18, 16, "", { fontSize: "14px", color: "#ffdd66", fontStyle: "bold", fontFamily: hudFont })
+      .setScrollFactor(0)
+      .setDepth(110);
+
+    this.hudObj = this.add
+      .text(LAYOUT.WIDTH / 2, 16, "", { fontSize: "14px", color: "#f0f4e8", fontStyle: "bold", fontFamily: hudFont })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(110);
+
+    const mx = LAYOUT.WIDTH - 14 - 150;
+    /** Área: a la izquierda del minimapa, sin chocar con VOLVER (esquina sup. izq.) */
+    this.hudArea = this.add
+      .text(mx - 10, 16, "", {
+        fontSize: "11px",
+        color: "#c8d4b8",
+        fontStyle: "bold",
+        fontFamily: hudFont,
+        align: "right",
+        wordWrap: { width: 210 },
+      })
+      .setOrigin(1, 0)
+      .setScrollFactor(0)
+      .setDepth(110);
+
+    this.hudArea.setText(AREA_LABEL);
+    const my = LAYOUT.GAME_TOP + 8;
+    this.mmX = mx;
+    this.mmY = my;
+    this.mmW = 150;
+    this.mmH = 100;
+    this.add
+      .rectangle(mx + this.mmW / 2, my + this.mmH / 2, this.mmW, this.mmH, 0x0c1014, 0.94)
+      .setStrokeStyle(2, 0x8a7840)
+      .setScrollFactor(0)
+      .setDepth(108);
+    this.miniGfx = this.add.graphics().setScrollFactor(0).setDepth(109);
+  }
+
+  setupTouchControls() {
+    const mobile = !this.sys.game.device.os.desktop;
+    if (!mobile) return;
+
+    const jx = 118;
+    const jy = LAYOUT.CONTROLS_TOP + 72;
+    this.stickCx = jx;
+    this.stickCy = jy;
+
+    this.stickBase = this.add.circle(jx, jy, this.stickR, 0x2a3038, 0.55).setStrokeStyle(2, 0x5a6570).setScrollFactor(0).setDepth(112);
+    this.stickThumb = this.add.circle(jx, jy, 26, 0x8899aa, 0.9).setScrollFactor(0).setDepth(113);
+    this.stickBase.setInteractive({ useHandCursor: true });
+
+    this.stickBase.on("pointerdown", (p) => {
+      this.joystickActive = true;
+      this.updateJoystick(p);
+    });
+    this.input.on("pointermove", (p) => {
+      if (this.joystickActive) this.updateJoystick(p);
+    });
+    this.input.on("pointerup", () => {
+      this.joystickActive = false;
+      if (this.player) this.player.stickVector = null;
+      if (this.stickThumb) this.stickThumb.setPosition(this.stickCx, this.stickCy);
+    });
+
+    const ax = LAYOUT.WIDTH - 96;
+    const ay = LAYOUT.CONTROLS_TOP + 72;
+    const actBtn = this.add
+      .rectangle(ax, ay, 132, 52, 0x7a4a24, 1)
+      .setStrokeStyle(2, 0xd4a574)
+      .setScrollFactor(0)
+      .setDepth(112)
+      .setInteractive({ useHandCursor: true });
+    this.add
+      .text(ax, ay, "ACCIÓN", { fontSize: "14px", color: "#fff8f0", fontStyle: "bold" })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(113);
+    actBtn.on("pointerdown", () => this.tryExamineNearest());
+  }
+
+  updateJoystick(pointer) {
+    if (!this.player || !this.stickThumb) return;
+    const dx = pointer.x - this.stickCx;
+    const dy = pointer.y - this.stickCy;
+    const len = Math.hypot(dx, dy) || 1;
+    const clamp = Math.min(this.stickR, len);
+    const ang = Math.atan2(dy, dx);
+    this.stickThumb.setPosition(this.stickCx + Math.cos(ang) * clamp, this.stickCy + Math.sin(ang) * clamp);
+    const nx = (Math.cos(ang) * clamp) / this.stickR;
+    const ny = (Math.sin(ang) * clamp) / this.stickR;
+    this.player.stickVector = { x: nx, y: ny };
+  }
+
+  refreshHud() {
+    const found = 3 - this.collectibles.countActive(true);
+    const score = this.registry.get("game1Score") ?? 0;
+    this.hudPts.setText(`PUNTOS: ${String(score).padStart(3, "0")}`);
+    this.hudObj.setText(`OBJETOS: ${found} / 3`);
+  }
+
+  redrawMinimap() {
+    if (!this.miniGfx) return;
+    const ox = this.mmX;
+    const oy = this.mmY;
+    const sx = this.mmW / WORLD_W;
+    const sy = this.mmH / LAYOUT.GAME_H;
+    this.miniGfx.clear();
+    this.miniGfx.fillStyle(0x1e3028, 1);
+    this.miniGfx.fillRect(ox, oy, this.mmW, this.mmH);
+    const tcx = 960 * sx + ox;
+    const tcy = (LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - LAYOUT.GAME_TOP) * sy + oy;
+    this.miniGfx.lineStyle(1, 0x4a6054, 0.65);
+    this.miniGfx.strokeCircle(tcx, tcy, PLAZA_OUTER_R * sx);
+
+    for (const c of this.collectibles.getChildren()) {
+      if (!c.active) continue;
+      const cx = c.x * sx + ox;
+      const cy = (c.y - LAYOUT.GAME_TOP) * sy + oy;
+      this.miniGfx.fillStyle(0xffb030, 1);
+      this.miniGfx.fillCircle(cx, cy, 4);
+    }
+
+    const px = this.player.x * sx + ox;
+    const py = (this.player.y - LAYOUT.GAME_TOP) * sy + oy;
+    this.miniGfx.fillStyle(0x4a9cff, 1);
+    this.miniGfx.fillCircle(px, py, 5);
+    this.miniGfx.lineStyle(1, 0xffffff, 0.9);
+    this.miniGfx.strokeCircle(px, py, 5);
+  }
+
+  tryExamineNearest() {
+    let best = null;
+    let bestD = Infinity;
+    for (const c of this.collectibles.getChildren()) {
+      if (!c.active || c.getData("quizBusy")) continue;
+      const r = c.getData("interactR") ?? 60;
+      const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
+      if (d <= r && d < bestD) {
+        bestD = d;
+        best = c;
+      }
+    }
+    if (best) this.openQuiz(best);
+  }
+
+  pointerExamine(item) {
+    const r = item.getData("interactR") ?? 60;
+    const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, item.x, item.y);
+    if (d > r) return;
+    this.openQuiz(item);
+  }
+
+  openQuiz(item) {
+    if (!item.active || item.getData("quizBusy")) return;
+    if (item.getData("overlapLock")) return;
+    this.joystickActive = false;
+    if (this.player) this.player.stickVector = null;
+    if (this.stickThumb) this.stickThumb.setPosition(this.stickCx, this.stickCy);
+    item.setData("quizBusy", true);
+    this.pendingCollectible = item;
+    this.scene.pause();
+    this.scene.launch("QuizScene", {
+      questionId: item.getData("questionId"),
+      returnScene: "Game1Scene",
+    });
   }
 
   tryShowResults() {
@@ -135,59 +761,45 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   update() {
+    if (this.sceneryTile) {
+      this.sceneryTile.tilePositionX += 0.05;
+      this.sceneryTile.tilePositionY += 0.018;
+    }
+    if (this.atmosphereTile) {
+      this.atmosphereTile.tilePositionX += 0.012;
+    }
     this.player.updateMovement();
 
     for (const c of this.collectibles.getChildren()) {
       if (!c.active || !c.getData("overlapLock")) continue;
+      const r = (c.getData("interactR") ?? 60) + 14;
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
-      if (d > 72) {
-        c.setData("overlapLock", false);
-      }
+      if (d > r) c.setData("overlapLock", false);
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keyE)) {
-      let best = null;
-      let dmin = Infinity;
-      for (const c of this.collectibles.getChildren()) {
-        if (!c.active || c.getData("quizBusy")) continue;
-        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
-        if (d < 56 && d < dmin) {
-          dmin = d;
-          best = c;
-        }
-      }
-      if (best) {
-        best.setData("quizBusy", true);
-        this.pendingCollectible = best;
-        this.scene.pause();
-        this.scene.launch("QuizScene", {
-          questionId: best.getData("questionId"),
-          returnScene: "Game1Scene",
-        });
-      }
+      this.tryExamineNearest();
     }
 
-    const found = 3 - this.collectibles.countActive(true);
-    const score = this.registry.get("game1Score") ?? 0;
-    this.hud.setText(`Objetos hallados: ${found}/3 · Puntos: ${score}/300 · WASD / flechas`);
+    this.refreshHud();
+    this.redrawMinimap();
 
-    if (found >= 3) {
+    const foundCount = 3 - this.collectibles.countActive(true);
+
+    if (foundCount >= 3) {
       this.hint.setText(
         "¡Misión completada! Has encontrado los 3 objetos del descubrimiento de 2002. Pulsa [Enter] o toca abajo para ver resultados.",
       );
-      this.resultPrompt.setText("[ Ver resultados ]");
+      this.resultPrompt.setText("Ver resultados");
     } else {
-      const near = this.collectibles.getChildren().some(
-        (c) =>
-          c.active &&
-          !c.getData("quizBusy") &&
-          Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y) < 56,
+      const near = this.collectibles.getChildren().some((c) => {
+        if (!c.active || c.getData("quizBusy")) return false;
+        const pr = c.getData("promptR") ?? 72;
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y) <= pr;
+      });
+      this.hint.setText(
+        near ? TXT_PROMPT : "Explora el sitio Santa Ana – La Florida. Localiza los tres objetos del descubrimiento de 2002.",
       );
-      if (near) {
-        this.hint.setText("¡Objeto arqueológico encontrado!\nPresiona [E] o toca la pantalla para examinar");
-      } else {
-        this.hint.setText("Explora el sitio Santa Ana – La Florida. Localiza los tres objetos del descubrimiento de 2002.");
-      }
       this.resultPrompt.setText("");
     }
   }

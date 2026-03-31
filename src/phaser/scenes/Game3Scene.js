@@ -387,8 +387,7 @@ export default class Game3Scene extends Phaser.Scene {
         const sp = this.guardianSpawns[g.guardianIndex];
         g.setPosition(sp.x, sp.y);
         g.setVelocity(0, 0);
-        this.score += 400;
-        this.hint.setText(`¡Guardián disipado! +400 · Poder: ${Math.ceil((this.powerUntil - this.time.now) / 1000)}s`);
+        this.hint.setText(`¡Guardián disipado! · Poder: ${Math.ceil((this.powerUntil - this.time.now) / 1000)}s`);
         return;
       }
       if (this.hitCooldown > 0) return;
@@ -436,7 +435,7 @@ export default class Game3Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.pieces, (_p, piece) => {
       piece.destroy();
       this.piecesFound += 1;
-      this.score += 80;
+      this.score += 50;
       if (this.beansLeft === 0 && this.piecesFound === this.piecesTotal) {
         this.hint.setText("¡Piezas reunidas! — Corra a la vasija.");
       }
@@ -452,8 +451,8 @@ export default class Game3Scene extends Phaser.Scene {
         this.powerPelletAlive = false;
         this.powerUntil = this.time.now + POWER_MS;
         this.poderLabel.setVisible(false);
-        this.score += 50;
-        this.hint.setText("¡PODER ANCESTRAL! Los guardianes huyen (+400 si los alcanzas).");
+        this.score += 5;
+        this.hint.setText("¡PODER ANCESTRAL! +5 · Los guardianes huyen mientras dura el poder.");
       });
     }
 
@@ -472,7 +471,7 @@ export default class Game3Scene extends Phaser.Scene {
       }
       if (this.vasijaReached) return;
       this.vasijaReached = true;
-      this.score += 250;
+      this.score += 300;
       this.scene.start("ResultScene", {
         game: "mazeWin",
         score: this.score,
