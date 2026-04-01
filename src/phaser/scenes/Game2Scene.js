@@ -10,10 +10,10 @@ const START_LIVES = 3;
 /** Progreso por distancia: ~12–14 s por tramo a ~280–330 px/s. */
 const DIST_PER_ZONE = 3600;
 /** Doc 3.3: espacio entre obstáculos (px virtuales a la velocidad del scroll). */
-const MIN_OBSTACLE_GAP = 220;
-/** Doc 3.3: ítems cada 150–400 px. */
-const ITEM_GAP_MIN = 150;
-const ITEM_GAP_MAX = 400;
+const MIN_OBSTACLE_GAP = 540;
+/** Doc 3.3: ítems cada 160–420 px. */
+const ITEM_GAP_MIN = 160;
+const ITEM_GAP_MAX = 420;
 /** Salto en aire adicional (patrón Feronato / endless runner). */
 const MAX_AIR_JUMPS = 2;
 
@@ -33,6 +33,31 @@ const ZONE_SCENERY = [
 export default class Game2Scene extends Phaser.Scene {
   constructor() {
     super({ key: "Game2Scene" });
+  }
+
+  clearRunPause() {
+    this.runPaused = false;
+    this.physics.resume();
+    this.time.paused = false;
+    this.tweens.resumeAll();
+    if (this.pauseOverlayElts) {
+      this.pauseOverlayElts.forEach((el) => el.setVisible(false));
+    }
+  }
+
+  toggleRunPause() {
+    if (!this.runActive) return;
+    if (this.runPaused) {
+      this.clearRunPause();
+    } else {
+      this.runPaused = true;
+      this.physics.pause();
+      this.time.paused = true;
+      this.tweens.pauseAll();
+      if (this.pauseOverlayElts) {
+        this.pauseOverlayElts.forEach((el) => el.setVisible(true));
+      }
+    }
   }
 
   releaseObstacle(o) {
@@ -187,6 +212,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.winTriggered = false;
     this._obsTimer = null;
     this._itemTimer = null;
+    this.runPaused = false;
 
     const groundCenterY = GROUND_TOP_Y + 28;
     const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 1);
@@ -217,7 +243,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.podPool = this.add.group();
 
     this.physics.add.overlap(this.player, this.pods, (_p, pod) => {
-      if (!pod.active || pod.getData("picking")) return;
+      if (this.runPaused || !pod.active || pod.getData("picking")) return;
       pod.setData("picking", true);
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
@@ -259,7 +285,7 @@ export default class Game2Scene extends Phaser.Scene {
     });
 
     this.physics.add.overlap(this.player, this.obstacles, (_player, obs) => {
-      if (!this.runActive || this.invulnerableMs > 0) return;
+      if (this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
       this.releaseObstacle(obs);
       this.lives -= 1;
       this.invulnerableMs = INVULN_MS;
@@ -273,6 +299,7 @@ export default class Game2Scene extends Phaser.Scene {
       });
       if (this.lives <= 0) {
         this.runActive = false;
+        this.clearRunPause();
         this.scene.start("ResultScene", {
           game: "runner_fail",
           score: this.points,
@@ -341,6 +368,22 @@ export default class Game2Scene extends Phaser.Scene {
       .setAlpha(0)
       .setDepth(18);
 
+    const pauseBg = this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH - 40, LAYOUT.GAME_H - 24, 0x000811, 0.55)
+      .setDepth(25)
+      .setVisible(false);
+    this.pauseLabel = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - 8, "PAUSA\nPulse ENTER para continuar", {
+        fontSize: "22px",
+        color: "#e8f0ff",
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(26)
+      .setVisible(false);
+    this.pauseOverlayElts = [pauseBg, this.pauseLabel];
+
     const jumpY = LAYOUT.CONTROLS_TOP + Math.min(72, LAYOUT.CONTROLS_H_ACTUAL * 0.35);
     const jumpBtn = this.add
       .rectangle(LAYOUT.WIDTH - 96, jumpY, 168, 54, 0x2563a8, 1)
@@ -362,10 +405,11 @@ export default class Game2Scene extends Phaser.Scene {
     jumpLabel.setVisible(showMobileJump);
     if (!showMobileJump) jumpBtn.disableInteractive();
 
-    this.space = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.keyEnter = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
     this.keyUp = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
     this.input.on("pointerdown", (p) => {
+      if (this.runPaused) return;
       if (p.y >= LAYOUT.GAME_TOP && p.y < LAYOUT.HINT_TOP) {
         this.doJump();
       }
@@ -392,6 +436,12 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.refreshSpawnTimers();
     this.time.delayedCall(120, () => this.spawnInitialWave());
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.time.paused = false;
+      this.tweens.resumeAll();
+      this.physics.resume();
+    });
   }
 
   refreshSpawnTimers() {
@@ -414,7 +464,7 @@ export default class Game2Scene extends Phaser.Scene {
       delay: obsMs,
       loop: true,
       callback: () => {
-        if (!this.runActive) return;
+        if (!this.runActive || this.runPaused) return;
         this.spawnObstacle(GROUND_TOP_Y + 28);
       },
     });
@@ -422,7 +472,7 @@ export default class Game2Scene extends Phaser.Scene {
       delay: itemMs,
       loop: true,
       callback: () => {
-        if (!this.runActive) return;
+        if (!this.runActive || this.runPaused) return;
         this.spawnCollectible(GROUND_TOP_Y + 28);
       },
     });
@@ -431,20 +481,30 @@ export default class Game2Scene extends Phaser.Scene {
   spawnInitialWave() {
     if (!this.runActive) return;
     const gy = GROUND_TOP_Y + 28;
-    this.spawnObstacle(gy);
     this.spawnCollectible(gy);
-    this.time.delayedCall(280, () => {
-      if (!this.runActive) return;
+    this.time.delayedCall(520, () => {
+      if (!this.runActive || this.runPaused) return;
       this.spawnObstacle(gy);
     });
-    this.time.delayedCall(400, () => {
-      if (!this.runActive) return;
+    this.time.delayedCall(720, () => {
+      if (!this.runActive || this.runPaused) return;
       this.spawnCollectible(gy);
     });
-    this.time.delayedCall(520, () => {
-      if (!this.runActive) return;
-      this.spawnObstacle(gy);
-    });
+  }
+
+  /**
+   * Altura de vasijas: mayoría en el aire para incentivar saltos (runner clásico).
+   * groundCenterY + offset; offsets negativos = más arriba en pantalla.
+   */
+  pickCollectibleYJitter() {
+    const r = Math.random();
+    if (r < 0.12) {
+      return Phaser.Math.Between(-6, -38);
+    }
+    if (r < 0.48) {
+      return Phaser.Math.Between(-72, -120);
+    }
+    return Phaser.Math.Between(-125, -205);
   }
 
   countDatosUnlocked() {
@@ -545,7 +605,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.92).setOrigin(0).setDepth(15);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setDepth(15);
     this.add
-      .text(24, LAYOUT.CONTROLS_TOP + 14, "ESPACIO / ↑ / TAP · DOBLE SALTO en el aire · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
+      .text(24, LAYOUT.CONTROLS_TOP + 14, "ENTER pausa/reanuda · ↑ salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
         fontSize: "10px",
         color: "#6a7580",
       })
@@ -555,7 +615,7 @@ export default class Game2Scene extends Phaser.Scene {
       .text(
         LAYOUT.WIDTH / 2,
         LAYOUT.CONTROLS_TOP + 52,
-        "TIP: vasijas doradas y piezas culturales desbloquean datos históricos · Recoge y evita rocas",
+        "TIP: vasijas en el aire — salta o doble salto. Doradas y piezas culturales desbloquean datos.",
         { fontSize: "10px", color: "#555c64", align: "center" },
       )
       .setOrigin(0.5)
@@ -563,7 +623,7 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   doJump() {
-    if (!this.runActive) return;
+    if (!this.runActive || this.runPaused) return;
     const b = this.player.body;
     if (b.touching.down || (this.playerJumps > 0 && this.playerJumps < MAX_AIR_JUMPS)) {
       if (b.touching.down) {
@@ -582,7 +642,7 @@ export default class Game2Scene extends Phaser.Scene {
     }
     this.time.delayedCall(2800, () => {
       this.hintLine.setText(
-        "El escenario avanza solo — ESPACIO / ↑ / toca la pista: salta; segundo toque en el aire = doble salto · Recoge vasijas y evita rocas.",
+        "ENTER = pausa (se detiene todo). Flecha ARRIBA = saltar y doble salto. Táctil: toca la pista. Vasijas en el aire · evita rocas.",
       );
     });
   }
@@ -621,6 +681,7 @@ export default class Game2Scene extends Phaser.Scene {
     if (this.zoneIndex === 4 && this.runDistance >= 5 * DIST_PER_ZONE && !this.winTriggered) {
       this.winTriggered = true;
       this.runActive = false;
+      this.clearRunPause();
       this.points += 200;
       this.scene.start("ResultScene", {
         game: "runner",
@@ -665,7 +726,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     const isCultural = canCultural && !hasPiece;
     const isGold = !isCultural && Math.random() < 0.125;
-    const yJitter = Phaser.Math.Between(-8, -52);
+    const yJitter = isCultural ? Phaser.Math.Between(-100, -175) : this.pickCollectibleYJitter();
 
     const fitVesselBody = (p) => {
       if (!p.body) return;
@@ -713,12 +774,20 @@ export default class Game2Scene extends Phaser.Scene {
       this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
     }
     this.hintLine.setText(
-      "El escenario avanza solo — ESPACIO / ↑ / toca la pista: salta; segundo toque en el aire = doble salto · Recoge vasijas y evita rocas.",
+      "ENTER = pausa (se detiene todo). Flecha ARRIBA = saltar y doble salto. Táctil: toca la pista. Vasijas en el aire · evita rocas.",
     );
   }
 
   update(_t, dt) {
+    if (this.keyEnter && Phaser.Input.Keyboard.JustDown(this.keyEnter) && this.runActive) {
+      this.toggleRunPause();
+    }
+
     if (!this.runActive) return;
+
+    if (this.runPaused) {
+      return;
+    }
 
     const delta = typeof dt === "number" && dt > 0 ? dt : 16.67;
 
@@ -763,7 +832,7 @@ export default class Game2Scene extends Phaser.Scene {
       if (o.x < -60) this.releasePod(o);
     });
 
-    if (Phaser.Input.Keyboard.JustDown(this.space) || Phaser.Input.Keyboard.JustDown(this.keyUp)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keyUp)) {
       this.doJump();
     }
   }
