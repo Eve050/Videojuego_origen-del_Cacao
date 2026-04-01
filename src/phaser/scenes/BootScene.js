@@ -129,6 +129,27 @@ export default class BootScene extends Phaser.Scene {
     pl.generateTexture("ph_player", 44, 48);
     pl.destroy();
 
+    /** Silueta tejada para parallax cercano (runner / Feronato-style capas). */
+    const ridge = this.make.graphics({ x: 0, y: 0, add: false });
+    ridge.fillStyle(0x040302, 1);
+    ridge.beginPath();
+    ridge.moveTo(0, 128);
+    ridge.lineTo(0, 70);
+    ridge.lineTo(44, 32);
+    ridge.lineTo(92, 58);
+    ridge.lineTo(148, 14);
+    ridge.lineTo(210, 52);
+    ridge.lineTo(268, 22);
+    ridge.lineTo(332, 60);
+    ridge.lineTo(400, 28);
+    ridge.lineTo(472, 72);
+    ridge.lineTo(512, 40);
+    ridge.lineTo(512, 128);
+    ridge.closePath();
+    ridge.fillPath();
+    ridge.generateTexture("ph_parallax_ridge", 512, 128);
+    ridge.destroy();
+
     mk("ph_collect", 28, 28, 0xc8921a);
     mk("ph_guardian", 28, 28, 0x8b2942);
     mk("ph_wall", 32, 32, 0x4a3728);
@@ -197,6 +218,26 @@ export default class BootScene extends Phaser.Scene {
     pot.generateTexture("ph_vessel", 48, 48);
     pot.destroy();
 
+    const potG = this.make.graphics({ x: 0, y: 0, add: false });
+    potG.fillStyle(0x050808, 0.35);
+    potG.fillEllipse(26, 46, 22, 8);
+    potG.fillStyle(0xc9a020, 1);
+    potG.fillEllipse(24, 34, 28, 22);
+    potG.fillStyle(0xffe066, 1);
+    potG.fillEllipse(24, 30, 20, 16);
+    potG.fillStyle(0x8a6820, 1);
+    potG.fillEllipse(24, 26, 14, 8);
+    potG.fillStyle(0xfff8cc, 1);
+    potG.fillEllipse(12, 22, 8, 12);
+    potG.lineStyle(2, 0x8a6020, 0.95);
+    potG.strokeEllipse(24, 34, 28, 22);
+    potG.lineStyle(2, 0xfff8cc, 0.65);
+    potG.strokeEllipse(12, 22, 8, 12);
+    potG.fillStyle(0xffffff, 0.85);
+    potG.fillCircle(28, 16, 3);
+    potG.generateTexture("ph_vessel_gold", 48, 48);
+    potG.destroy();
+
     const pr = this.make.graphics({ x: 0, y: 0, add: false });
     pr.lineStyle(2, 0xffe8a0, 0.95);
     pr.strokeCircle(16, 16, 14);
@@ -236,41 +277,133 @@ export default class BootScene extends Phaser.Scene {
     run.generateTexture("ph_runner", 44, 54);
     run.destroy();
 
-    /** Juego 1 — iconos legibles (estilo ilustración limpia) */
+    /** Juego 1 — vasija cerámica botella de asa de estribo (solo alfarería, sin rostro) */
     const gb = this.make.graphics({ x: 0, y: 0, add: false });
-    gb.fillStyle(0x1a1010, 0.25);
-    gb.fillEllipse(28, 52, 26, 9);
-    gb.fillStyle(0xc9a050, 1);
-    gb.fillRoundedRect(14, 12, 30, 36, 9);
-    gb.fillStyle(0xe8c878, 1);
-    gb.fillRoundedRect(17, 15, 24, 20, 7);
-    gb.fillStyle(0x8a6020, 1);
-    gb.fillEllipse(28, 42, 22, 12);
-    gb.lineStyle(2, 0xfff0c0, 0.95);
-    gb.strokeRoundedRect(14, 12, 30, 36, 9);
-    gb.fillStyle(0xfff8e8, 0.85);
-    gb.fillCircle(24, 24, 5);
-    gb.generateTexture("ph_g1_bottle", 58, 58);
+    const BX = 34;
+    const BW = 68;
+    const BH = 78;
+    gb.fillStyle(0x141008, 0.3);
+    gb.fillEllipse(BX, 72, 32, 9);
+    gb.fillStyle(0x7a5030, 1);
+    gb.fillEllipse(BX, 69, 20, 6);
+    gb.lineStyle(1, 0x483018, 0.65);
+    gb.strokeEllipse(BX, 69, 20, 6);
+    gb.fillStyle(0xb06820, 1);
+    gb.fillEllipse(BX, 52, 38, 32);
+    gb.fillStyle(0xdc9830, 1);
+    gb.fillEllipse(BX, 50, 30, 24);
+    gb.fillStyle(0xf0c058, 1);
+    gb.fillEllipse(BX, 48, 22, 16);
+    gb.lineStyle(1.1, 0x804018, 0.55);
+    gb.strokeEllipse(BX, 52, 38, 32);
+    gb.lineStyle(1, 0x906038, 0.45);
+    gb.beginPath();
+    gb.arc(BX, 48, 22, 0.2 * Math.PI, 0.8 * Math.PI, false);
+    gb.strokePath();
+    gb.beginPath();
+    gb.arc(BX, 54, 24, 0.18 * Math.PI, 0.82 * Math.PI, false);
+    gb.strokePath();
+    gb.beginPath();
+    gb.arc(BX, 58, 26, 0.16 * Math.PI, 0.84 * Math.PI, false);
+    gb.strokePath();
+    gb.fillStyle(0xc08028, 1);
+    gb.fillEllipse(BX, 32, 22, 12);
+    gb.fillStyle(0xe0a848, 1);
+    gb.fillEllipse(BX, 30, 16, 9);
+    gb.lineStyle(1, 0x604018, 0.55);
+    gb.strokeEllipse(BX, 32, 22, 12);
+    gb.fillStyle(0xd49838, 1);
+    gb.fillRoundedRect(BX - 5.5, 24, 4, 10, 2);
+    gb.fillRoundedRect(BX + 1.5, 24, 4, 10, 2);
+    gb.lineStyle(2.2, 0x4a2810, 1);
+    gb.strokeEllipse(BX, 15, 19, 16);
+    gb.lineStyle(1.2, 0xe0c070, 0.85);
+    gb.strokeEllipse(BX, 15, 16, 13);
+    gb.fillStyle(0xc8a878, 1);
+    gb.fillEllipse(BX, 15.5, 9, 6.5);
+    gb.fillStyle(0xe8b850, 1);
+    gb.fillEllipse(BX, 5.5, 11, 7);
+    gb.fillStyle(0x1a1410, 0.82);
+    gb.fillEllipse(BX, 6.2, 5.5, 2);
+    gb.lineStyle(1, 0x5a3018, 1);
+    gb.strokeEllipse(BX, 5.5, 11, 7);
+    gb.generateTexture("ph_g1_bottle", BW, BH);
     gb.destroy();
 
-    const gtz = this.make.graphics({ x: 0, y: 0, add: false });
-    gtz.fillStyle(0x102828, 0.35);
-    gtz.fillEllipse(18, 32, 20, 7);
-    gtz.fillStyle(0x00a898, 1);
-    gtz.beginPath();
-    gtz.moveTo(18, 7);
-    gtz.lineTo(27, 14);
-    gtz.lineTo(22, 25);
-    gtz.lineTo(14, 25);
-    gtz.lineTo(9, 14);
-    gtz.closePath();
-    gtz.fillPath();
-    gtz.fillStyle(0x40f0e0, 0.65);
-    gtz.fillTriangle(18, 11, 23, 17, 13, 20);
-    gtz.lineStyle(2, 0xc8ffff, 0.95);
-    gtz.strokeCircle(18, 18, 12);
-    gtz.generateTexture("ph_g1_turquoise", 36, 36);
-    gtz.destroy();
+    /** Collar con cordón y cuentas de turquesa (vista frontal, pieza central) */
+    const neck = this.make.graphics({ x: 0, y: 0, add: false });
+    const NW = 92;
+    const NH = 58;
+    const qbx = (t, xa, xb, xc) => (1 - t) * (1 - t) * xa + 2 * (1 - t) * t * xb + t * t * xc;
+    const qby = (t, ya, yb, yc) => (1 - t) * (1 - t) * ya + 2 * (1 - t) * t * yb + t * t * yc;
+    const pts = [];
+    for (let i = 0; i <= 28; i += 1) {
+      const t = i / 28;
+      pts.push({ x: qbx(t, 10, 46, 82), y: qby(t, 14, 40, 14) });
+    }
+    neck.fillStyle(0x081820, 0.38);
+    neck.fillEllipse(46, 50, 62, 11);
+    neck.lineStyle(2.8, 0x2a1810, 1);
+    neck.beginPath();
+    neck.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i += 1) neck.lineTo(pts[i].x, pts[i].y);
+    neck.strokePath();
+    neck.lineStyle(1.2, 0x7a6050, 0.82);
+    neck.beginPath();
+    neck.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i += 1) neck.lineTo(pts[i].x, pts[i].y);
+    neck.strokePath();
+    const beadSmall = (x, y) => {
+      neck.fillStyle(0x003028, 1);
+      neck.fillCircle(x, y, 4.6);
+      neck.fillStyle(0x00b0a0, 1);
+      neck.fillCircle(x, y - 0.5, 3.6);
+      neck.fillStyle(0xc8fff8, 0.38);
+      neck.fillEllipse(x - 1.5, y - 2.5, 2.6, 3.4);
+    };
+    [4, 7, 21, 24].forEach((pi) => beadSmall(pts[pi].x, pts[pi].y));
+    const mx = pts[14].x;
+    const my = pts[14].y + 2;
+    neck.fillStyle(0x002820, 1);
+    neck.fillEllipse(mx, my + 3, 20, 8.5);
+    neck.fillStyle(0x005048, 1);
+    neck.fillEllipse(mx, my, 18, 20);
+    neck.fillStyle(0x00c8b8, 1);
+    neck.fillEllipse(mx, my - 1, 13.5, 15);
+    neck.fillStyle(0x88fff0, 0.45);
+    neck.fillEllipse(mx - 4, my - 6, 6.5, 9);
+    neck.fillStyle(0x051818, 0.9);
+    neck.fillEllipse(mx, my - 10, 5, 3.2);
+    neck.fillEllipse(mx, my + 9.5, 5, 3.2);
+    neck.lineStyle(1.4, 0x003028, 1);
+    neck.strokeEllipse(mx, my, 18, 20);
+    neck.lineStyle(0.9, 0x58f0e0, 0.75);
+    neck.strokeEllipse(mx, my - 1, 10, 12);
+    neck.generateTexture("ph_g1_necklace", NW, NH);
+    neck.destroy();
+
+    /** Tileset 32×32 para Tiled (Juego 1): 4 pastos + 1 borde sólido (gid 5) */
+    const g1ts = this.make.graphics({ x: 0, y: 0, add: false });
+    const grassCols = [0x2a5840, 0x325c42, 0x2e5038, 0x365848];
+    for (let i = 0; i < 4; i += 1) {
+      const tx = i * 32;
+      g1ts.fillStyle(grassCols[i], 1);
+      g1ts.fillRect(tx, 0, 32, 32);
+      for (let n = 0; n < 14; n += 1) {
+        g1ts.fillStyle(0x1a2818, Phaser.Math.FloatBetween(0.07, 0.24));
+        g1ts.fillRect(tx + Phaser.Math.Between(1, 29), Phaser.Math.Between(1, 29), Phaser.Math.Between(1, 2), 1);
+      }
+      g1ts.lineStyle(1, 0x1a2018, 0.12);
+      g1ts.strokeRect(tx + 0.5, 0.5, 31, 31);
+    }
+    g1ts.fillStyle(0x1e1810, 1);
+    g1ts.fillRect(128, 0, 32, 32);
+    g1ts.fillStyle(0x0c0a08, 0.45);
+    g1ts.fillRect(130, 2, 28, 4);
+    g1ts.lineStyle(1, 0x121008, 0.85);
+    g1ts.strokeRect(128.5, 0.5, 31, 31);
+    g1ts.generateTexture("ph_g1_tileset", 160, 32);
+    g1ts.destroy();
 
     const hut = this.make.graphics({ x: 0, y: 0, add: false });
     const hcx = 44;

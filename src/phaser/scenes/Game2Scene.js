@@ -9,11 +9,13 @@ const INVULN_MS = 1500;
 const START_LIVES = 3;
 /** Progreso por distancia: ~12–14 s por tramo a ~280–330 px/s. */
 const DIST_PER_ZONE = 3600;
-/** Doc 3.3: mínimo 300 px entre obstáculos. */
-const MIN_OBSTACLE_GAP = 300;
+/** Doc 3.3: espacio entre obstáculos (px virtuales a la velocidad del scroll). */
+const MIN_OBSTACLE_GAP = 220;
 /** Doc 3.3: ítems cada 150–400 px. */
 const ITEM_GAP_MIN = 150;
 const ITEM_GAP_MAX = 400;
+/** Salto en aire adicional (patrón Feronato / endless runner). */
+const MAX_AIR_JUMPS = 2;
 
 /** Capas de color por zona (cielo / suelo) — alineado a diseño de 5 zonas. */
 const ZONE_SCENERY = [
@@ -25,7 +27,7 @@ const ZONE_SCENERY = [
 ];
 
 /**
- * Minijuego 2 — Viaje del cacao: recolectar vainas / piezas, saltar obstáculos,
+ * Minijuego 2 — Viaje del cacao: recolectar vasijas / piezas, saltar obstáculos,
  * avance por distancia (5 zonas hasta Europa). Doc: gravedad 1200, salto -620.
  */
 export default class Game2Scene extends Phaser.Scene {
@@ -33,18 +35,125 @@ export default class Game2Scene extends Phaser.Scene {
     super({ key: "Game2Scene" });
   }
 
+  releaseObstacle(o) {
+    if (!o || !o.scene) return;
+    this.tweens.killTweensOf(o);
+    o.setActive(false);
+    o.setVisible(false);
+    if (o.body) o.body.enable = false;
+    this.obstacles.remove(o, false, false);
+    o.setPosition(-9999, -9999);
+    this.obstaclePool.add(o);
+  }
+
+  obtainObstacle() {
+    let o = null;
+    const pooled = this.obstaclePool.getChildren();
+    for (let i = 0; i < pooled.length; i += 1) {
+      if (!pooled[i].active) {
+        o = pooled[i];
+        break;
+      }
+    }
+    if (o) {
+      this.obstaclePool.remove(o, false, false);
+      this.obstacles.add(o);
+    } else {
+      o = this.physics.add.sprite(0, 0, "ph_obstacle");
+      this.obstacles.add(o);
+    }
+    o.setActive(true);
+    o.setVisible(true);
+    if (o.body) {
+      o.body.enable = true;
+      o.body.setAllowGravity(false);
+      o.body.setImmovable(true);
+    }
+    return o;
+  }
+
+  releasePod(p) {
+    if (!p || !p.scene) return;
+    this.tweens.killTweensOf(p);
+    p.setActive(false);
+    p.setVisible(false);
+    if (p.body) p.body.enable = false;
+    this.pods.remove(p, false, false);
+    p.setPosition(-9999, -9999);
+    p.setAlpha(1);
+    p.setScale(1);
+    p.setData("picking", false);
+    this.podPool.add(p);
+  }
+
+  obtainPod() {
+    let p = null;
+    const pooled = this.podPool.getChildren();
+    for (let i = 0; i < pooled.length; i += 1) {
+      if (!pooled[i].active) {
+        p = pooled[i];
+        break;
+      }
+    }
+    if (p) {
+      this.podPool.remove(p, false, false);
+      this.pods.add(p);
+    } else {
+      p = this.physics.add.sprite(0, 0, "ph_vessel");
+      this.pods.add(p);
+    }
+    p.setActive(true);
+    p.setVisible(true);
+    p.setAlpha(1);
+    p.setData("picking", false);
+    if (p.body) {
+      p.body.enable = true;
+      p.body.setAllowGravity(false);
+    }
+    return p;
+  }
+
+
+  hudVesselScaleForCount() {
+    return 0.34 + Math.min(this.vainasCount, 48) * 0.0068;
+  }
+
+  pulseHudVessel() {
+    if (!this.hudVesselIcon) return;
+    const s = this.hudVesselScaleForCount();
+    this.tweens.killTweensOf(this.hudVesselIcon);
+    this.hudVesselIcon.setScale(s * 1.14);
+    this.tweens.add({
+      targets: this.hudVesselIcon,
+      scale: s,
+      duration: 210,
+      ease: "Sine.easeOut",
+    });
+  }
+
   create() {
     this.drawChrome();
 
     if (this.textures.exists("bg_selva_run")) {
-      this.bgJungle = this.add
-        .tileSprite(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH * 2 + 400, LAYOUT.GAME_H + 40, "bg_selva_run")
-        .setDepth(0);
+      const cx = LAYOUT.WIDTH / 2;
+      const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
+      this.bgParallaxFar = this.add
+        .tileSprite(cx, cy - 24, LAYOUT.WIDTH * 2 + 900, LAYOUT.GAME_H + 100, "bg_selva_run")
+        .setDepth(0)
+        .setAlpha(0.42)
+        .setTint(0x1a2834);
 
-      /**
-       * Un solo velo uniforme por zona (evita la costura horizontal de dos rectángulos
-       * cielo/suelo y el tono partido arriba/abajo).
-       */
+      this.bgJungle = this.add
+        .tileSprite(cx, cy, LAYOUT.WIDTH * 2 + 400, LAYOUT.GAME_H + 40, "bg_selva_run")
+        .setDepth(0.5);
+
+      if (this.textures.exists("ph_parallax_ridge")) {
+        this.bgParallaxNear = this.add
+          .tileSprite(cx, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 52, LAYOUT.WIDTH * 4, 128, "ph_parallax_ridge")
+          .setDepth(2)
+          .setAlpha(0.82);
+      }
+
       this.zoneTintLayer = this.add
         .rectangle(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH, LAYOUT.GAME_H, ZONE_SCENERY[0].sky, 0.1)
         .setDepth(1)
@@ -71,8 +180,9 @@ export default class Game2Scene extends Phaser.Scene {
     this.runActive = true;
     this.lives = START_LIVES;
     this.invulnerableMs = 0;
+    this.playerJumps = 0;
+    this.playerRunPhase = 0;
 
-    /** Distancia acumulada del viaje (px virtuales) — solo zonas / barra / parallax. */
     this.runDistance = 0;
     this.winTriggered = false;
     this._obsTimer = null;
@@ -84,19 +194,34 @@ export default class Game2Scene extends Phaser.Scene {
     this.physics.add.existing(ground, true);
     this.groundBodyTop = groundCenterY - 28;
 
-    this.player = this.physics.add.sprite(220, GROUND_TOP_Y - 46, "ph_runner");
+    this.player = this.physics.add.sprite(220, GROUND_TOP_Y - 44, "ph_player");
     this.player.setDepth(9);
+    this.player.setScale(1.12);
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(32, 50);
-    this.physics.add.collider(this.player, ground);
+    if (this.player.body) {
+      const pw = 26;
+      const ph = 30;
+      this.player.body.setSize(pw, ph);
+      this.player.body.setOffset(
+        (this.player.displayWidth - pw) / 2,
+        this.player.displayHeight - ph - 6,
+      );
+    }
+    this.physics.add.collider(this.player, ground, () => {
+      this.playerJumps = 0;
+    });
 
     this.obstacles = this.physics.add.group();
     this.pods = this.physics.add.group();
+    this.obstaclePool = this.add.group();
+    this.podPool = this.add.group();
 
     this.physics.add.overlap(this.player, this.pods, (_p, pod) => {
+      if (!pod.active || pod.getData("picking")) return;
+      pod.setData("picking", true);
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
-      pod.destroy();
+
       if (cultural) {
         this.points += 50;
         const z = this.zones[this.zoneIndex];
@@ -118,13 +243,24 @@ export default class Game2Scene extends Phaser.Scene {
         } else {
           this.points += 10;
         }
+        this.pulseHudVessel();
       }
       this.updateHud();
+
+      this.tweens.add({
+        targets: pod,
+        y: pod.y - 70,
+        alpha: 0,
+        scale: pod.scaleX * 1.15,
+        duration: 320,
+        ease: "Cubic.easeOut",
+        onComplete: () => this.releasePod(pod),
+      });
     });
 
     this.physics.add.overlap(this.player, this.obstacles, (_player, obs) => {
       if (!this.runActive || this.invulnerableMs > 0) return;
-      obs.destroy();
+      this.releaseObstacle(obs);
       this.lives -= 1;
       this.invulnerableMs = INVULN_MS;
       this.flashHint("", "Cuidado, el camino del cacao no es fácil.");
@@ -150,8 +286,14 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.scrollSpeed = this.zones[0].scrollSpeed || 280;
 
+    this.hudVesselIcon = this.add
+      .image(38, 20, "ph_vessel")
+      .setDepth(22)
+      .setOrigin(0.5)
+      .setScale(0.34);
+
     this.hudVainas = this.add
-      .text(20, 8, "", { fontSize: "14px", color: "#ffdd44", fontStyle: "bold" })
+      .text(68, 8, "", { fontSize: "14px", color: "#ffdd44", fontStyle: "bold" })
       .setDepth(22);
     this.hudZona = this.add
       .text(LAYOUT.WIDTH / 2, 8, "", {
@@ -214,7 +356,6 @@ export default class Game2Scene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(25);
     jumpBtn.on("pointerdown", () => this.doJump());
-    /** Doc §1.1: control táctil — botón de acción visible en móvil; teclado/desktop usa espacio / tap en pista. */
     const showMobileJump = !this.sys.game.device.os.desktop;
     jumpBtn.setVisible(showMobileJump);
     jumpBtn.setActive(showMobileJump);
@@ -253,7 +394,6 @@ export default class Game2Scene extends Phaser.Scene {
     this.time.delayedCall(120, () => this.spawnInitialWave());
   }
 
-  /** Spawners por tiempo (Phaser): más fiables que depender solo de runDistance en update. */
   refreshSpawnTimers() {
     if (this._obsTimer) {
       this._obsTimer.remove(false);
@@ -265,7 +405,7 @@ export default class Game2Scene extends Phaser.Scene {
     }
     if (!this.runActive) return;
     const spd = Math.max(200, this.scrollSpeed || 280);
-    const obsMs = Math.max(380, Math.round((MIN_OBSTACLE_GAP / spd) * 1000));
+    const obsMs = Math.max(280, Math.round((MIN_OBSTACLE_GAP / spd) * 1000));
     const itemMs = Math.max(
       320,
       Math.round((((ITEM_GAP_MIN + ITEM_GAP_MAX) / 2) / spd) * 1000),
@@ -293,9 +433,17 @@ export default class Game2Scene extends Phaser.Scene {
     const gy = GROUND_TOP_Y + 28;
     this.spawnObstacle(gy);
     this.spawnCollectible(gy);
+    this.time.delayedCall(280, () => {
+      if (!this.runActive) return;
+      this.spawnObstacle(gy);
+    });
     this.time.delayedCall(400, () => {
       if (!this.runActive) return;
       this.spawnCollectible(gy);
+    });
+    this.time.delayedCall(520, () => {
+      if (!this.runActive) return;
+      this.spawnObstacle(gy);
     });
   }
 
@@ -338,8 +486,16 @@ export default class Game2Scene extends Phaser.Scene {
     const ji = Math.min(this.zoneIndex, ZONE_SCENERY.length - 1);
     const sc = ZONE_SCENERY[ji];
     const jungleTints = [0xb8d4b8, 0xa8c0e0, 0x98d8b0, 0xe8d0a0, 0xa8b8e8];
+    if (this.bgParallaxFar) {
+      const tf = [0x152018, 0x1a2430, 0x142820, 0x281a10, 0x101828];
+      this.bgParallaxFar.setTint(tf[ji] ?? 0x1a2834);
+    }
     if (this.bgJungle) {
       this.bgJungle.setTint(jungleTints[ji] ?? 0xb8c8b8);
+    }
+    if (this.bgParallaxNear) {
+      const ridgeTint = [0x1a2820, 0x202830, 0x182818, 0x281810, 0x101820];
+      this.bgParallaxNear.setTint(ridgeTint[ji] ?? 0xffffff);
     }
     if (this.zoneTintLayer) {
       this.zoneTintLayer.setFillStyle(sc.sky, 0.1);
@@ -389,7 +545,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.92).setOrigin(0).setDepth(15);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setDepth(15);
     this.add
-      .text(24, LAYOUT.CONTROLS_TOP + 14, "ESPACIO / ↑ / TAP en pista = SALTAR · Vainas +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
+      .text(24, LAYOUT.CONTROLS_TOP + 14, "ESPACIO / ↑ / TAP · DOBLE SALTO en el aire · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
         fontSize: "10px",
         color: "#6a7580",
       })
@@ -399,7 +555,7 @@ export default class Game2Scene extends Phaser.Scene {
       .text(
         LAYOUT.WIDTH / 2,
         LAYOUT.CONTROLS_TOP + 52,
-        "TIP: vainas doradas y piezas culturales desbloquean datos históricos · Recoge y evita rocas",
+        "TIP: vasijas doradas y piezas culturales desbloquean datos históricos · Recoge y evita rocas",
         { fontSize: "10px", color: "#555c64", align: "center" },
       )
       .setOrigin(0.5)
@@ -408,8 +564,13 @@ export default class Game2Scene extends Phaser.Scene {
 
   doJump() {
     if (!this.runActive) return;
-    if (this.player.body.touching.down) {
+    const b = this.player.body;
+    if (b.touching.down || (this.playerJumps > 0 && this.playerJumps < MAX_AIR_JUMPS)) {
+      if (b.touching.down) {
+        this.playerJumps = 0;
+      }
       this.player.setVelocityY(-620);
+      this.playerJumps += 1;
     }
   }
 
@@ -421,7 +582,7 @@ export default class Game2Scene extends Phaser.Scene {
     }
     this.time.delayedCall(2800, () => {
       this.hintLine.setText(
-        "El escenario avanza solo — ESPACIO / ↑ / toca la pista para SALTAR · Recoge vainas y evita rocas.",
+        "El escenario avanza solo — ESPACIO / ↑ / toca la pista: salta; segundo toque en el aire = doble salto · Recoge vasijas y evita rocas.",
       );
     });
   }
@@ -460,7 +621,6 @@ export default class Game2Scene extends Phaser.Scene {
     if (this.zoneIndex === 4 && this.runDistance >= 5 * DIST_PER_ZONE && !this.winTriggered) {
       this.winTriggered = true;
       this.runActive = false;
-      /** Doc §1.5 J2: bonus por completar las 5 zonas. */
       this.points += 200;
       this.scene.start("ResultScene", {
         game: "runner",
@@ -477,19 +637,23 @@ export default class Game2Scene extends Phaser.Scene {
     const typeRoll = Math.random();
     let y = groundCenterY - 36;
     let scaleY = 1;
-    if (typeRoll > 0.72) {
+    if (typeRoll > 0.68) {
       y = groundCenterY - 54;
-      scaleY = 1.15;
+      scaleY = 1.18;
+    } else if (typeRoll > 0.38) {
+      y = groundCenterY - 44;
+      scaleY = 1.08;
     }
-    const o = this.physics.add.sprite(x, y, "ph_obstacle");
+    const o = this.obtainObstacle();
+    o.setPosition(x, y);
     o.setDepth(8);
     o.setScale(1, scaleY);
-    o.setVelocityX(-this.scrollSpeed);
-    o.body.setAllowGravity(false);
-    if (typeof o.refreshBody === "function") {
-      o.refreshBody();
-    }
-    this.obstacles.add(o);
+    o.setVelocity(0, 0);
+    const bw = 48;
+    const bh = Math.round(30 * scaleY);
+    o.body.setSize(bw, bh);
+    o.body.setOffset((o.displayWidth - bw) / 2, (o.displayHeight - bh) * 0.55);
+    o.body.updateFromGameObject();
   }
 
   spawnCollectible(groundCenterY) {
@@ -503,28 +667,36 @@ export default class Game2Scene extends Phaser.Scene {
     const isGold = !isCultural && Math.random() < 0.125;
     const yJitter = Phaser.Math.Between(-8, -52);
 
+    const fitVesselBody = (p) => {
+      if (!p.body) return;
+      const pw = 30;
+      const ph = 34;
+      p.body.setSize(pw, ph);
+      p.body.setOffset((p.displayWidth - pw) / 2, (p.displayHeight - ph) * 0.55);
+      p.body.updateFromGameObject();
+    };
+
+    const p = this.obtainPod();
+    p.setPosition(x, groundCenterY + yJitter);
+    p.setDepth(8);
+    p.setVelocity(0, 0);
+
     if (isCultural) {
-      const p = this.physics.add.sprite(x, groundCenterY + yJitter, "ph_piece");
-      p.setDepth(8);
-      p.setTint(0x9966dd);
-      p.setScale(1.05);
+      p.setTexture("ph_vessel");
+      p.clearTint();
+      p.setTint(0xaa77dd);
+      p.setScale(0.72);
       p.setData("isGolden", false);
       p.setData("isCultural", true);
-      p.setVelocityX(-this.scrollSpeed);
-      p.body.setAllowGravity(false);
-      this.pods.add(p);
-      return;
+    } else {
+      const key = isGold ? "ph_vessel_gold" : "ph_vessel";
+      p.setTexture(key);
+      p.clearTint();
+      p.setScale(isGold ? 0.7 : 0.68);
+      p.setData("isGolden", isGold);
+      p.setData("isCultural", false);
     }
-
-    const key = isGold ? "ph_pod_gold" : "ph_pod";
-    const p = this.physics.add.sprite(x, groundCenterY + yJitter, key);
-    p.setDepth(8);
-    p.setScale(key === "ph_pod_gold" ? 1.05 : 1.12);
-    p.setData("isGolden", isGold);
-    p.setData("isCultural", false);
-    p.setVelocityX(-this.scrollSpeed);
-    p.body.setAllowGravity(false);
-    this.pods.add(p);
+    fitVesselBody(p);
   }
 
   heartsLine() {
@@ -534,11 +706,14 @@ export default class Game2Scene extends Phaser.Scene {
   updateHud() {
     const z = this.zones[this.zoneIndex];
     const datosN = this.countDatosUnlocked();
-    this.hudVainas.setText(`VAINAS: ${this.vainasCount.toString().padStart(2, "0")}`);
+    this.hudVainas.setText(`VASIJAS: ${this.vainasCount.toString().padStart(2, "0")}`);
     this.hudZona.setText(`ZONA: ${z.name.toUpperCase()}`);
     this.hudDatos.setText(`DATOS: ${datosN} / 5 desbloqueados\n${this.heartsLine()}`);
+    if (this.hudVesselIcon && !this.tweens.isTweening(this.hudVesselIcon)) {
+      this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
+    }
     this.hintLine.setText(
-      "El escenario avanza solo — ESPACIO / ↑ / toca la pista para SALTAR · Recoge vainas y evita rocas.",
+      "El escenario avanza solo — ESPACIO / ↑ / toca la pista: salta; segundo toque en el aire = doble salto · Recoge vasijas y evita rocas.",
     );
   }
 
@@ -554,22 +729,38 @@ export default class Game2Scene extends Phaser.Scene {
     const ds = (this.scrollSpeed * delta) / 1000;
     this.runDistance += ds;
 
+    if (this.bgParallaxFar) {
+      this.bgParallaxFar.tilePositionX += ds * 0.09;
+    }
     if (this.bgJungle) {
       this.bgJungle.tilePositionX += ds * 0.24;
+    }
+    if (this.bgParallaxNear) {
+      this.bgParallaxNear.tilePositionX += ds * 0.48;
+    }
+
+    if (this.player.body.touching.down && this.invulnerableMs <= 0) {
+      this.playerRunPhase += delta * 0.014;
+      const bob = Math.sin(this.playerRunPhase) * 0.04;
+      this.player.setScale(1.12 + bob);
+    } else if (this.invulnerableMs <= 0) {
+      this.player.setScale(1.12);
     }
 
     this.tryAdvanceZoneFromDistance();
     this.updateRouteBar();
 
     this.obstacles.getChildren().forEach((o) => {
-      if (o.body && o.x < -60) {
-        o.destroy();
-      }
+      if (!o.active) return;
+      o.x -= ds;
+      if (o.body) o.body.updateFromGameObject();
+      if (o.x < -60) this.releaseObstacle(o);
     });
     this.pods.getChildren().forEach((o) => {
-      if (o.body && o.x < -60) {
-        o.destroy();
-      }
+      if (!o.active) return;
+      o.x -= ds;
+      if (o.body) o.body.updateFromGameObject();
+      if (o.x < -60) this.releasePod(o);
     });
 
     if (Phaser.Input.Keyboard.JustDown(this.space) || Phaser.Input.Keyboard.JustDown(this.keyUp)) {

@@ -28,10 +28,11 @@ export const INTRO_COPY = {
       "CÓMO JUGAR:",
       "El corredor parte desde Palanda y avanza automáticamente.",
       "Presiona ESPACIO o toca la pantalla para SALTAR los obstáculos.",
-      "Recoge vainas de cacao en cada etapa del viaje histórico.",
+      "En el aire, un segundo toque permite el doble salto.",
+      "Recoge vasijas de cacao en cada etapa del viaje histórico.",
       "Llega a Europa para completar el viaje milenario del cacao.",
     ],
-    statsLines: ["TIP: Las vainas doradas desbloquean datos históricos reales."],
+    statsLines: ["TIP: Doble salto en el aire; las vasijas doradas desbloquean datos históricos."],
   },
   game3: {
     nextScene: "Game3Scene",

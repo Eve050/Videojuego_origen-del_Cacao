@@ -26,6 +26,10 @@ export default class Game1Scene extends Phaser.Scene {
     super({ key: "Game1Scene" });
   }
 
+  preload() {
+    this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
+  }
+
   create() {
     this.registry.set("game1Score", 0);
     this.pendingCollectible = null;
@@ -52,6 +56,8 @@ export default class Game1Scene extends Phaser.Scene {
 
     this.physics.world.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
 
+    this.collisionTileLayer = null;
+    this.buildTilemapFromTiled();
     this.buildScenery();
     this.buildObstacles();
 
@@ -62,6 +68,9 @@ export default class Game1Scene extends Phaser.Scene {
     this.player.setDepth(8);
 
     this.physics.add.collider(this.player, this.obstacles);
+    if (this.collisionTileLayer) {
+      this.physics.add.collider(this.player, this.collisionTileLayer);
+    }
 
     this.collectibles = this.add.group();
     this.buildCollectibles();
@@ -140,6 +149,29 @@ export default class Game1Scene extends Phaser.Scene {
       .setDepth(z + 2);
   }
 
+  /**
+   * Suelo y bordes desde Tiled (export game1-plaza.json, tileset name game1_tiles).
+   * Textura ph_g1_tileset se genera en BootScene; al editar en Tiled añade game1-tiles.png de 160×32 (opcional).
+   */
+  buildTilemapFromTiled() {
+    if (!this.textures.exists("ph_g1_tileset")) return;
+    const map = this.make.tilemap({ key: "game1_plaza" });
+    const tileset = map.addTilesetImage("game1_tiles", "ph_g1_tileset");
+    if (!tileset) return;
+    const ground = map.createLayer("Ground", tileset, 0, LAYOUT.GAME_TOP);
+    if (ground) {
+      ground.setDepth(-4.8);
+      ground.setAlpha(0.94);
+    }
+    const coll = map.createLayer("Collision", tileset, 0, LAYOUT.GAME_TOP);
+    if (coll) {
+      coll.setDepth(-4.7);
+      coll.setAlpha(0);
+      coll.setCollision([5]);
+      this.collisionTileLayer = coll;
+    }
+  }
+
   buildScenery() {
     const midY = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
     const cx = 960;
@@ -157,12 +189,6 @@ export default class Game1Scene extends Phaser.Scene {
     this.add
       .rectangle(WORLD_W / 2, midY, WORLD_W + 180, LAYOUT.GAME_H + 100, 0x152820, 1)
       .setDepth(-5);
-
-    this.sceneryTile = this.add
-      .tileSprite(WORLD_W / 2, midY, WORLD_W + 100, LAYOUT.GAME_H + 40, "ph_floor")
-      .setTint(0x4a6654)
-      .setAlpha(0.65)
-      .setDepth(0);
 
     const grad = [
       0x101810, 0x141c14, 0x18241c, 0x1e2c22, 0x24362a, 0x2c4234, 0x34503e, 0x3d5c48,
@@ -437,7 +463,7 @@ export default class Game1Scene extends Phaser.Scene {
       if (x < 46 || x > WORLD_W - 46) continue;
       if (y < LAYOUT.GAME_TOP + 34 || y > LAYOUT.GAME_TOP + LAYOUT.GAME_H - 34) continue;
       if (x > cx - 140 && x < cx + 140 && y < LAYOUT.GAME_TOP + 215) continue;
-      decoHouseAt(x, y, 0.51, t + Math.PI / 2);
+      decoHouseAt(x, y, 0.51, 0);
     }
 
     for (let r = 0; r < settleRows; r += 1) {
@@ -484,6 +510,7 @@ export default class Game1Scene extends Phaser.Scene {
       const hy = cy + Math.sin(a * Math.PI) * ringR;
       const h = this.physics.add.staticSprite(hx, hy, "ph_g1_house");
       h.setScale(0.82);
+      h.setAngle(0);
       h.setDepth(3);
       h.refreshBody();
       if (h.body) {
@@ -498,27 +525,16 @@ export default class Game1Scene extends Phaser.Scene {
     anglesOuter.forEach((a) => placeHouse(a, rOuter));
     anglesInner.forEach((a) => placeHouse(a, rInner));
 
-    const thick = 18;
-    const borders = [
-      [WORLD_W / 2, LAYOUT.GAME_TOP + thick / 2, WORLD_W + 80, thick],
-      [WORLD_W / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H - thick / 2, WORLD_W + 80, thick],
-      [thick / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, thick, LAYOUT.GAME_H + 40],
-      [WORLD_W - thick / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, thick, LAYOUT.GAME_H + 40],
-    ];
-    for (const [bx, by, bw, bh] of borders) {
-      const wall = this.add.rectangle(bx, by, bw, bh, 0x000000, 0);
-      this.physics.add.existing(wall, true);
-      this.obstacles.add(wall);
-    }
+    /* Bordes: capa Collision del Tiled (tile gid 5) */
   }
 
   buildCollectibles() {
     const cx = 960;
     const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
 
-    this.add.ellipse(cx - 125, cy + 28, 52, 16, 0x081210, 0.42).setDepth(4);
-    const bottle = this.add.sprite(cx - 125, cy + 0, "ph_g1_bottle");
-    bottle.setScale(1.42);
+    this.add.ellipse(cx - 125, cy + 30, 58, 14, 0x081210, 0.38).setDepth(4);
+    const bottle = this.add.sprite(cx - 125, cy + 2, "ph_g1_bottle");
+    bottle.setScale(1.02);
     bottle.setDepth(5);
     this.decorateCollectible(bottle, "objeto-1-botella", 72, 92, "bottle");
 
@@ -528,29 +544,27 @@ export default class Game1Scene extends Phaser.Scene {
     vasija.setDepth(6);
     this.decorateCollectible(vasija, "objeto-2-vasija", 72, 92, "vasija");
 
-    this.add.ellipse(cx + 138, cy + 34, 46, 15, 0x081210, 0.42).setDepth(4);
-    const turq = this.add.container(cx + 138, cy + 6);
-    const bead = this.add.sprite(0, 0, "ph_g1_turquoise");
-    bead.setScale(1.48);
-    turq.add(bead);
-    for (let i = 0; i < 4; i += 1) {
-      const a = (i / 4) * Math.PI * 2;
-      turq.add(this.add.circle(Math.cos(a) * 19, Math.sin(a) * 19, 2.8, 0xccffff, 0.95));
-    }
+    this.add.ellipse(cx + 138, cy + 34, 58, 15, 0x081210, 0.42).setDepth(4);
+    const turq = this.add.container(cx + 138, cy + 4);
+    const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
+    neckSpr.setScale(1.12);
+    turq.add(neckSpr);
     turq.setDepth(5);
     turq.setData("questionId", "objeto-3-turquesa");
     turq.setData("quizBusy", false);
     turq.setData("overlapLock", false);
-    turq.setData("interactR", 60);
-    turq.setData("promptR", 78);
-    turq.setInteractive(new Phaser.Geom.Circle(0, 0, 30), Phaser.Geom.Circle.Contains);
+    turq.setData("interactR", 78);
+    turq.setData("promptR", 96);
+    turq.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
     turq.on("pointerdown", () => this.pointerExamine(turq));
     this.collectibles.add(turq);
     this.tweens.add({
       targets: turq,
-      angle: 360,
-      duration: 7000,
+      y: cy + 2,
+      duration: 1400,
+      yoyo: true,
       repeat: -1,
+      ease: "Sine.easeInOut",
     });
   }
 
@@ -566,10 +580,11 @@ export default class Game1Scene extends Phaser.Scene {
     if (kind === "bottle") {
       this.tweens.add({
         targets: sprite,
-        alpha: { from: 0.82, to: 1 },
-        duration: 550,
+        alpha: { from: 0.94, to: 1 },
+        duration: 2200,
         yoyo: true,
         repeat: -1,
+        ease: "Sine.easeInOut",
       });
     } else if (kind === "vasija") {
       this.tweens.add({

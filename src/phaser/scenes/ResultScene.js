@@ -65,12 +65,12 @@ export default class ResultScene extends Phaser.Scene {
       body = `Puntuación final: ${score} / 300 puntos\n\n${tierExplore(score)}`;
     } else if (game === "runner_fail") {
       title = "Cuidado, el camino del cacao no es fácil";
-      body = `Puntos: ${score}\nVainas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5`;
+      body = `Puntos: ${score}\nVasijas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5`;
     } else if (game === "runner") {
       title = "¡El cacao llegó a Europa! El viaje de 5.500 años se ha completado.";
       const vainas = this.payload.vainas ?? 0;
       const datos = this.payload.datos ?? 0;
-      body = `Partiste de Palanda y llevaste el cacao al mundo entero.\n\nVainas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
+      body = `Partiste de Palanda y llevaste el cacao al mundo entero.\n\nVasijas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
       if (this.payload.allZones && score != null) {
         body += `\n\nPuntuación total: ${score} puntos\n\n«Eres el mensajero del cacao ancestral. Como la botella cerámica de Santa Ana – La Florida, tú también portas el origen del mundo.»`;
       }
