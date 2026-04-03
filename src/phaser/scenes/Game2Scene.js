@@ -35,6 +35,32 @@ export default class Game2Scene extends Phaser.Scene {
     super({ key: "Game2Scene" });
   }
 
+  onRunnerDomKey(ev, isDown) {
+    const el = ev.target;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+    const slotByCode = {
+      ArrowUp: "jump",
+      KeyW: "jump",
+      Space: "jump",
+      KeyP: "pause",
+      Escape: "pause",
+    };
+    const slotByKey = {
+      ArrowUp: "jump",
+      w: "jump",
+      W: "jump",
+      " ": "jump",
+      p: "pause",
+      P: "pause",
+      Escape: "pause",
+      Esc: "pause",
+    };
+    const slot = slotByCode[ev.code] ?? slotByKey[ev.key];
+    if (!slot || !this._domRunner) return;
+    ev.preventDefault();
+    this._domRunner[slot] = isDown;
+  }
+
   clearRunPause() {
     this.runPaused = false;
     this.physics.resume();
@@ -496,7 +522,7 @@ export default class Game2Scene extends Phaser.Scene {
       .setDepth(25)
       .setVisible(false);
     this.pauseLabel = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - 8, "PAUSA\nPulse ESPACIO para continuar", {
+      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - 8, "PAUSA\nPulse P o ESC para continuar", {
         fontSize: "22px",
         color: "#e8f0ff",
         fontStyle: "bold",
@@ -528,16 +554,53 @@ export default class Game2Scene extends Phaser.Scene {
     jumpLabel.setVisible(showMobileJump);
     if (!showMobileJump) jumpBtn.disableInteractive();
 
-    this.keyPause = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    this.input.keyboard?.addCapture(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    this.keyUp = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+    const kb = this.input.keyboard;
+    if (kb) kb.enabled = true;
+    this.runnerKeys =
+      kb?.addKeys(
+        {
+          up: Phaser.Input.Keyboard.KeyCodes.UP,
+          w: Phaser.Input.Keyboard.KeyCodes.W,
+          space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+          p: Phaser.Input.Keyboard.KeyCodes.P,
+          esc: Phaser.Input.Keyboard.KeyCodes.ESC,
+        },
+        true,
+        true,
+      ) ?? null;
+    this.keyPause = this.runnerKeys?.p ?? this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+    this.keyUp = this.runnerKeys?.up ?? this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
+
+    this._domRunner = { jump: false, pause: false };
+    this._domJumpPrev = false;
+    this._domPausePrev = false;
+    this._domKeyDown = (ev) => this.onRunnerDomKey(ev, true);
+    this._domKeyUp = (ev) => this.onRunnerDomKey(ev, false);
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", this._domKeyDown, { capture: true });
+      window.addEventListener("keyup", this._domKeyUp, { capture: true });
+    }
 
     this.input.on("pointerdown", (p) => {
+      if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
+      const canvas = this.game?.canvas;
+      if (canvas && typeof canvas.focus === "function") {
+        try {
+          canvas.focus({ preventScroll: true });
+        } catch {
+          canvas.focus();
+        }
+      }
       if (this.runPaused) return;
       if (p.y >= LAYOUT.GAME_TOP && p.y < LAYOUT.HINT_TOP) {
         this.doJump();
       }
     });
+
+    if (this.game?.canvas) {
+      this.game.canvas.setAttribute("tabindex", "0");
+      this.game.canvas.style.outline = "none";
+    }
 
     this.add
       .text(LAYOUT.WIDTH - 24, 38, "[ VOLVER AL MAPA ]", { fontSize: "11px", color: "#c8921a" })
@@ -565,7 +628,12 @@ export default class Game2Scene extends Phaser.Scene {
       this.time.paused = false;
       this.tweens.resumeAll();
       this.physics.resume();
-      this.input.keyboard?.removeCapture(Phaser.Input.Keyboard.KeyCodes.SPACE);
+      if (typeof window !== "undefined" && this._domKeyDown) {
+        window.removeEventListener("keydown", this._domKeyDown, { capture: true });
+        window.removeEventListener("keyup", this._domKeyUp, { capture: true });
+      }
+      this._domKeyDown = null;
+      this._domKeyUp = null;
     });
   }
 
@@ -727,7 +795,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.92).setOrigin(0).setDepth(15);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setDepth(15);
     this.add
-      .text(24, LAYOUT.CONTROLS_TOP + 14, "ESPACIO pausa/reanuda · ↑ salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
+      .text(24, LAYOUT.CONTROLS_TOP + 14, "P/ESC pausa · ↑/W/ESPACIO salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
         fontSize: "10px",
         color: "#6a7580",
       })
@@ -764,7 +832,7 @@ export default class Game2Scene extends Phaser.Scene {
     }
     this.time.delayedCall(2800, () => {
       this.hintLine.setText(
-        "ESPACIO = pausa (personaje, escenario y vasijas se detienen). ARRIBA = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
+        "P o ESC = pausa. ARRIBA/W/ESPACIO = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
       );
     });
   }
@@ -896,14 +964,19 @@ export default class Game2Scene extends Phaser.Scene {
       this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
     }
     this.hintLine.setText(
-      "ESPACIO = pausa (personaje, escenario y vasijas se detienen). ARRIBA = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
+      "P o ESC = pausa. ARRIBA/W/ESPACIO = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
     );
   }
 
   update(_t, dt) {
-    if (this.keyPause && Phaser.Input.Keyboard.JustDown(this.keyPause) && this.runActive) {
+    const pausePressed =
+      (this.keyPause && Phaser.Input.Keyboard.JustDown(this.keyPause)) ||
+      (this.runnerKeys?.esc && Phaser.Input.Keyboard.JustDown(this.runnerKeys.esc)) ||
+      (this._domRunner?.pause && !this._domPausePrev);
+    if (pausePressed && this.runActive) {
       this.toggleRunPause();
     }
+    this._domPausePrev = !!this._domRunner?.pause;
 
     if (!this.runActive) return;
 
@@ -954,8 +1027,14 @@ export default class Game2Scene extends Phaser.Scene {
       if (o.x < -60) this.releasePod(o);
     });
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyUp)) {
+    const jumpPressed =
+      (this.keyUp && Phaser.Input.Keyboard.JustDown(this.keyUp)) ||
+      (this.runnerKeys?.w && Phaser.Input.Keyboard.JustDown(this.runnerKeys.w)) ||
+      (this.runnerKeys?.space && Phaser.Input.Keyboard.JustDown(this.runnerKeys.space)) ||
+      (this._domRunner?.jump && !this._domJumpPrev);
+    if (jumpPressed) {
       this.doJump();
     }
+    this._domJumpPrev = !!this._domRunner?.jump;
   }
 }
