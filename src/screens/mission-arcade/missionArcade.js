@@ -1,5 +1,6 @@
 import { ensureAmbientAudioState } from "../../modules/audioManager.js";
 import { getGameState, isMissionUnlocked } from "../../modules/gameState.js";
+import { bindRunnerGameOverUI } from "../../modules/runnerGameOverUI.js";
 import { startPhaserGame } from "../../phaser/phaserHost.js";
 
 const CABIN_COPY = {
@@ -76,9 +77,37 @@ export function renderMissionArcade(container, missionNumber) {
     </section>
   `;
 
-  container.querySelector("#missionArcadeExit")?.addEventListener("click", () => {
-    window.location.hash = "#/p04";
-  });
+  const exitToMap = () => {
+    import("../../phaser/phaserHost.js").then(({ destroyPhaserGame }) => {
+      destroyPhaserGame();
+      window.location.hash = "#/p04";
+    });
+  };
+
+  container.querySelector("#missionArcadeExit")?.addEventListener("click", exitToMap);
+
+  document.body.classList.add("enigma-lock-scroll");
+  document.documentElement.classList.add("enigma-lock-scroll");
+
+  if (missionNumber === 2) {
+    bindRunnerGameOverUI(container, {
+      sectionSelector: ".mission-arcade",
+      wrapSelector: ".mission-arcade-screen-wrap",
+      onRetry: () => {
+        import("../../phaser/phaserHost.js").then(({ destroyPhaserGame, startPhaserGame }) => {
+          destroyPhaserGame();
+          const mount = container.querySelector("#missionPhaserRoot");
+          if (mount) {
+            startPhaserGame(mount, {
+              expeditionMission: missionNumber,
+              directRunner: true,
+            });
+          }
+        });
+      },
+      onExitMap: exitToMap,
+    });
+  }
 
   const mount = container.querySelector("#missionPhaserRoot");
   if (mount) {

@@ -26,13 +26,11 @@ export const INTRO_COPY = {
     missionTitle: "EL VIAJE COMIENZA EN PALANDA, ECUADOR – 5.500 AÑOS ATRÁS",
     missionLines: [
       "CÓMO JUGAR:",
-      "El corredor parte desde Palanda y avanza automáticamente.",
-      "Presiona ESPACIO o toca la pantalla para SALTAR los obstáculos.",
-      "En el aire, un segundo toque permite el doble salto.",
-      "Recoge vasijas de cacao en cada etapa del viaje histórico.",
-      "Llega a Europa para completar el viaje milenario del cacao.",
+      "El escenario avanza solo de Palanda hacia Europa (cinco etapas).",
+      "Esquiva rocas y recoge vasijas en el aire (saltando o con doble salto); no están en el suelo.",
+      "Las vasijas doradas y las piezas especiales desbloquean datos históricos.",
     ],
-    statsLines: ["TIP: Doble salto en el aire; las vasijas doradas desbloquean datos históricos."],
+    statsLines: ["Objetivo: completar el viaje hasta Europa."],
   },
   game3: {
     nextScene: "Game3Scene",

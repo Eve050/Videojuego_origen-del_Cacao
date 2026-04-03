@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import questions from "../data/questions.json";
 import culturalData from "../data/culturalData.json";
 import zonesConfig from "../data/zonesConfig.json";
-import { takePendingExpeditionMission } from "../missionContext.js";
+import { takePendingExpeditionMission, takePendingDirectRunner } from "../missionContext.js";
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -21,14 +21,20 @@ export default class BootScene extends Phaser.Scene {
     this.generatePlaceholderTextures();
 
     const expeditionMission = takePendingExpeditionMission();
+    const directRunner = takePendingDirectRunner();
     this.registry.set("expeditionMission", expeditionMission);
+
+    if (directRunner && (expeditionMission === 2 || expeditionMission == null)) {
+      this.scene.start("Game2Scene");
+      return;
+    }
 
     if (expeditionMission === 1) {
       this.scene.start("Game1Scene");
       return;
     }
     if (expeditionMission === 2) {
-      this.scene.start("Game2Scene");
+      this.scene.start("MiniInstructionsScene", { pack: "game2", fromExpedition: true });
       return;
     }
     if (expeditionMission === 3) {
@@ -254,6 +260,61 @@ export default class BootScene extends Phaser.Scene {
     ghostG.fillRoundedRect(2, 8, 24, 20, 6);
     ghostG.fillCircle(14, 10, 11);
     ghostG.generateTexture("ph_ghost_pac", 28, 30);
+    ghostG.destroy();
+
+    /** Juego 3 — guardianes espirituales (siluetas con forma propia; nombres Kichwa / andinos). */
+    const GW = 32;
+    const GH = 36;
+    const mkMzGuard = (key, bodyFill, eyeGlow, drawAccent) => {
+      const g = this.make.graphics({ x: 0, y: 0, add: false });
+      g.fillStyle(bodyFill, 0.96);
+      g.fillCircle(GW / 2, 13, 12);
+      g.fillRoundedRect(4, 12, GW - 8, 22, 7);
+      g.fillStyle(0x120818, 0.75);
+      g.fillCircle(GW / 2 - 5, 11, 2.5);
+      g.fillCircle(GW / 2 + 5, 11, 2.5);
+      g.fillStyle(eyeGlow, 0.95);
+      g.fillCircle(GW / 2 - 5, 11, 1.25);
+      g.fillCircle(GW / 2 + 5, 11, 1.25);
+      drawAccent(g);
+      g.lineStyle(2, 0x1a0810, 0.55);
+      g.strokeRoundedRect(4, 12, GW - 8, 22, 7);
+      g.lineStyle(1.2, 0xffffff, 0.22);
+      g.strokeCircle(GW / 2, 13, 12);
+      g.generateTexture(key, GW, GH);
+      g.destroy();
+    };
+    mkMzGuard("ph_maze_g_kunku", 0xb83830, 0xffe8a0, (g) => {
+      g.fillStyle(0xff5520, 0.95);
+      g.fillTriangle(16, 2, 9, 11, 23, 11);
+      g.fillTriangle(10, 5, 5, 12, 12, 10);
+      g.fillTriangle(22, 5, 27, 12, 20, 10);
+    });
+    mkMzGuard("ph_maze_g_sumak", 0x2a68c0, 0xc8f0ff, (g) => {
+      g.lineStyle(2, 0x88d0ff, 0.75);
+      g.beginPath();
+      g.moveTo(4, 8);
+      g.lineTo(10, 5);
+      g.lineTo(16, 8);
+      g.lineTo(22, 5);
+      g.lineTo(28, 8);
+      g.strokePath();
+      g.fillStyle(0x4088e0, 0.35);
+      g.fillEllipse(16, 7, 20, 6);
+    });
+    mkMzGuard("ph_maze_g_allpa", 0x2a8848, 0xd8ffd8, (g) => {
+      g.fillStyle(0x4a5030, 0.9);
+      g.fillTriangle(16, 3, 8, 12, 24, 12);
+      g.fillStyle(0x5ec878, 0.85);
+      g.fillEllipse(16, 5, 8, 4);
+    });
+    mkMzGuard("ph_maze_g_wasi", 0xa87820, 0xfff8c8, (g) => {
+      g.fillStyle(0xe8c060, 0.95);
+      g.fillTriangle(16, 2, 7, 12, 25, 12);
+      g.fillRect(6, 10, 20, 3);
+      g.lineStyle(1.5, 0xfff0c8, 0.65);
+      g.strokeTriangle(16, 2, 7, 12, 25, 12);
+    });
 
     const dg = this.make.graphics({ x: 0, y: 0, add: false });
     dg.fillStyle(0x7744aa, 1);

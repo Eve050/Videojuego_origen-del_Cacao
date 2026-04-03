@@ -46,11 +46,14 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   toggleRunPause() {
-    if (!this.runActive) return;
+    if (this._gameOverActive || !this.runActive) return;
     if (this.runPaused) {
       this.clearRunPause();
     } else {
       this.runPaused = true;
+      if (this.player?.body) {
+        this.player.setVelocity(0, 0);
+      }
       this.physics.pause();
       this.time.paused = true;
       this.tweens.pauseAll();
@@ -58,6 +61,127 @@ export default class Game2Scene extends Phaser.Scene {
         this.pauseOverlayElts.forEach((el) => el.setVisible(true));
       }
     }
+  }
+
+  triggerGameOver() {
+    if (this._gameOverActive) return;
+    this._gameOverActive = true;
+    if (this._obsTimer) {
+      this._obsTimer.remove(false);
+      this._obsTimer = null;
+    }
+    if (this._itemTimer) {
+      this._itemTimer.remove(false);
+      this._itemTimer = null;
+    }
+    if (this.player?.body) {
+      this.player.setVelocity(0, 0);
+    }
+    this.physics.pause();
+    this.tweens.pauseAll();
+    if (this.pauseOverlayElts) {
+      this.pauseOverlayElts.forEach((el) => el.setVisible(false));
+    }
+    this.updateHud();
+
+    const canvas = this.sys.game?.canvas;
+    const domHost =
+      canvas?.closest?.(".mission-arcade-screen-wrap") ?? canvas?.closest?.(".phaser-lab-canvas-wrap");
+    if (domHost) {
+      domHost.dispatchEvent(
+        new CustomEvent("enigma-runner-game-over", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            points: this.points,
+            vainas: this.vainasCount,
+            datos: this.countDatosUnlocked(),
+          },
+        }),
+      );
+      return;
+    }
+
+    const depth = 55;
+    const cx = LAYOUT.WIDTH / 2;
+    const cy = LAYOUT.HEIGHT / 2;
+    this.add
+      .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x120a08, 0.86)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    this.add
+      .text(cx, cy - 118, "GAME OVER", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "48px",
+        color: "#ff6b6b",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    const stats = `Sin vidas\n\nPuntos: ${this.points}\nVasijas: ${this.vainasCount}\nDatos: ${this.countDatosUnlocked()} / 5`;
+    this.add
+      .text(cx, cy - 8, stats, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        color: "#f9f2dd",
+        align: "center",
+        lineSpacing: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.addGameOverBtn(cx, cy + 108, 340, 48, "[ VOLVER A JUGAR ]", () => {
+      this.tweens.resumeAll();
+      this.physics.resume();
+      this.scene.restart();
+    });
+    this.addGameOverBtn(cx, cy + 168, 340, 48, "[ VOLVER AL MAPA ]", () => {
+      import("../phaserHost.js").then(({ destroyPhaserGame }) => {
+        destroyPhaserGame();
+        exitToMainMap();
+      });
+    });
+  }
+
+  addGameOverBtn(x, y, w, h, label, fn) {
+    const depth = 60;
+    const fill = 0x3d2818;
+    const stroke = 0xe8c066;
+    const rect = this.add
+      .rectangle(x, y, w, h, fill)
+      .setStrokeStyle(2, stroke)
+      .setDepth(depth)
+      .setScrollFactor(0);
+    rect.setInteractive({ useHandCursor: true });
+    const txt = this.add
+      .text(x, y, label, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "14px",
+        color: "#f9f2dd",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+    const run = () => {
+      if (this._gameOverBtnUsed) return;
+      this._gameOverBtnUsed = true;
+      fn();
+    };
+    rect.on("pointerover", () => {
+      rect.setFillStyle(0x4a3220);
+      txt.setColor("#fff8cc");
+    });
+    rect.on("pointerout", () => {
+      rect.setFillStyle(fill);
+      txt.setColor("#f9f2dd");
+    });
+    rect.on("pointerup", run);
+    rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
   }
 
   releaseObstacle(o) {
@@ -213,6 +337,8 @@ export default class Game2Scene extends Phaser.Scene {
     this._obsTimer = null;
     this._itemTimer = null;
     this.runPaused = false;
+    this._gameOverActive = false;
+    this._gameOverBtnUsed = false;
 
     const groundCenterY = GROUND_TOP_Y + 28;
     const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 1);
@@ -243,7 +369,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.podPool = this.add.group();
 
     this.physics.add.overlap(this.player, this.pods, (_p, pod) => {
-      if (this.runPaused || !pod.active || pod.getData("picking")) return;
+      if (this._gameOverActive || !this.runActive || this.runPaused || !pod.active || pod.getData("picking")) return;
       pod.setData("picking", true);
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
@@ -285,7 +411,7 @@ export default class Game2Scene extends Phaser.Scene {
     });
 
     this.physics.add.overlap(this.player, this.obstacles, (_player, obs) => {
-      if (this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
+      if (this._gameOverActive || this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
       this.releaseObstacle(obs);
       this.lives -= 1;
       this.invulnerableMs = INVULN_MS;
@@ -299,13 +425,10 @@ export default class Game2Scene extends Phaser.Scene {
       });
       if (this.lives <= 0) {
         this.runActive = false;
-        this.clearRunPause();
-        this.scene.start("ResultScene", {
-          game: "runner_fail",
-          score: this.points,
-          vainas: this.vainasCount,
-          datos: this.countDatosUnlocked(),
-        });
+        if (this.player?.body) {
+          this.player.setVelocity(0, 0);
+        }
+        this.time.delayedCall(0, () => this.triggerGameOver());
       } else {
         this.updateHud();
       }
@@ -373,7 +496,7 @@ export default class Game2Scene extends Phaser.Scene {
       .setDepth(25)
       .setVisible(false);
     this.pauseLabel = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - 8, "PAUSA\nPulse ENTER para continuar", {
+      .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - 8, "PAUSA\nPulse ESPACIO para continuar", {
         fontSize: "22px",
         color: "#e8f0ff",
         fontStyle: "bold",
@@ -405,7 +528,8 @@ export default class Game2Scene extends Phaser.Scene {
     jumpLabel.setVisible(showMobileJump);
     if (!showMobileJump) jumpBtn.disableInteractive();
 
-    this.keyEnter = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
+    this.keyPause = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.input.keyboard?.addCapture(Phaser.Input.Keyboard.KeyCodes.SPACE);
     this.keyUp = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP);
 
     this.input.on("pointerdown", (p) => {
@@ -441,6 +565,7 @@ export default class Game2Scene extends Phaser.Scene {
       this.time.paused = false;
       this.tweens.resumeAll();
       this.physics.resume();
+      this.input.keyboard?.removeCapture(Phaser.Input.Keyboard.KeyCodes.SPACE);
     });
   }
 
@@ -493,18 +618,15 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   /**
-   * Altura de vasijas: mayoría en el aire para incentivar saltos (runner clásico).
-   * groundCenterY + offset; offsets negativos = más arriba en pantalla.
+   * Vasijas / monedas solo en el aire (nunca pegadas al suelo): hay que saltar para recogerlas.
+   * groundCenterY + offset; offsets más negativos = más arriba.
    */
   pickCollectibleYJitter() {
     const r = Math.random();
-    if (r < 0.12) {
-      return Phaser.Math.Between(-6, -38);
+    if (r < 0.5) {
+      return Phaser.Math.Between(-88, -118);
     }
-    if (r < 0.48) {
-      return Phaser.Math.Between(-72, -120);
-    }
-    return Phaser.Math.Between(-125, -205);
+    return Phaser.Math.Between(-122, -205);
   }
 
   countDatosUnlocked() {
@@ -605,7 +727,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.92).setOrigin(0).setDepth(15);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setDepth(15);
     this.add
-      .text(24, LAYOUT.CONTROLS_TOP + 14, "ENTER pausa/reanuda · ↑ salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
+      .text(24, LAYOUT.CONTROLS_TOP + 14, "ESPACIO pausa/reanuda · ↑ salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
         fontSize: "10px",
         color: "#6a7580",
       })
@@ -615,7 +737,7 @@ export default class Game2Scene extends Phaser.Scene {
       .text(
         LAYOUT.WIDTH / 2,
         LAYOUT.CONTROLS_TOP + 52,
-        "TIP: vasijas en el aire — salta o doble salto. Doradas y piezas culturales desbloquean datos.",
+        "TIP: vasijas y premios van en el aire — salta o doble salto; esquiva rocas. Doradas y piezas culturales desbloquean datos.",
         { fontSize: "10px", color: "#555c64", align: "center" },
       )
       .setOrigin(0.5)
@@ -642,7 +764,7 @@ export default class Game2Scene extends Phaser.Scene {
     }
     this.time.delayedCall(2800, () => {
       this.hintLine.setText(
-        "ENTER = pausa (se detiene todo). Flecha ARRIBA = saltar y doble salto. Táctil: toca la pista. Vasijas en el aire · evita rocas.",
+        "ESPACIO = pausa (personaje, escenario y vasijas se detienen). ARRIBA = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
       );
     });
   }
@@ -726,7 +848,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     const isCultural = canCultural && !hasPiece;
     const isGold = !isCultural && Math.random() < 0.125;
-    const yJitter = isCultural ? Phaser.Math.Between(-100, -175) : this.pickCollectibleYJitter();
+    const yJitter = isCultural ? Phaser.Math.Between(-100, -178) : this.pickCollectibleYJitter();
 
     const fitVesselBody = (p) => {
       if (!p.body) return;
@@ -774,12 +896,12 @@ export default class Game2Scene extends Phaser.Scene {
       this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
     }
     this.hintLine.setText(
-      "ENTER = pausa (se detiene todo). Flecha ARRIBA = saltar y doble salto. Táctil: toca la pista. Vasijas en el aire · evita rocas.",
+      "ESPACIO = pausa (personaje, escenario y vasijas se detienen). ARRIBA = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
     );
   }
 
   update(_t, dt) {
-    if (this.keyEnter && Phaser.Input.Keyboard.JustDown(this.keyEnter) && this.runActive) {
+    if (this.keyPause && Phaser.Input.Keyboard.JustDown(this.keyPause) && this.runActive) {
       this.toggleRunPause();
     }
 

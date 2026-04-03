@@ -55,6 +55,37 @@ body {
   min-height: 100vh;
 }
 
+/* Pantallas minijuego / cabina: sin scroll (también si el navegador no soporta :has) */
+html.enigma-lock-scroll,
+body.enigma-lock-scroll {
+  overflow: hidden !important;
+  height: 100dvh;
+  max-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+html.enigma-lock-scroll #app,
+body.enigma-lock-scroll #app {
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+/* Cabina P06–P08: una sola pantalla, sin scroll vertical */
+body:has(.mission-arcade) {
+  overflow: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+#app:has(.mission-arcade) {
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 .screen {
   min-height: 100vh;
   min-height: 100dvh;
@@ -4055,12 +4086,28 @@ body {
 .screen--phaser-lab {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: clamp(0.75rem, 2vw, 1.25rem);
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: clamp(0.35rem, 1.2vw, 0.65rem);
   background:
     radial-gradient(ellipse 90% 55% at 50% 0%, rgba(29, 107, 58, 0.22), transparent 55%),
     linear-gradient(168deg, #0a1210 0%, #050807 100%);
+}
+
+body:has(.screen--phaser-lab) {
+  overflow: hidden;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+#app:has(.screen--phaser-lab) {
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 .phaser-lab-bar {
@@ -4068,8 +4115,9 @@ body {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  gap: 0.5rem 0.75rem;
+  flex-shrink: 0;
+  margin-bottom: 0.25rem;
 }
 
 .phaser-lab-title {
@@ -4081,6 +4129,7 @@ body {
 }
 
 .phaser-lab-canvas-wrap {
+  position: relative;
   flex: 1;
   display: flex;
   justify-content: center;
@@ -4089,10 +4138,11 @@ body {
   width: 100%;
   max-width: min(1280px, 100%);
   margin: 0 auto;
-  padding: 0.35rem;
+  padding: 0.3rem;
   border-radius: var(--radius-md);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: var(--shadow-inset-top), 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
 .phaser-root {
@@ -4110,9 +4160,10 @@ body {
 }
 
 .phaser-lab-foot {
-  margin: 0.65rem 0 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  flex-shrink: 0;
+  margin: 0.35rem 0 0;
+  font-size: clamp(0.62rem, 1.5vw, 0.72rem);
+  line-height: 1.35;
   color: rgba(232, 220, 200, 0.55);
   text-align: center;
   max-width: 42rem;
@@ -4123,13 +4174,15 @@ body {
 /* P06–P08 — marco arcade retro alrededor de Phaser (expedición) */
 .mission-arcade {
   position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: clamp(0.75rem, 2vw, 1.5rem);
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  padding: clamp(0.35rem, 1.2vw, 0.75rem);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.4rem;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(40, 28, 12, 0.95), transparent 55%),
     repeating-linear-gradient(
@@ -4157,6 +4210,7 @@ body {
   z-index: 1;
   text-align: center;
   max-width: 52rem;
+  flex-shrink: 0;
 }
 
 .mission-arcade-brand {
@@ -4179,10 +4233,10 @@ body {
 }
 
 .mission-arcade-title {
-  margin: 0.65rem 0 0.25rem;
+  margin: 0.35rem 0 0.15rem;
   font-family: "Press Start 2P", monospace;
-  font-size: clamp(0.62rem, 2vw, 0.85rem);
-  line-height: 1.5;
+  font-size: clamp(0.55rem, 1.6vw, 0.78rem);
+  line-height: 1.45;
   color: #fff5dd;
   text-shadow: 0 0 20px rgba(255, 220, 120, 0.25);
 }
@@ -4194,10 +4248,10 @@ body {
 }
 
 .mission-arcade-coin {
-  margin: 0.75rem 0 0;
+  margin: 0.35rem 0 0;
   font-family: "Press Start 2P", monospace;
-  font-size: clamp(0.38rem, 1.1vw, 0.5rem);
-  line-height: 1.6;
+  font-size: clamp(0.35rem, 0.95vw, 0.48rem);
+  line-height: 1.5;
   color: #7cfc9a;
   text-shadow: 0 0 8px rgba(80, 255, 120, 0.35);
 }
@@ -4206,7 +4260,12 @@ body {
   position: relative;
   z-index: 1;
   width: min(100%, 920px);
-  padding: clamp(0.6rem, 1.5vw, 1rem);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: clamp(0.45rem, 1.2vw, 0.75rem);
   border-radius: 18px;
   background: linear-gradient(145deg, #4a3520 0%, #2a1a0e 40%, #1a1008 100%);
   box-shadow:
@@ -4256,6 +4315,10 @@ body {
 
 .mission-arcade-screen-wrap {
   position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
   border: 4px solid #0a0604;
@@ -4266,6 +4329,11 @@ body {
 
 .mission-arcade-crt {
   position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #0a0e0c;
 }
 
@@ -4287,8 +4355,10 @@ body {
 .mission-arcade-phaser-host {
   position: relative;
   z-index: 1;
-  min-height: min(72vh, 640px);
+  flex: 1;
+  min-height: 0;
   width: 100%;
+  max-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4304,10 +4374,107 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem 1.25rem;
-  margin-top: 0.75rem;
-  padding-top: 0.65rem;
+  gap: 0.5rem 1rem;
+  flex-shrink: 0;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
   border-top: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+/* Game over misión 2 — capa HTML centrada sobre el CRT (clics fiables) */
+.mission-arcade-runner-gameover {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.5rem, 2vw, 1.25rem);
+  background: rgba(10, 6, 4, 0.88);
+  pointer-events: auto;
+}
+
+.mission-arcade-runner-gameover-card {
+  text-align: center;
+  max-width: min(28rem, 94vw);
+  padding: clamp(1rem, 3vw, 1.75rem) clamp(1.25rem, 4vw, 2rem);
+  border-radius: 14px;
+  border: 2px solid #c9a050;
+  background: linear-gradient(165deg, #2a1810 0%, #1a1008 100%);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.mission-arcade-runner-go-title {
+  margin: 0 0 0.35rem;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(0.85rem, 2.8vw, 1.15rem);
+  line-height: 1.35;
+  color: #ff6b6b;
+  text-shadow: 0 0 12px rgba(255, 80, 80, 0.35);
+}
+
+.mission-arcade-runner-go-sub {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #f0e8dc;
+}
+
+.mission-arcade-runner-go-stats {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: rgba(240, 230, 216, 0.92);
+}
+
+.mission-arcade-runner-go-stats p {
+  margin: 0.2rem 0;
+}
+
+.mission-arcade-runner-go-hint {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: rgba(200, 180, 150, 0.85);
+}
+
+.mission-arcade-runner-go-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: stretch;
+}
+
+.mission-arcade-runner-go-micro {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(200, 188, 170, 0.82);
+}
+
+.mission-arcade-runner-go-btn {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  font-family: "Nunito", system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid #c9a050;
+  background: #3d2818;
+  color: #f9f2dd;
+  touch-action: manipulation;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.mission-arcade-runner-go-btn:hover {
+  background: #4a3220;
+  color: #fff8cc;
+}
+
+.mission-arcade-runner-go-btn--primary {
+  background: #4a2c12;
+  border-color: #e8c066;
 }
 
 .mission-arcade-led {

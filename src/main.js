@@ -33,6 +33,8 @@ const routes = {
 };
 
 function renderCurrentRoute() {
+  document.body.classList.remove("enigma-lock-scroll");
+  document.documentElement.classList.remove("enigma-lock-scroll");
   destroyPhaserGame();
   const route = window.location.hash || "#/p01";
   const renderScreen = routes[route] || renderP01;

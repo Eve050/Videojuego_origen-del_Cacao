@@ -64,8 +64,8 @@ export default class ResultScene extends Phaser.Scene {
       title = "¡Misión completada! Has encontrado los 3 objetos del descubrimiento de 2002.";
       body = `Puntuación final: ${score} / 300 puntos\n\n${tierExplore(score)}`;
     } else if (game === "runner_fail") {
-      title = "Cuidado, el camino del cacao no es fácil";
-      body = `Puntos: ${score}\nVasijas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5`;
+      title = "GAME OVER";
+      body = `Sin vidas.\n\nPuntos: ${score}\nVasijas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5\n\nEl camino del cacao no es fácil — ¡inténtalo otra vez!`;
     } else if (game === "runner") {
       title = "¡El cacao llegó a Europa! El viaje de 5.500 años se ha completado.";
       const vainas = this.payload.vainas ?? 0;
@@ -77,19 +77,21 @@ export default class ResultScene extends Phaser.Scene {
     } else if (game === "mazeWin") {
       title = "¡Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón!";
       const pt = this.payload.piecesTotal ?? 4;
-      body = `Completaste el ritual del laberinto y la vasija ceremonial.\n\nPiezas sagradas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
+      body = `Todos los granos de cacao han sido recolectados.\n\nPiezas arqueológicas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
     } else if (game === "mazeLose") {
-      title = "Los guardianes han protegido el laberinto sagrado…";
+      title = "Los guardianes han protegido el laberinto sagrado...";
       body = `El cacao ancestral de 5.500 años sigue esperando ser descubierto.\n\nPuntos: ${score} | Mejor puntaje: ${this.payload.highScore ?? score}`;
       if (this.payload.detail) {
         body += `\n\n${this.payload.detail}`;
       }
     }
 
+    const titleSize = game === "runner_fail" ? "42px" : "22px";
+    const titleColor = game === "runner_fail" ? "#ff6b6b" : "#c8921a";
     this.add
-      .text(LAYOUT.WIDTH / 2, 140, title, {
-        fontSize: "22px",
-        color: "#c8921a",
+      .text(LAYOUT.WIDTH / 2, game === "runner_fail" ? 120 : 140, title, {
+        fontSize: titleSize,
+        color: titleColor,
         fontStyle: "bold",
         align: "center",
         wordWrap: { width: 1000 },
@@ -158,7 +160,8 @@ export default class ResultScene extends Phaser.Scene {
           window.location.hash = "#/p04";
         });
       } else if (expeditionFail) {
-        this.resultBtn(y0, "[ REINTENTAR ]", () => {
+        const replayLabel = game === "runner_fail" ? "[ VOLVER A JUGAR ]" : "[ REINTENTAR ]";
+        this.resultBtn(y0, replayLabel, () => {
           const key = exp === 1 ? "Game1Scene" : exp === 2 ? "Game2Scene" : "Game3Scene";
           this.scene.start(key);
         });
@@ -173,7 +176,11 @@ export default class ResultScene extends Phaser.Scene {
       this.resultBtn(y0 + 88, "[ JUGAR DE NUEVO ]", () =>
         this.scene.start("MiniIntroScene", { pack: "game1" }),
       );
-    } else if (game === "runner" || game === "runner_fail") {
+    } else if (game === "runner_fail") {
+      this.resultBtn(y0, "[ VOLVER A JUGAR ]", () => this.scene.start("Game2Scene"));
+      this.resultBtn(y0 + 44, "[ CONTINUAR AL MAPA ]", () => exitToMainMap());
+      this.resultBtn(y0 + 88, "[ VER DATOS HISTÓRICOS ]", () => this.showRunnerFacts());
+    } else if (game === "runner") {
       this.resultBtn(y0, "[ VER DATOS HISTÓRICOS ]", () => this.showRunnerFacts());
       this.resultBtn(y0 + 44, "[ CONTINUAR AL MAPA ]", () => exitToMainMap());
       this.resultBtn(y0 + 88, "[ JUGAR DE NUEVO ]", () =>
