@@ -80,7 +80,7 @@ export function renderP01(container) {
             Minijuegos Phaser (propuesta PDF)
           </button>
           <p class="p01-phaser-hint">Aquí está el demo del documento: quiz 3 objetos, viaje 5 zonas, laberinto. No es la misma pantalla que JUGAR.</p>
-          <p class="audio-hint" id="audioStatus">Cargando musica ambiental...</p>
+          <p class="audio-hint" id="audioStatus">Musica en OFF.</p>
         </article>
 
         <footer class="screen-footer">VERSION 0.3.0 - PROTOTIPO P01</footer>

@@ -26,6 +26,67 @@ export default class Game1Scene extends Phaser.Scene {
     super({ key: "Game1Scene" });
   }
 
+  onGame1DomKey(ev, isDown) {
+    const el = ev.target;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+    const byCode = {
+      ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      KeyW: "up",
+      KeyS: "down",
+      KeyA: "left",
+      KeyD: "right",
+      KeyE: "action",
+      Enter: "result",
+    };
+    const slot = byCode[ev.code];
+    if (!slot || !this._domGame1) return;
+    ev.preventDefault();
+    this._domGame1[slot] = isDown;
+  }
+
+  readGame1Steer() {
+    const d = this._domGame1;
+    const m = this.game1Keys;
+    let vx = 0;
+    let vy = 0;
+    const j = this.player?.stickVector;
+    if (j && (j.x !== 0 || j.y !== 0)) {
+      vx = j.x;
+      vy = j.y;
+      const len = Math.hypot(vx, vy) || 1;
+      if (len > 1) {
+        vx /= len;
+        vy /= len;
+      }
+    } else if (d) {
+      if (d.left || m?.left?.isDown || m?.a?.isDown) vx = -1;
+      else if (d.right || m?.right?.isDown || m?.d?.isDown) vx = 1;
+      if (d.up || m?.up?.isDown || m?.w?.isDown) vy = -1;
+      else if (d.down || m?.down?.isDown || m?.s?.isDown) vy = 1;
+    } else if (m) {
+      if (m.left.isDown || m.a.isDown) vx = -1;
+      else if (m.right.isDown || m.d.isDown) vx = 1;
+      if (m.up.isDown || m.w.isDown) vy = -1;
+      else if (m.down.isDown || m.s.isDown) vy = 1;
+    } else {
+      const cu = this.player?.cursors;
+      const w = this.player?.wasd;
+      if (cu?.left.isDown || w?.A.isDown) vx = -1;
+      else if (cu?.right.isDown || w?.D.isDown) vx = 1;
+      if (cu?.up.isDown || w?.W.isDown) vy = -1;
+      else if (cu?.down.isDown || w?.S.isDown) vy = 1;
+    }
+    if (vx !== 0 && vy !== 0) {
+      const n = 1 / Math.SQRT2;
+      vx *= n;
+      vy *= n;
+    }
+    return { vx, vy };
+  }
+
   preload() {
     this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
   }
@@ -33,6 +94,7 @@ export default class Game1Scene extends Phaser.Scene {
   create() {
     this.registry.set("game1Score", 0);
     this.pendingCollectible = null;
+    this.finishedAutoTransition = false;
     this.joystickActive = false;
     this.stickCx = 0;
     this.stickCy = 0;
@@ -83,7 +145,51 @@ export default class Game1Scene extends Phaser.Scene {
     this.setupHudAndMinimap();
     this.setupTouchControls();
 
-    this.keyE = this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    const kb = this.input.keyboard;
+    if (kb) kb.enabled = true;
+    this.game1Keys =
+      kb?.addKeys(
+        {
+          up: Phaser.Input.Keyboard.KeyCodes.UP,
+          down: Phaser.Input.Keyboard.KeyCodes.DOWN,
+          left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+          right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+          w: Phaser.Input.Keyboard.KeyCodes.W,
+          a: Phaser.Input.Keyboard.KeyCodes.A,
+          s: Phaser.Input.Keyboard.KeyCodes.S,
+          d: Phaser.Input.Keyboard.KeyCodes.D,
+          e: Phaser.Input.Keyboard.KeyCodes.E,
+          enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+        },
+        true,
+        true,
+      ) ?? null;
+    this.keyE = this.game1Keys?.e ?? this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+    this._domGame1 = { up: false, down: false, left: false, right: false, action: false, result: false };
+    this._domActionPrev = false;
+    this._domResultPrev = false;
+    this._domKeyDown = (ev) => this.onGame1DomKey(ev, true);
+    this._domKeyUp = (ev) => this.onGame1DomKey(ev, false);
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", this._domKeyDown, { capture: true });
+      window.addEventListener("keyup", this._domKeyUp, { capture: true });
+    }
+    if (this.game?.canvas) {
+      this.game.canvas.setAttribute("tabindex", "0");
+      this.game.canvas.style.outline = "none";
+    }
+    this.input.on("pointerdown", () => {
+      if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
+      const canvas = this.game?.canvas;
+      if (canvas && typeof canvas.focus === "function") {
+        try {
+          canvas.focus({ preventScroll: true });
+        } catch {
+          canvas.focus();
+        }
+      }
+    });
 
     this.add
       .text(18, 40, "VOLVER AL MAPA", {
@@ -125,7 +231,14 @@ export default class Game1Scene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     this.resultPrompt.on("pointerdown", () => this.tryShowResults());
-    this.input.keyboard?.on("keydown-ENTER", () => this.tryShowResults());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (typeof window !== "undefined" && this._domKeyDown) {
+        window.removeEventListener("keydown", this._domKeyDown, { capture: true });
+        window.removeEventListener("keyup", this._domKeyUp, { capture: true });
+      }
+      this._domKeyDown = null;
+      this._domKeyUp = null;
+    });
   }
 
   drawChrome() {
@@ -783,7 +896,8 @@ export default class Game1Scene extends Phaser.Scene {
     if (this.atmosphereTile) {
       this.atmosphereTile.tilePositionX += 0.012;
     }
-    this.player.updateMovement();
+    const { vx, vy } = this.readGame1Steer();
+    this.player.setVelocity(vx * this.player.speed, vy * this.player.speed);
 
     for (const c of this.collectibles.getChildren()) {
       if (!c.active || !c.getData("overlapLock")) continue;
@@ -792,9 +906,13 @@ export default class Game1Scene extends Phaser.Scene {
       if (d > r) c.setData("overlapLock", false);
     }
 
-    if (Phaser.Input.Keyboard.JustDown(this.keyE)) {
+    const doAction =
+      (this.keyE && Phaser.Input.Keyboard.JustDown(this.keyE)) ||
+      (this._domGame1?.action && !this._domActionPrev);
+    if (doAction) {
       this.tryExamineNearest();
     }
+    this._domActionPrev = !!this._domGame1?.action;
 
     this.refreshHud();
     this.redrawMinimap();
@@ -802,6 +920,12 @@ export default class Game1Scene extends Phaser.Scene {
     const foundCount = 3 - this.collectibles.countActive(true);
 
     if (foundCount >= 3) {
+      if (!this.finishedAutoTransition) {
+        this.finishedAutoTransition = true;
+        const score = this.registry.get("game1Score") ?? 0;
+        this.scene.start("ResultScene", { game: "explore", score });
+        return;
+      }
       this.hint.setText(
         "¡Misión completada! Has encontrado los 3 objetos del descubrimiento de 2002. Pulsa [Enter] o toca abajo para ver resultados.",
       );
@@ -817,5 +941,10 @@ export default class Game1Scene extends Phaser.Scene {
       );
       this.resultPrompt.setText("");
     }
+    const doResult =
+      (this.game1Keys?.enter && Phaser.Input.Keyboard.JustDown(this.game1Keys.enter)) ||
+      (this._domGame1?.result && !this._domResultPrev);
+    if (doResult) this.tryShowResults();
+    this._domResultPrev = !!this._domGame1?.result;
   }
 }

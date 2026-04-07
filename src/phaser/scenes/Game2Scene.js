@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { LAYOUT } from "../layout.js";
 import zonesConfig from "../data/zonesConfig.json";
 import { exitToMainMap } from "../data/introCopy.js";
+import { completeMissionByNumber } from "../../modules/gameState.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -59,6 +60,26 @@ export default class Game2Scene extends Phaser.Scene {
     if (!slot || !this._domRunner) return;
     ev.preventDefault();
     this._domRunner[slot] = isDown;
+  }
+
+  isPlayerGrounded() {
+    const b = this.player?.body;
+    if (!b) return false;
+    return !!(b.blocked?.down || b.touching?.down || b.onFloor?.());
+  }
+
+  tryApplyJump() {
+    if (!this.runActive || this.runPaused) return false;
+    const grounded = this.isPlayerGrounded() || (this.coyoteMs ?? 0) > 0;
+    if (grounded) {
+      this.playerJumps = 0;
+    }
+    const canAirJump = this.playerJumps > 0 && this.playerJumps < MAX_AIR_JUMPS;
+    if (!grounded && !canAirJump) return false;
+    this.player.setVelocityY(-620);
+    this.playerJumps += 1;
+    this.coyoteMs = 0;
+    return true;
   }
 
   clearRunPause() {
@@ -208,6 +229,143 @@ export default class Game2Scene extends Phaser.Scene {
     });
     rect.on("pointerup", run);
     rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
+  }
+
+  addWinOverlayBtn(x, y, w, h, label, fn) {
+    const depth = 93;
+    const fill = 0x204228;
+    const stroke = 0x6cfc8a;
+    const rect = this.add
+      .rectangle(x, y, w, h, fill, 0.98)
+      .setStrokeStyle(2, stroke)
+      .setDepth(depth)
+      .setScrollFactor(0);
+    rect.setInteractive({ useHandCursor: true });
+    const txt = this.add
+      .text(x, y, label, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "14px",
+        color: "#eaffef",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+    const run = () => {
+      if (this._winBtnUsed) return;
+      this._winBtnUsed = true;
+      fn();
+    };
+    rect.on("pointerover", () => {
+      rect.setFillStyle(0x2a5a36);
+      txt.setColor("#ffffff");
+    });
+    rect.on("pointerout", () => {
+      rect.setFillStyle(fill);
+      txt.setColor("#eaffef");
+    });
+    rect.on("pointerup", run);
+    rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
+  }
+
+  runnerResultPayload() {
+    return {
+      game: "runner",
+      score: this.points,
+      vainas: this.vainasCount,
+      datos: this.countDatosUnlocked(),
+      allZones: true,
+    };
+  }
+
+  showRunnerWinOverlay() {
+    if (this._winOverlayActive) return;
+    this._winOverlayActive = true;
+    this._winBtnUsed = false;
+
+    const depth = 90;
+    const cx = LAYOUT.WIDTH / 2;
+    const cy = LAYOUT.HEIGHT / 2;
+    this.add
+      .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x07110b, 0.9)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    const title = this.add
+      .text(cx, cy - 132, "¡FELICIDADES!", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "74px",
+        color: "#6cfc8a",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+    this.tweens.add({
+      targets: title,
+      scale: { from: 0.94, to: 1.04 },
+      alpha: { from: 0.86, to: 1 },
+      duration: 650,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    this.add
+      .text(cx, cy - 48, "MISION SUPERADA", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "30px",
+        color: "#c2ffd0",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.add
+      .text(cx, cy + 6, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente mision.", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "22px",
+        color: "#f5fff7",
+        align: "center",
+        lineSpacing: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.add
+      .text(
+        cx,
+        cy + 84,
+        `Puntos: ${this.points}   |   Vasijas: ${this.vainasCount}   |   Datos: ${this.countDatosUnlocked()} / 5`,
+        {
+          fontFamily: "Arial, sans-serif",
+          fontSize: "18px",
+          color: "#d3ffe0",
+          align: "center",
+        },
+      )
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    const expMission = this.registry.get("expeditionMission");
+    if (expMission === 2) {
+      this.addWinOverlayBtn(cx, cy + 160, 460, 52, "[ IR A LA SIGUIENTE MISION ]", () => {
+        completeMissionByNumber(2);
+        window.location.hash = "#/p04";
+      });
+      this.addWinOverlayBtn(cx, cy + 224, 460, 48, "[ VER RESULTADOS ]", () => {
+        this.scene.start("ResultScene", this.runnerResultPayload());
+      });
+    } else {
+      this.addWinOverlayBtn(cx, cy + 160, 420, 52, "[ VER RESULTADOS ]", () => {
+        this.scene.start("ResultScene", this.runnerResultPayload());
+      });
+      this.addWinOverlayBtn(cx, cy + 224, 420, 48, "[ VOLVER AL MAPA ]", () => {
+        exitToMainMap();
+      });
+    }
   }
 
   releaseObstacle(o) {
@@ -365,6 +523,8 @@ export default class Game2Scene extends Phaser.Scene {
     this.runPaused = false;
     this._gameOverActive = false;
     this._gameOverBtnUsed = false;
+    this.coyoteMs = 0;
+    this.jumpBufferMs = 0;
 
     const groundCenterY = GROUND_TOP_Y + 28;
     const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 1);
@@ -625,9 +785,9 @@ export default class Game2Scene extends Phaser.Scene {
     this.time.delayedCall(120, () => this.spawnInitialWave());
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.time.paused = false;
-      this.tweens.resumeAll();
-      this.physics.resume();
+      if (this.time) this.time.paused = false;
+      this.tweens?.resumeAll?.();
+      if (this.physics?.world) this.physics.resume();
       if (typeof window !== "undefined" && this._domKeyDown) {
         window.removeEventListener("keydown", this._domKeyDown, { capture: true });
         window.removeEventListener("keyup", this._domKeyUp, { capture: true });
@@ -814,14 +974,11 @@ export default class Game2Scene extends Phaser.Scene {
 
   doJump() {
     if (!this.runActive || this.runPaused) return;
-    const b = this.player.body;
-    if (b.touching.down || (this.playerJumps > 0 && this.playerJumps < MAX_AIR_JUMPS)) {
-      if (b.touching.down) {
-        this.playerJumps = 0;
-      }
-      this.player.setVelocityY(-620);
-      this.playerJumps += 1;
+    if (this.tryApplyJump()) {
+      this.jumpBufferMs = 0;
+      return;
     }
+    this.jumpBufferMs = Math.max(this.jumpBufferMs ?? 0, 140);
   }
 
   flashHint(title, sub) {
@@ -854,6 +1011,27 @@ export default class Game2Scene extends Phaser.Scene {
     });
   }
 
+  finishRunnerWin() {
+    if (this.winTriggered) return;
+    this.winTriggered = true;
+    this.runActive = false;
+    this.clearRunPause();
+    if (this._obsTimer) {
+      this._obsTimer.remove(false);
+      this._obsTimer = null;
+    }
+    if (this._itemTimer) {
+      this._itemTimer.remove(false);
+      this._itemTimer = null;
+    }
+    if (this.player?.body) {
+      this.player.setVelocity(0, 0);
+    }
+    this.points += 200;
+    this.flashHint("¡FELICIDADES!", "El cacao llegó a Europa. Viaje histórico completado.");
+    this.showRunnerWinOverlay();
+  }
+
   tryAdvanceZoneFromDistance() {
     const targetZone = Math.min(4, Math.floor(this.runDistance / DIST_PER_ZONE));
     let advancedZone = false;
@@ -863,24 +1041,16 @@ export default class Game2Scene extends Phaser.Scene {
       this.scrollSpeed = z.scrollSpeed;
       this.applyZoneVisuals();
       this.flashBanner(z.bannerText);
+      if (this.zoneIndex === 4) {
+        this.flashHint("¡Tramo final!", "Europa alcanzada. Último esfuerzo para completar el viaje.");
+      }
       advancedZone = true;
     }
     if (advancedZone) {
       this.refreshSpawnTimers();
     }
-    if (this.zoneIndex === 4 && this.runDistance >= 5 * DIST_PER_ZONE && !this.winTriggered) {
-      this.winTriggered = true;
-      this.runActive = false;
-      this.clearRunPause();
-      this.points += 200;
-      this.scene.start("ResultScene", {
-        game: "runner",
-        score: this.points,
-        vainas: this.vainasCount,
-        datos: this.countDatosUnlocked(),
-        allZones: true,
-      });
-    }
+    const classicEnd = this.runDistance >= 5 * DIST_PER_ZONE;
+    if (classicEnd) this.finishRunnerWin();
   }
 
   spawnObstacle(groundCenterY) {
@@ -990,6 +1160,16 @@ export default class Game2Scene extends Phaser.Scene {
       this.invulnerableMs -= delta;
     }
 
+    const groundedNow = this.isPlayerGrounded();
+    if (groundedNow) {
+      this.playerJumps = 0;
+      this.coyoteMs = 120;
+    } else if ((this.coyoteMs ?? 0) > 0) {
+      this.coyoteMs -= delta;
+    } else {
+      this.coyoteMs = 0;
+    }
+
     const ds = (this.scrollSpeed * delta) / 1000;
     this.runDistance += ds;
 
@@ -1033,7 +1213,15 @@ export default class Game2Scene extends Phaser.Scene {
       (this.runnerKeys?.space && Phaser.Input.Keyboard.JustDown(this.runnerKeys.space)) ||
       (this._domRunner?.jump && !this._domJumpPrev);
     if (jumpPressed) {
-      this.doJump();
+      this.jumpBufferMs = 140;
+      this.tryApplyJump();
+    }
+    if ((this.jumpBufferMs ?? 0) > 0) {
+      if (this.tryApplyJump()) {
+        this.jumpBufferMs = 0;
+      } else {
+        this.jumpBufferMs -= delta;
+      }
     }
     this._domJumpPrev = !!this._domRunner?.jump;
   }

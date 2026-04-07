@@ -9,12 +9,26 @@ const CREAM_EDGE = [245, 238, 225];
 const BROWN = [26, 13, 5];
 const BROWN_MUTED = [90, 78, 68];
 
+function drawCornerOrnament(doc, x, y, sx = 1, sy = 1) {
+  doc.setDrawColor(...GOLD);
+  doc.setLineWidth(0.24);
+  doc.line(x, y, x + 7 * sx, y);
+  doc.line(x, y, x, y + 7 * sy);
+  doc.setLineWidth(0.14);
+  doc.line(x + 1.6 * sx, y + 1.6 * sy, x + 6.2 * sx, y + 1.6 * sy);
+  doc.line(x + 1.6 * sx, y + 1.6 * sy, x + 1.6 * sx, y + 6.2 * sy);
+  doc.setLineWidth(0.12);
+  doc.line(x + 2.5 * sx, y + 4.2 * sy, x + 4.8 * sx, y + 4.2 * sy);
+  doc.line(x + 4.2 * sx, y + 2.5 * sy, x + 4.2 * sx, y + 4.8 * sy);
+}
+
 /**
  * Genera y descarga el certificado en PDF (A4 horizontal, solo cliente).
  * @param {{ playerName: string; fileBase?: string }} opts
  */
 export function downloadCertificatePdf(opts) {
   const playerName = (opts.playerName || "Explorador").trim() || "Explorador";
+  const displayName = playerName.toUpperCase();
   const fileBase = opts.fileBase || "certificado-enigma-santa-ana";
 
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
@@ -84,6 +98,9 @@ export function downloadCertificatePdf(opts) {
 
   doc.setFillColor(...CREAM);
   doc.rect(frameIn + bodyPad, bodyTop, pageW - (frameIn + bodyPad) * 2, bodyBottom - bodyTop, "F");
+  // Velo cálido suave para tono pergamino.
+  doc.setFillColor(249, 244, 232);
+  doc.rect(frameIn + bodyPad, bodyTop, pageW - (frameIn + bodyPad) * 2, bodyBottom - bodyTop, "F");
 
   const bx1 = frameIn + 5;
   const bx2 = pageW - frameIn - 5;
@@ -93,6 +110,9 @@ export function downloadCertificatePdf(opts) {
   doc.setDrawColor(...GOLD_SOFT);
   doc.setLineWidth(0.2);
   doc.rect(bx1 + 3, by1 + 2, bx2 - bx1 - 6, by2 - by1 - 4, "S");
+  doc.setDrawColor(194, 166, 110);
+  doc.setLineWidth(0.15);
+  doc.rect(bx1 + 4.4, by1 + 3.4, bx2 - bx1 - 8.8, by2 - by1 - 6.8, "S");
 
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.4);
@@ -105,77 +125,77 @@ export function downloadCertificatePdf(opts) {
   doc.line(bx1 + 3, by2 - 2, bx1 + 3, by2 - 2 - c);
   doc.line(bx2 - 3, by2 - 2, bx2 - 3 - c, by2 - 2);
   doc.line(bx2 - 3, by2 - 2, bx2 - 3, by2 - 2 - c);
+  drawCornerOrnament(doc, bx1 + 4.8, by1 + 4, 1, 1);
+  drawCornerOrnament(doc, bx2 - 4.8, by1 + 4, -1, 1);
+  drawCornerOrnament(doc, bx1 + 4.8, by2 - 4, 1, -1);
+  drawCornerOrnament(doc, bx2 - 4.8, by2 - 4, -1, -1);
 
-  // Dos columnas: izquierda (nombre, distintivo) · derecha (sello + texto)
+  // Composición central limpia y elegante.
   const innerL = bx1 + 8;
   const innerR = bx2 - 8;
   const innerW = innerR - innerL;
-  const colGap = innerL + innerW * 0.56;
-  const leftCx = (innerL + colGap) / 2;
-  const rightColW = innerR - colGap - 6;
-  const rightCx = colGap + 6 + rightColW / 2;
+  const centerCx = innerL + innerW / 2;
+  const rightCx = innerR - 22;
 
-  let y = by1 + 14;
+  const certY = by1 + 18;
+  const recognizeY = certY + 12;
+  const nameY = recognizeY + 12;
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(10);
   doc.setTextColor(...BROWN);
   const certLabel = "CERTIFICADO DIGITAL";
   const labelW = doc.getTextWidth(certLabel);
   doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.3);
-  doc.line(innerL + 6, y - 1.2, leftCx - labelW / 2 - 3, y - 1.2);
-  doc.line(leftCx + labelW / 2 + 3, y - 1.2, colGap - 8, y - 1.2);
-  doc.text(certLabel, leftCx, y, { align: "center" });
-
-  y += 11;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...BROWN_MUTED);
-  doc.text("Se reconoce como", leftCx, y, { align: "center" });
-
-  y += 9;
-  doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.22);
-  doc.line(leftCx - 38, y - 2.5, leftCx + 38, y - 2.5);
+  doc.line(innerL + 10, certY - 1.4, centerCx - labelW / 2 - 6, certY - 1.4);
+  doc.line(centerCx + labelW / 2 + 6, certY - 1.4, innerR - 10, certY - 1.4);
+  doc.text(certLabel, centerCx, certY, { align: "center" });
 
-  y += 1;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.setTextColor(...GOLD);
-  const nameMaxW = colGap - innerL - 14;
-  const nameLines = doc.splitTextToSize(playerName, nameMaxW);
-  doc.text(nameLines, leftCx, y, { align: "center" });
-  y += nameLines.length * 7 + 2;
-
-  doc.line(leftCx - 38, y, leftCx + 38, y);
-
-  y += 9;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
+  doc.setFontSize(12.5);
   doc.setTextColor(...BROWN_MUTED);
-  doc.text("con el título honorífico de", leftCx, y, { align: "center" });
+  doc.text("Se reconoce como", centerCx, recognizeY, { align: "center" });
 
-  y += 8;
-  const badgeW = 76;
-  const badgeH = 8;
-  const badgeX = leftCx - badgeW / 2;
-  doc.setFillColor(...GREEN_DARK);
+  doc.setFont("times", "bold");
+  doc.setFontSize(31);
+  doc.setTextColor(128, 88, 24);
+  const nameMaxW = innerW - 120;
+  const nameLines = doc.splitTextToSize(displayName, nameMaxW);
+  const nameLineH = 10;
+  const nameBlockH = Math.max(1, nameLines.length) * nameLineH;
+  doc.text(nameLines, centerCx, nameY, { align: "center" });
+  // Subrayado fino del nombre.
   doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.18);
+  doc.setLineWidth(0.2);
+  doc.line(centerCx - 38, nameY + nameBlockH + 1.2, centerCx + 38, nameY + nameBlockH + 1.2);
+
+  const honorY = nameY + nameBlockH + 10;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.setTextColor(...BROWN_MUTED);
+  doc.text("con el título honorífico de", centerCx, honorY, { align: "center" });
+
+  const badgeY = honorY + 9.5;
+  const badgeW = 98;
+  const badgeH = 9;
+  const badgeX = centerCx - badgeW / 2;
+  doc.setFillColor(...GREEN_DARK);
+  doc.setDrawColor(173, 141, 76);
+  doc.setLineWidth(0.16);
   if (typeof doc.roundedRect === "function") {
-    doc.roundedRect(badgeX, y - 4.5, badgeW, badgeH, 1.8, 1.8, "FD");
+    doc.roundedRect(badgeX, badgeY - 4.2, badgeW, badgeH, 1.4, 1.4, "FD");
   } else {
-    doc.rect(badgeX, y - 4.5, badgeW, badgeH, "FD");
+    doc.rect(badgeX, badgeY - 4.2, badgeW, badgeH, "FD");
   }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(210, 245, 220);
-  doc.text("Explorador del Cacao", leftCx, y + 0.8, { align: "center" });
+  doc.setFontSize(11.5);
+  doc.setTextColor(220, 242, 228);
+  doc.text("Explorador del Cacao", centerCx, badgeY + 1.3, { align: "center" });
 
-  // Columna derecha: sello + párrafo
-  const sealR = 14;
-  const sealY = by1 + 28;
+  // Sello lateral discreto.
+  const sealR = 11;
+  const sealY = by1 + 42;
   doc.setDrawColor(...GOLD);
   doc.setLineWidth(0.45);
   doc.setFillColor(255, 252, 246);
@@ -185,24 +205,24 @@ export function downloadCertificatePdf(opts) {
   doc.setLineWidth(0.22);
   doc.circle(rightCx, sealY, sealR - 2, "S");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6);
+  doc.setFontSize(5.2);
   doc.setTextColor(...GREEN);
   doc.text("RUTA", rightCx, sealY - 2.8, { align: "center" });
   doc.text("CACAO", rightCx, sealY + 1.2, { align: "center" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(4.8);
+  doc.setFontSize(4.2);
   doc.setTextColor(...BROWN_MUTED);
   doc.text("EC · PE", rightCx, sealY + 5.2, { align: "center" });
-
-  let yRight = sealY + sealR + 6;
+  // Texto descriptivo centrado.
+  const yBody = badgeY + 19;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.setFontSize(10.2);
   doc.setTextColor(...BROWN);
   const bodyLines = doc.splitTextToSize(
     "Por completar la expedición educativa y las tres misiones sobre la historia del cacao y la cultura Mayo-Chinchipe en el sitio Santa Ana-La Florida (Palanda, Ecuador).",
-    rightColW - 4,
+    innerW - 96,
   );
-  doc.text(bodyLines, rightCx, yRight, { align: "center" });
+  doc.text(bodyLines, centerCx, yBody, { align: "center" });
 
   // Pie
   doc.setDrawColor(...GOLD);

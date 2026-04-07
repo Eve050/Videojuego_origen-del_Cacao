@@ -12,6 +12,7 @@ export default class MiniIntroScene extends Phaser.Scene {
 
   init(data) {
     this.pack = data.pack || "game1";
+    this.fromExpedition = data?.fromExpedition === true;
   }
 
   create() {
@@ -21,48 +22,54 @@ export default class MiniIntroScene extends Phaser.Scene {
       return;
     }
 
-    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1610).setOrigin(0);
-    this.add.rectangle(LAYOUT.WIDTH / 2, 120, 920, 2, 0xc8921a, 0.7).setOrigin(0.5);
+    // Placeholder temporal para intro de video (1080x720).
+    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x000000).setOrigin(0);
+    this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, 1080, 720, 0x050505, 1)
+      .setStrokeStyle(2, 0x303030);
 
     this.add
-      .text(LAYOUT.WIDTH / 2, 36, "PROPUESTA DE MINIJUEGOS EDUCATIVOS | El Enigma de Santa Ana – La Florida", {
+      .text(LAYOUT.WIDTH / 2, 74, cfg.title || "INTRO", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "13px",
-        color: "#c8921a",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(LAYOUT.WIDTH / 2, 64, cfg.title, {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "26px",
-        color: "#e4b84a",
+        fontSize: "32px",
+        color: "#f0f0f0",
         fontStyle: "bold",
       })
       .setOrigin(0.5);
 
     this.add
-      .text(LAYOUT.WIDTH / 2, 104, cfg.subtitle, {
+      .text(LAYOUT.WIDTH / 2, 122, cfg.subtitle || "", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "15px",
-        color: "#e8e4dc",
+        fontSize: "16px",
+        color: "#b8b8b8",
         align: "center",
-        wordWrap: { width: 1000 },
+        wordWrap: { width: 980 },
       })
       .setOrigin(0.5);
-
-    if (this.pack === "game3") {
-      this.addLevelButtons(cfg);
-    } else {
-      this.addStandardButtons(cfg);
-    }
 
     this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT - 24, "Plan Binacional Ecuador–Perú • Proyecto Palanda", {
-        fontSize: "11px",
-        color: "#6a6558",
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 20, "PANTALLA NEGRA TEMPORAL\n(AQUÍ IRÁ EL VIDEO DE INTRO)", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "20px",
+        color: "#cfcfcf",
+        align: "center",
+        lineSpacing: 6,
       })
       .setOrigin(0.5);
+
+    this.makeButton(500, "[ COMENZAR JUEGO ]", () => this.startGameNow(cfg));
+    this.makeButton(556, "[ VER INSTRUCCIONES ]", () =>
+      this.scene.start("MiniInstructionsScene", { pack: this.pack, fromExpedition: this.fromExpedition }),
+    );
+    this.makeButton(612, "[ VOLVER AL MAPA ]", () => exitToMainMap());
+  }
+
+  startGameNow(cfg) {
+    if (this.pack === "game3") {
+      const lv = Number(this.registry.get("mazeLevel")) || 1;
+      this.registry.set("mazeLevel", lv);
+    }
+    this.scene.start(cfg.nextScene);
   }
 
   makeButton(y, label, onClick) {

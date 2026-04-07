@@ -30,16 +30,16 @@ export default class BootScene extends Phaser.Scene {
     }
 
     if (expeditionMission === 1) {
-      this.scene.start("Game1Scene");
+      this.scene.start("MiniIntroScene", { pack: "game1", fromExpedition: true });
       return;
     }
     if (expeditionMission === 2) {
-      this.scene.start("MiniInstructionsScene", { pack: "game2", fromExpedition: true });
+      this.scene.start("MiniIntroScene", { pack: "game2", fromExpedition: true });
       return;
     }
     if (expeditionMission === 3) {
       this.registry.set("mazeLevel", 1);
-      this.scene.start("Game3Scene");
+      this.scene.start("MiniIntroScene", { pack: "game3", fromExpedition: true });
       return;
     }
 

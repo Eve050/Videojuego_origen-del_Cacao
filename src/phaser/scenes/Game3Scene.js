@@ -6,18 +6,18 @@ import { exitToMainMap } from "../data/introCopy.js";
 
 /**
  * Laberinto ampliado (~5–8 min a ritmo calmado). Leyenda: # muro · o grano · . vacío · p pieza · * poder · V vasija.
- * Niveles 1–2 comparten mapa; nivel 3 sube agresividad de guardianes.
+ * Niveles 1–2 comparten mapa; nivel 2 cierra la misión.
  */
 const MAZE_L1 = [
   "#####################",
   "#pooooooo#oooooooopo#",
   "#o###o##o#o##o###o#o#",
   "#o#ooooo#o#ooooo#o#o#",
-  "#o#o###o#o#o###o#o#o#",
-  "#o#o#ooooooo#o#o#o#o#",
-  "#ooo#o###V###o#ooo#o#",
-  "#o#o#ooooooo#o#o#o#o#",
-  "#o#o###o#o#o###o#o#o#",
+  "#o#o###ooooooo###o#o#",
+  "#o#o#oooo#o#oooo#o#o#",
+  "#ooo#o##oVo##o#ooo#o#",
+  "#o#o#oooo#o#oooo#o#o#",
+  "#o#o###ooooooo###o#o#",
   "#o#ooooo#o#ooooo#o#o#",
   "#o###o##o#o##o###o#o#",
   "#opoooooo#oooooooopo#",
@@ -27,10 +27,10 @@ const MAZE_L1 = [
 const TILE = 36;
 const PANEL_W = 300;
 const WALL_COLOR_BORDER = 0x8855cc;
-const POWER_MS_BY_LEVEL = [12000, 10000, 8000];
-const SCARED_GUARDIAN_SPEED = 80;
-/** Partida pensada ~5–8 min; al pasar 8:00 el ritual termina en derrota. */
-const LEVEL_TIME_MAX_MS = 8 * 60 * 1000;
+const MAX_MAZE_LEVEL = 2;
+const POWER_MS_BY_LEVEL = [10000, 10000];
+const SCARED_GUARDIAN_SPEED = 72;
+const HUNT_GUARDIAN_COLOR = 0x8b5a2b;
 
 const GUARDIAN_CATCH = {
   KUNKU: "¡El guardián del fuego te encontró! Cuidado.",
@@ -67,16 +67,15 @@ const PANEL_COPY = [
 ];
 
 const ACTIVE_BY_LEVEL = [
-  [0, 2],
-  [0, 2, 1],
+  [0, 1, 2, 3],
   [0, 1, 2, 3],
 ];
 
-const GUARDIAN_SPEED_PX = [120, 160, 200];
-const AI_INTERVAL_MS = [800, 500, 300];
-const BEANS_BY_LEVEL = [80, 72, 64];
-/** Nivel 1 y 2: mismo ritmo del jugador (~5–8 min); nivel 3 más veloz. */
-const PLAYER_SPEED_BY_LV = [86, 86, 108];
+const GUARDIAN_SPEED_PX = [104, 126];
+const AI_INTERVAL_MS = [920, 760];
+const BEANS_BY_LEVEL = [80, 72];
+/** Dos niveles: exploración y cierre final. */
+const PLAYER_SPEED_BY_LV = [86, 90];
 const PIECE_FACTS = [
   "Santa Ana – La Florida: evidencia más antigua del uso de cacao en el mundo (5.500 AP).",
   "La plaza ceremonial circular tiene 40 m de diámetro y fue centro cívico-ritual.",
@@ -202,6 +201,115 @@ export default class Game3Scene extends Phaser.Scene {
       });
       this.powerPods.add(orb);
     }
+    this.powerPodsTotal = anchors.length;
+    this.powerPodsCollected = 0;
+  }
+
+  playPickupFx(x, y, color = 0xffcc66, text = "+10") {
+    const burst = this.add.circle(x, y, 5, color, 0.95).setDepth(18);
+    const ring = this.add.circle(x, y, 8, color, 0).setStrokeStyle(2, color, 0.95).setDepth(18);
+    const lbl = this.add
+      .text(x, y - 8, text, {
+        fontSize: "11px",
+        color: "#fff7dd",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(19);
+
+    this.tweens.add({
+      targets: burst,
+      scale: { from: 0.7, to: 1.8 },
+      alpha: { from: 0.95, to: 0 },
+      duration: 190,
+      ease: "Cubic.easeOut",
+      onComplete: () => burst.destroy(),
+    });
+    this.tweens.add({
+      targets: ring,
+      scale: { from: 0.9, to: 1.9 },
+      alpha: { from: 0.95, to: 0 },
+      duration: 230,
+      ease: "Sine.easeOut",
+      onComplete: () => ring.destroy(),
+    });
+    this.tweens.add({
+      targets: lbl,
+      y: y - 22,
+      alpha: { from: 1, to: 0 },
+      duration: 330,
+      ease: "Sine.easeOut",
+      onComplete: () => lbl.destroy(),
+    });
+
+    if (this.player?.scene) {
+      this.tweens.add({
+        targets: this.player,
+        scaleX: this.player.scaleX * 1.05,
+        scaleY: this.player.scaleY * 1.05,
+        yoyo: true,
+        duration: 90,
+        repeat: 0,
+      });
+    }
+  }
+
+  activateGuardianHuntMode(ms = 10000) {
+    const now = this.time.now;
+    this.powerUntil = Math.max(this.powerUntil, now + ms);
+    this.huntModeMs = ms;
+    this.poderLabel.setVisible(false);
+    for (const g of this.guardians || []) {
+      if (!g?.body?.enable) continue;
+      g.setTint(HUNT_GUARDIAN_COLOR);
+      g.setAlpha(1);
+    }
+    this.hint.setText(
+      `¡MODO CACERIA! +50 · Puedes perseguir guardianes por ${Math.ceil(ms / 1000)}s.`,
+    );
+  }
+
+  sendGuardianToCenter(g) {
+    const home = this.guardianHomes?.[g.guardianIndex] ?? this.guardianCenterHome;
+    if (!home) return;
+    g.setPosition(home.x, home.y);
+    g.setVelocity(0, 0);
+    g.patternIndex = 0;
+    g.stuckTicks = 0;
+    g.lastCellKey = "";
+    g.respawnUntil = this.time.now + 500;
+  }
+
+  collectSingleBean(bean) {
+    if (!bean?.active || this.vasijaReached) return;
+    const bx = bean.x;
+    const by = bean.y;
+    bean.destroy();
+    this.beansLeft -= 1;
+    this.score += 10;
+    this.playPickupFx(bx, by, 0xffb347, "+10");
+    this.updateHud();
+    if (this.beansLeft === 0) {
+      this.hint.setText("¡Todos los granos listos! Ahora recoge todos los orbes para pasar de nivel.");
+      return;
+    }
+    this.hint.setText(
+      `Granos: ${this.beansTotal - this.beansLeft}/${this.beansTotal} · Objetivo: recoger todos los orbes.`,
+    );
+  }
+
+  collectBeansByProximity() {
+    if (!this.beans || !this.player || this.vasijaReached) return;
+    const px = this.player.x;
+    const py = this.player.y;
+    const rPick = TILE * 0.62;
+    const list = this.beans.getChildren();
+    for (let i = list.length - 1; i >= 0; i -= 1) {
+      const bean = list[i];
+      if (!bean?.active) continue;
+      if (Phaser.Math.Distance.Between(px, py, bean.x, bean.y) > rPick) continue;
+      this.collectSingleBean(bean);
+    }
   }
 
   bfsFirstStep(sr, sc, tr, tc) {
@@ -269,11 +377,19 @@ export default class Game3Scene extends Phaser.Scene {
   create() {
     let lv = Number(this.registry.get("mazeLevel")) || 1;
     if (lv < 1) lv = 1;
-    if (lv > 3) lv = 3;
+    if (lv > MAX_MAZE_LEVEL) lv = MAX_MAZE_LEVEL;
     this.mazeLevel = lv;
-    this.maze = MAZE_L1;
+    // Copiamos la forma del lado derecho al izquierdo (simétrico).
+    this.maze = MAZE_L1.map((row) => {
+      const arr = row.split("");
+      const n = arr.length;
+      for (let i = 0; i < Math.floor((n - 1) / 2); i += 1) {
+        arr[i] = arr[n - 1 - i];
+      }
+      return arr.join("");
+    });
 
-    this.maxLives = lv === 3 ? 2 : 3;
+    this.maxLives = 3;
     this.guardianSpeedPx = GUARDIAN_SPEED_PX[lv - 1];
     this.guardianAiMs = AI_INTERVAL_MS[lv - 1];
     this.aiAccum = this.guardianAiMs;
@@ -283,8 +399,8 @@ export default class Game3Scene extends Phaser.Scene {
     this.vasijaHintCd = 0;
     this.powerUntil = 0;
     this.powerMs = POWER_MS_BY_LEVEL[lv - 1] ?? 10000;
+    this.huntModeMs = this.powerMs;
     this.levelStartTime = this.time.now;
-    this.timeOver = false;
 
     this.beansTotal = 0;
     this.piecesTotal = 0;
@@ -307,8 +423,10 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.beansLeft = this.beansTotal;
     this.piecesFound = 0;
-    this.score = 0;
-    this.lives = this.maxLives;
+    const carryScore = Number(this.registry.get("mazeCarryScore")) || 0;
+    const carryLives = Number(this.registry.get("mazeCarryLives")) || this.maxLives;
+    this.score = lv > 1 ? carryScore : 0;
+    this.lives = lv > 1 ? Phaser.Math.Clamp(carryLives, 1, this.maxLives) : this.maxLives;
     this.level = this.mazeLevel;
     this.hitCooldown = 0;
     this.startGrid = { r: 1, c: 2 };
@@ -513,12 +631,34 @@ export default class Game3Scene extends Phaser.Scene {
       { r: 6, c: 1 },
       { r: 11, c: 1 },
     ];
+    const centerBase = this.findWalkableNear(Math.floor(rows / 2), Math.floor(cols / 2), 8);
+    this.guardianCenterHome = {
+      x: this.offsetX + centerBase.c * TILE + TILE / 2,
+      y: this.offsetY + centerBase.r * TILE + TILE / 2,
+    };
+    const homeOffsets = [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [0, -1],
+    ];
+    this.guardianHomes = homeOffsets.map(([dr, dc]) => {
+      const near = this.findWalkableNear(centerBase.r + dr, centerBase.c + dc, 5);
+      return {
+        x: this.offsetX + near.c * TILE + TILE / 2,
+        y: this.offsetY + near.r * TILE + TILE / 2,
+      };
+    });
+
     this.guardians = [];
     this.guardianGroup = this.physics.add.group();
-    this.guardianSpawns = spawnRc.map(({ r, c }) => ({
-      x: this.offsetX + c * TILE + TILE / 2,
-      y: this.offsetY + r * TILE + TILE / 2,
-    }));
+    this.guardianSpawns = spawnRc.map(({ r, c }) => {
+      const near = this.findWalkableNear(r, c, 8);
+      return {
+        x: this.offsetX + near.c * TILE + TILE / 2,
+        y: this.offsetY + near.r * TILE + TILE / 2,
+      };
+    });
 
     const activeIdx = ACTIVE_BY_LEVEL[lv - 1];
     this.activeGuardianIndices = new Set(activeIdx);
@@ -551,10 +691,12 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.guardianGroup, (_p, g) => {
       if (!g.body?.enable) return;
+      if ((g.respawnUntil ?? 0) > this.time.now) return;
       if (this.time.now < this.powerUntil) {
-        const sp = this.guardianSpawns[g.guardianIndex];
-        g.setPosition(sp.x, sp.y);
-        g.setVelocity(0, 0);
+        this.sendGuardianToCenter(g);
+        this.score += 40;
+        this.playPickupFx(g.x, g.y, 0xd6ad60, "+40");
+        this.updateHud();
         this.hint.setText(`¡Guardián disipado! · Poder: ${Math.ceil((this.powerUntil - this.time.now) / 1000)}s`);
         return;
       }
@@ -565,12 +707,15 @@ export default class Game3Scene extends Phaser.Scene {
       this.hint.setText(GUARDIAN_CATCH[name] || GUARDIAN_CATCH.KUNKU);
       this.time.delayedCall(2800, () => {
         this.hint.setText(
-          "Recoge todos los granos para completar el ritual; piezas y poder suman puntos y ayudan frente a los guardianes.",
+          "Recoge los orbes ancestrales para pasar de nivel; piezas y granos suman puntos.",
         );
       });
       if (this.lives <= 0) {
         const hi = Math.max(this.registry.get("mazeHighScore") ?? 0, this.score);
         this.registry.set("mazeHighScore", hi);
+        this.registry.set("mazeLevel", 1);
+        this.registry.remove("mazeCarryScore");
+        this.registry.remove("mazeCarryLives");
         this.scene.start("ResultScene", {
           game: "mazeLose",
           score: this.score,
@@ -583,27 +728,27 @@ export default class Game3Scene extends Phaser.Scene {
     });
 
     this.physics.add.overlap(this.player, this.beans, (_p, pod) => {
-      pod.destroy();
-      this.beansLeft -= 1;
-      this.score += 10;
-      this.updateHud();
-      if (this.beansLeft === 0) {
-        this.winMazeByGranos();
-        return;
-      }
-      this.hint.setText(`Recolecta todos los granos (${this.beansTotal - this.beansLeft}/${this.beansTotal}).`);
+      this.collectSingleBean(pod);
     });
 
     this.physics.add.overlap(this.player, this.powerPods, (_p, pod) => {
       if (!pod?.active) return;
+      const px = pod.x;
+      const py = pod.y;
       this.tweens.killTweensOf(pod);
       pod.destroy();
-      this.powerUntil = this.time.now + this.powerMs;
-      this.poderLabel.setVisible(false);
+      this.powerPodsCollected += 1;
       this.score += 5;
-      this.hint.setText(
-        `¡PODER ANCESTRAL! +5 · Guardianes en modo scared (${Math.round(this.powerMs / 1000)}s).`,
-      );
+      this.playPickupFx(px, py, 0xffdc66, "PODER");
+      // Estilo Pac-Man: este item activa exactamente 10s para perseguir guardianes.
+      this.activateGuardianHuntMode(10000);
+      if (this.powerPodsCollected >= this.powerPodsTotal) {
+        this.completeCurrentMazeLevel();
+      } else {
+        this.hint.setText(
+          `Orbes ancestrales: ${this.powerPodsCollected}/${this.powerPodsTotal}. Sigue recolectando para pasar de nivel.`,
+        );
+      }
     });
 
     this.physics.add.overlap(this.player, this.vasijaSensor, () => {
@@ -612,10 +757,12 @@ export default class Game3Scene extends Phaser.Scene {
         this.vasijaHintCd = this.time.now + 2200;
         if (this.beansLeft > 0) {
           this.hint.setText(
-            `Meta: todos los granos (${this.beansTotal - this.beansLeft}/${this.beansTotal}). La vasija es el corazón del ritual.`,
+            `Meta principal: ORBES ${this.powerPodsCollected}/${this.powerPodsTotal}. Granos: ${this.beansTotal - this.beansLeft}/${this.beansTotal}.`,
           );
         } else {
-          this.hint.setText("¡Cosecha lista! El ritual se completa al reunir todos los granos del laberinto.");
+          this.hint.setText(
+            `¡Cosecha lista! Falta objetivo principal: ORBES ${this.powerPodsCollected}/${this.powerPodsTotal}.`,
+          );
         }
       }
     });
@@ -663,7 +810,7 @@ export default class Game3Scene extends Phaser.Scene {
       .setDepth(25);
 
     this.hint.setText(
-      "Recolecta todos los granos (HUD) y evita guardianes. Flechas / WASD para moverse.",
+      "Recolecta todos los ORBES para pasar de nivel; granos y piezas dan puntos. Flechas / WASD.",
     );
     this.updateHud();
   }
@@ -677,7 +824,7 @@ export default class Game3Scene extends Phaser.Scene {
       .setDepth(6);
 
     this.add
-      .text(px + 14, LAYOUT.GAME_TOP + 18, "GUARDIANES\nESPIRITUALES", {
+      .text(px + 14, LAYOUT.GAME_TOP + 18, "4 GUARDIANES\nESPIRITUALES", {
         fontSize: "24px",
         color: "#e8c048",
         fontStyle: "bold",
@@ -759,25 +906,40 @@ export default class Game3Scene extends Phaser.Scene {
   /**
    * Victoria principal: último grano del laberinto. Evita doble disparo con vasija o tiempo.
    */
-  winMazeByGranos() {
+  completeCurrentMazeLevel() {
     if (this.vasijaReached) return;
     this.vasijaReached = true;
+    if (this.level < MAX_MAZE_LEVEL) {
+      this.score += 120;
+      this.registry.set("mazeCarryScore", this.score);
+      this.registry.set("mazeCarryLives", this.lives);
+      this.registry.set("mazeLevel", this.level + 1);
+      this.hint.setText("¡Recolectaste todos los orbes! Pasas al nivel final.");
+      this.time.delayedCall(850, () => this.scene.restart());
+      return;
+    }
+
     this.score += 180;
     const hi = Math.max(this.registry.get("mazeHighScore") ?? 0, this.score);
     this.registry.set("mazeHighScore", hi);
-    this.hint.setText("¡Cosecha completa! Los guardianes honran tu recorrido.");
+    this.registry.set("mazeLevel", 1);
+    this.registry.remove("mazeCarryScore");
+    this.registry.remove("mazeCarryLives");
+    this.hint.setText("¡Nivel final superado! Ya puedes entregar el certificado.");
     this.scene.start("ResultScene", {
       game: "mazeWin",
       score: this.score,
       pieces: this.piecesFound,
       piecesTotal: this.piecesTotal,
+      finalLevel: true,
     });
   }
 
   updateHud() {
     const got = this.beansTotal - this.beansLeft;
     this.hudLeft.setText(`GRANOS: ${got}/${this.beansTotal}`);
-    this.hudMid.setText(`PIEZAS: ${this.piecesFound}/${this.piecesTotal}`);
+    const podsNow = `${this.powerPodsCollected ?? 0}/${this.powerPodsTotal ?? 4}`;
+    this.hudMid.setText(`PIEZAS: ${this.piecesFound}/${this.piecesTotal} · ORBES: ${podsNow}`);
     const scared = this.time.now < this.powerUntil;
     const extra = scared ? `  PODER ${Math.ceil((this.powerUntil - this.time.now) / 1000)}s` : "";
     this.hudRight.setText(`${this.heartsLine()}     Nv. ${this.level}${extra}`);
@@ -839,13 +1001,69 @@ export default class Game3Scene extends Phaser.Scene {
       const piece = list[i];
       if (!piece?.active) continue;
       if (Phaser.Math.Distance.Between(px, py, piece.x, piece.y) > rPick) continue;
+      const sx = piece.x;
+      const sy = piece.y;
       piece.destroy();
       this.piecesFound += 1;
       this.score += 50;
+      this.playPickupFx(sx, sy, 0xb78cff, "+50");
       this.updateHud();
       const idx = Math.max(0, Math.min(PIECE_FACTS.length - 1, this.piecesFound - 1));
       this.hint.setText(`¡PIEZA ${this.piecesFound}/4! +50 · DATO CULTURAL: ${PIECE_FACTS[idx]}`);
     }
+  }
+
+  patternStepForGuardian(g, gr, gc) {
+    const orders = {
+      KUNKU: [
+        [0, 1],
+        [1, 0],
+        [0, -1],
+        [-1, 0],
+      ],
+      SUMAK: [
+        [1, 0],
+        [0, 1],
+        [-1, 0],
+        [0, -1],
+      ],
+      ALLPA: [
+        [0, -1],
+        [-1, 0],
+        [0, 1],
+        [1, 0],
+      ],
+      WASI: [
+        [-1, 0],
+        [0, -1],
+        [1, 0],
+        [0, 1],
+      ],
+    };
+    const seq = orders[g.guardianType] ?? orders.KUNKU;
+    if (typeof g.patternIndex !== "number") g.patternIndex = 0;
+    for (let i = 0; i < seq.length; i += 1) {
+      const idx = (g.patternIndex + i) % seq.length;
+      const [dr, dc] = seq[idx];
+      if (this.walkable(gr + dr, gc + dc)) {
+        g.patternIndex = (idx + 1) % seq.length;
+        return { dr, dc };
+      }
+    }
+    return { dr: 0, dc: 0 };
+  }
+
+  anyWalkableStep(gr, gc) {
+    const dirs = Phaser.Utils.Array.Shuffle([
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ]);
+    for (const [dr, dc] of dirs) {
+      if (this.walkable(gr + dr, gc + dc)) return { dr, dc };
+    }
+    return { dr: 0, dc: 0 };
   }
 
   applyGridMove(guardian, dr, dc, speedPx = this.guardianSpeedPx) {
@@ -867,7 +1085,7 @@ export default class Game3Scene extends Phaser.Scene {
       const g = this.guardians[i];
       if (!g.body?.enable) continue;
       if (scared) {
-        g.setTint(0xccdfff);
+        g.setTint(HUNT_GUARDIAN_COLOR);
         const left = this.powerUntil - this.time.now;
         if (left <= 5000) {
           g.setAlpha(0.35 + 0.65 * Math.abs(Math.sin(this.time.now / 95)));
@@ -880,6 +1098,13 @@ export default class Game3Scene extends Phaser.Scene {
       }
 
       const { r: gr, c: gc } = this.worldToCell(g.x, g.y);
+      const cellKey = `${gr},${gc}`;
+      if (g.lastCellKey === cellKey) {
+        g.stuckTicks = (g.stuckTicks ?? 0) + 1;
+      } else {
+        g.stuckTicks = 0;
+      }
+      g.lastCellKey = cellKey;
       let dr = 0;
       let dc = 0;
 
@@ -936,6 +1161,23 @@ export default class Game3Scene extends Phaser.Scene {
         }
       }
 
+      // Fallback común: si alguno se atasca o el path no existe, todos siguen su patrón.
+      if (dr === 0 && dc === 0) {
+        const step = this.patternStepForGuardian(g, gr, gc);
+        dr = step.dr;
+        dc = step.dc;
+      }
+      if (!this.walkable(gr + dr, gc + dc)) {
+        const step = this.patternStepForGuardian(g, gr, gc);
+        dr = step.dr;
+        dc = step.dc;
+      }
+      if ((g.stuckTicks ?? 0) >= 2) {
+        const step = this.anyWalkableStep(gr, gc);
+        dr = step.dr;
+        dc = step.dc;
+      }
+
       if (dr === 0 && dc === 0) {
         g.setVelocity(0, 0);
       } else {
@@ -945,29 +1187,16 @@ export default class Game3Scene extends Phaser.Scene {
   }
 
   update(time, delta) {
-    if (this.timeOver || !this.hudTime) return;
+    if (!this.hudTime) return;
 
     const elapsed = this.time.now - this.levelStartTime;
-    const left = LEVEL_TIME_MAX_MS - elapsed;
-    this.hudTime.setText(`TIEMPO ${fmtTime(elapsed)} / ${fmtTime(LEVEL_TIME_MAX_MS)}${left < 60000 ? "  ¡Apúrate!" : ""}`);
-
-    if (elapsed >= LEVEL_TIME_MAX_MS && !this.vasijaReached) {
-      this.timeOver = true;
-      const hi = Math.max(this.registry.get("mazeHighScore") ?? 0, this.score);
-      this.registry.set("mazeHighScore", hi);
-      this.scene.start("ResultScene", {
-        game: "mazeLose",
-        score: this.score,
-        highScore: hi,
-        detail: "Se agotaron los 8 minutos del ritual. La vasija sigue esperando.",
-      });
-      return;
-    }
+    this.hudTime.setText(`TIEMPO ${fmtTime(elapsed)}`);
 
     if (this.hitCooldown > 0) {
       this.hitCooldown -= delta;
     }
     this.updatePacPlayer();
+    this.collectBeansByProximity();
     this.collectMazePiecesByProximity();
 
     for (const g of this.guardians) {

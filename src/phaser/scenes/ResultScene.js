@@ -67,17 +67,22 @@ export default class ResultScene extends Phaser.Scene {
       title = "GAME OVER";
       body = `Sin vidas.\n\nPuntos: ${score}\nVasijas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5\n\nEl camino del cacao no es fácil — ¡inténtalo otra vez!`;
     } else if (game === "runner") {
-      title = "¡El cacao llegó a Europa! El viaje de 5.500 años se ha completado.";
+      title = "¡FELICIDADES!";
       const vainas = this.payload.vainas ?? 0;
       const datos = this.payload.datos ?? 0;
-      body = `Partiste de Palanda y llevaste el cacao al mundo entero.\n\nVasijas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
+      body = `Misión 2 superada con éxito.\nYa puedes pasar a la siguiente misión.\n\nVasijas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
       if (this.payload.allZones && score != null) {
-        body += `\n\nPuntuación total: ${score} puntos\n\n«Eres el mensajero del cacao ancestral. Como la botella cerámica de Santa Ana – La Florida, tú también portas el origen del mundo.»`;
+        body += `\n\nPuntuación total: ${score} puntos\n\n¡Suerte en la siguiente misión, explorador del cacao ancestral!`;
       }
     } else if (game === "mazeWin") {
-      title = "¡Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón!";
+      title = this.payload.finalLevel
+        ? "¡Felicidades! Superaste el nivel final del Cacao Maze."
+        : "¡Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón!";
       const pt = this.payload.piecesTotal ?? 4;
       body = `Todos los granos de cacao han sido recolectados.\n\nPiezas arqueológicas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
+      if (this.payload.finalLevel) {
+        body += "\n\nYa completaste la misión 3. Puedes continuar para obtener tu certificado.";
+      }
     } else if (game === "mazeLose") {
       title = "Los guardianes han protegido el laberinto sagrado...";
       body = `El cacao ancestral de 5.500 años sigue esperando ser descubierto.\n\nPuntos: ${score} | Mejor puntaje: ${this.payload.highScore ?? score}`;
@@ -86,8 +91,8 @@ export default class ResultScene extends Phaser.Scene {
       }
     }
 
-    const titleSize = game === "runner_fail" ? "42px" : "22px";
-    const titleColor = game === "runner_fail" ? "#ff6b6b" : "#c8921a";
+    const titleSize = game === "runner_fail" ? "42px" : game === "runner" ? "48px" : "22px";
+    const titleColor = game === "runner_fail" ? "#ff6b6b" : game === "runner" ? "#6cfc8a" : "#c8921a";
     this.add
       .text(LAYOUT.WIDTH / 2, game === "runner_fail" ? 120 : 140, title, {
         fontSize: titleSize,
@@ -155,7 +160,8 @@ export default class ResultScene extends Phaser.Scene {
           this.resultBtn(y0, "[ VER DATOS CULTURALES ]", () => this.showMazeFacts());
         }
         const y1 = game === "explore" || game === "runner" || game === "mazeWin" ? y0 + 44 : y0;
-        this.resultBtn(y1, "[ CONTINUAR EXPEDICION ]", () => {
+        const continueLabel = game === "runner" ? "[ IR A LA SIGUIENTE MISIÓN ]" : "[ CONTINUAR EXPEDICIÓN ]";
+        this.resultBtn(y1, continueLabel, () => {
           completeMissionByNumber(exp);
           window.location.hash = "#/p04";
         });

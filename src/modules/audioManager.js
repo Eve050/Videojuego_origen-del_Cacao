@@ -22,7 +22,7 @@ function getOrCreateAudioElement() {
 }
 
 export function isAudioEnabled() {
-  return window.localStorage.getItem(AUDIO_ENABLED_KEY) !== "off";
+  return window.localStorage.getItem(AUDIO_ENABLED_KEY) === "on";
 }
 
 export function setAudioEnabled(enabled) {
