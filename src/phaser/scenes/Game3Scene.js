@@ -3,6 +3,7 @@ import { LAYOUT } from "../layout.js";
 import Player from "../entities/Player.js";
 import Guardian from "../entities/Guardian.js";
 import { exitToMainMap } from "../data/introCopy.js";
+import { duckAmbientAudio } from "../../modules/audioManager.js";
 
 /**
  * Laberinto ampliado (~5–8 min a ritmo calmado). Leyenda: # muro · o grano · . vacío · p pieza · * poder · V vasija.
@@ -95,6 +96,18 @@ export default class Game3Scene extends Phaser.Scene {
     super({ key: "Game3Scene" });
   }
 
+  preload() {
+    this.load.audio("sfx_relic", "/assets/audio/reliquia-encontrada.mp3");
+  }
+
+  ensureSfxUnlocked() {
+    const ctx = this.sound?.context;
+    if (!ctx) return;
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => {});
+    }
+  }
+
   walkable(r, c) {
     if (r < 0 || c < 0 || r >= this.maze.length || c >= this.maze[0].length) return false;
     const ch = this.maze[r][c];
@@ -137,6 +150,7 @@ export default class Game3Scene extends Phaser.Scene {
     const slot = byCode[ev.code] ?? byKey[ev.key];
     if (!slot || !this._domMaze) return;
     ev.preventDefault();
+    if (isDown) this.ensureSfxUnlocked();
     this._domMaze[slot] = isDown;
   }
 
@@ -254,6 +268,17 @@ export default class Game3Scene extends Phaser.Scene {
     }
   }
 
+  playClippedSfx(key, volume = 0.4, maxMs = 2000) {
+    this.ensureSfxUnlocked();
+    if (!this.cache.audio.exists(key)) return;
+    const s = this.sound.add(key);
+    s.play({ volume });
+    this.time.delayedCall(maxMs, () => {
+      if (s.isPlaying) s.stop();
+      s.destroy();
+    });
+  }
+
   activateGuardianHuntMode(ms = 10000) {
     const now = this.time.now;
     this.powerUntil = Math.max(this.powerUntil, now + ms);
@@ -310,6 +335,114 @@ export default class Game3Scene extends Phaser.Scene {
       if (Phaser.Math.Distance.Between(px, py, bean.x, bean.y) > rPick) continue;
       this.collectSingleBean(bean);
     }
+  }
+
+  showMazeLevelWinOverlay(nextLevel) {
+    if (this._levelWinOverlayActive) return;
+    this._levelWinOverlayActive = true;
+    if (this.player?.body) this.player.setVelocity(0, 0);
+    for (const g of this.guardians || []) {
+      g?.setVelocity?.(0, 0);
+    }
+
+    const depth = 90;
+    const cx = LAYOUT.WIDTH / 2;
+    const cy = LAYOUT.HEIGHT / 2;
+    this.add
+      .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x07110b, 0.9)
+      .setDepth(depth)
+      .setScrollFactor(0);
+
+    const title = this.add
+      .text(cx, cy - 132, "¡FELICIDADES!", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "74px",
+        color: "#6cfc8a",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+    this.tweens.add({
+      targets: title,
+      scale: { from: 0.94, to: 1.04 },
+      alpha: { from: 0.86, to: 1 },
+      duration: 650,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    this.add
+      .text(cx, cy - 48, "MISIÓN SUPERADA", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "30px",
+        color: "#c2ffd0",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.add
+      .text(cx, cy + 6, `Ya superaste este nivel del Cacao Maze.\nPresiona para iniciar el Nivel ${nextLevel}.`, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "22px",
+        color: "#f5fff7",
+        align: "center",
+        lineSpacing: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    this.add
+      .text(cx, cy + 84, `Puntos: ${this.score}   |   Vidas: ${this.lives}   |   Nivel: ${this.level}/${MAX_MAZE_LEVEL}`, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "18px",
+        color: "#d3ffe0",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 1)
+      .setScrollFactor(0);
+
+    const fill = 0x204228;
+    const rect = this.add
+      .rectangle(cx, cy + 160, 460, 52, fill, 0.98)
+      .setStrokeStyle(2, 0x6cfc8a)
+      .setDepth(depth + 3)
+      .setScrollFactor(0)
+      .setInteractive({ useHandCursor: true });
+    const txt = this.add
+      .text(cx, cy + 160, `[ INICIAR NIVEL ${nextLevel} ]`, {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "14px",
+        color: "#eaffef",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 4)
+      .setScrollFactor(0);
+    rect.on("pointerover", () => {
+      rect.setFillStyle(0x2a5a36);
+      txt.setColor("#ffffff");
+    });
+    rect.on("pointerout", () => {
+      rect.setFillStyle(fill);
+      txt.setColor("#eaffef");
+    });
+    rect.on("pointerdown", () => {
+      if (this._levelWinOverlayUsed) return;
+      this._levelWinOverlayUsed = true;
+      this.startNextMazeLevel();
+    });
+  }
+
+  startNextMazeLevel() {
+    this.registry.set("mazeCarryScore", this.score);
+    this.registry.set("mazeCarryLives", this.lives);
+    this.registry.set("mazeLevel", this.level + 1);
+    this.scene.restart();
   }
 
   bfsFirstStep(sr, sc, tr, tc) {
@@ -375,6 +508,8 @@ export default class Game3Scene extends Phaser.Scene {
   }
 
   create() {
+    this._levelWinOverlayActive = false;
+    this._levelWinOverlayUsed = false;
     let lv = Number(this.registry.get("mazeLevel")) || 1;
     if (lv < 1) lv = 1;
     if (lv > MAX_MAZE_LEVEL) lv = MAX_MAZE_LEVEL;
@@ -481,12 +616,15 @@ export default class Game3Scene extends Phaser.Scene {
     this.player.clearTint();
     this.player.speed = PLAYER_SPEED_BY_LV[lv - 1];
     this.player.setDepth(5);
-    this.player.setScale(0.58);
+    this.player.setScale(0.72);
     if (typeof this.player.refreshBody === "function") {
       this.player.refreshBody();
     }
     if (this.player.body) {
-      const pr = Math.max(6, Math.round(Math.min(this.player.displayWidth, this.player.displayHeight) * 0.38));
+      const pr = Math.min(
+        11,
+        Math.max(6, Math.round(Math.min(this.player.displayWidth, this.player.displayHeight) * 0.38)),
+      );
       this.player.body.setCircle(pr);
       this.player.body.setCollideWorldBounds(false);
       this.player.body.setAllowGravity(false);
@@ -522,6 +660,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     this._domMaze = { up: false, down: false, left: false, right: false };
     this.input.on("pointerdown", () => {
+      this.ensureSfxUnlocked();
       if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
       const canvas = this.game?.canvas;
       if (canvas && typeof canvas.focus === "function") {
@@ -737,6 +876,7 @@ export default class Game3Scene extends Phaser.Scene {
       const py = pod.y;
       this.tweens.killTweensOf(pod);
       pod.destroy();
+      this.playClippedSfx("sfx_relic", 0.5, 2000);
       this.powerPodsCollected += 1;
       this.score += 5;
       this.playPickupFx(px, py, 0xffdc66, "PODER");
@@ -909,13 +1049,14 @@ export default class Game3Scene extends Phaser.Scene {
   completeCurrentMazeLevel() {
     if (this.vasijaReached) return;
     this.vasijaReached = true;
+    if (this.cache.audio.exists("sfx_mission_complete")) {
+      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
+      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+    }
     if (this.level < MAX_MAZE_LEVEL) {
       this.score += 120;
-      this.registry.set("mazeCarryScore", this.score);
-      this.registry.set("mazeCarryLives", this.lives);
-      this.registry.set("mazeLevel", this.level + 1);
       this.hint.setText("¡Recolectaste todos los orbes! Pasas al nivel final.");
-      this.time.delayedCall(850, () => this.scene.restart());
+      this.showMazeLevelWinOverlay(this.level + 1);
       return;
     }
 
@@ -1004,6 +1145,7 @@ export default class Game3Scene extends Phaser.Scene {
       const sx = piece.x;
       const sy = piece.y;
       piece.destroy();
+      this.playClippedSfx("sfx_relic", 0.52, 2000);
       this.piecesFound += 1;
       this.score += 50;
       this.playPickupFx(sx, sy, 0xb78cff, "+50");
@@ -1188,6 +1330,14 @@ export default class Game3Scene extends Phaser.Scene {
 
   update(time, delta) {
     if (!this.hudTime) return;
+    if (this._levelWinOverlayActive) {
+      if (this.player?.body) this.player.setVelocity(0, 0);
+      for (const g of this.guardians || []) {
+        g?.setVelocity?.(0, 0);
+      }
+      this.updateHud();
+      return;
+    }
 
     const elapsed = this.time.now - this.levelStartTime;
     this.hudTime.setText(`TIEMPO ${fmtTime(elapsed)}`);

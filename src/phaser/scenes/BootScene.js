@@ -11,6 +11,10 @@ export default class BootScene extends Phaser.Scene {
 
   preload() {
     this.load.image("bg_selva_run", "/assets/images/fondo-selva-noche.webp");
+    this.load.audio("sfx_ok", "/assets/audio/acierto.mp3");
+    this.load.audio("sfx_error", "/assets/audio/error-sound.mp3");
+    this.load.audio("sfx_mission_complete", "/assets/audio/mision-completada.mp3");
+    this.load.audio("sfx_relic", "/assets/audio/reliquia-encontrada.mp3");
   }
 
   create() {

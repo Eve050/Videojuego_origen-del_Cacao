@@ -15,6 +15,8 @@ const PLAZA_INNER_R = 48;
 const HOUSE_RING_R = PLAZA_OUTER_R - 76;
 /** Área de juego documentada */
 const AREA_LABEL = "PLAZA CIRCULAR HUNDIDA";
+const GAME1_LEVELS = 2;
+const LEVEL_ITEMS_TOTAL = 3;
 
 /**
  * Minijuego 1 — El Origen del Cacao (doc §2.x).
@@ -44,6 +46,7 @@ export default class Game1Scene extends Phaser.Scene {
     const slot = byCode[ev.code];
     if (!slot || !this._domGame1) return;
     ev.preventDefault();
+    if (isDown) this.ensureSfxUnlocked();
     this._domGame1[slot] = isDown;
   }
 
@@ -87,14 +90,39 @@ export default class Game1Scene extends Phaser.Scene {
     return { vx, vy };
   }
 
+  ensureSfxUnlocked() {
+    const ctx = this.sound?.context;
+    if (!ctx) return;
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => {});
+    }
+  }
+
+  playClippedSfx(key, volume = 0.5, maxMs = 2000) {
+    this.ensureSfxUnlocked();
+    if (!this.cache.audio.exists(key)) return;
+    const s = this.sound.add(key);
+    s.play({ volume });
+    this.time.delayedCall(maxMs, () => {
+      if (s.isPlaying) s.stop();
+      s.destroy();
+    });
+  }
+
   preload() {
     this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
+    this.load.audio("sfx_relic", "/assets/audio/reliquia-encontrada.mp3");
   }
 
   create() {
     this.registry.set("game1Score", 0);
     this.pendingCollectible = null;
     this.finishedAutoTransition = false;
+    this.levelTransitionActive = false;
+    this.levelTransitionUi = null;
+    this.levelCollectibleDecor = [];
+    this.currentLevel = 1;
+    this.levelTotals = { 1: LEVEL_ITEMS_TOTAL, 2: LEVEL_ITEMS_TOTAL };
     this.joystickActive = false;
     this.stickCx = 0;
     this.stickCy = 0;
@@ -106,6 +134,7 @@ export default class Game1Scene extends Phaser.Scene {
       this.pendingCollectible = null;
       if (item && item.active) {
         if (data.correct || data.exhausted) {
+          this.playClippedSfx("sfx_relic", 0.52, 2000);
           item.destroy();
         } else {
           item.setData("quizBusy", false);
@@ -128,6 +157,10 @@ export default class Game1Scene extends Phaser.Scene {
     this.player = new Player(this, startX, startY);
     this.player.setTexture("ph_player");
     this.player.setDepth(8);
+    this.player.setScale(1.48);
+    if (this.player.body) {
+      this.player.body.setSize(33, 35, true);
+    }
 
     this.physics.add.collider(this.player, this.obstacles);
     if (this.collisionTileLayer) {
@@ -180,6 +213,7 @@ export default class Game1Scene extends Phaser.Scene {
       this.game.canvas.style.outline = "none";
     }
     this.input.on("pointerdown", () => {
+      this.ensureSfxUnlocked();
       if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
       const canvas = this.game?.canvas;
       if (canvas && typeof canvas.focus === "function") {
@@ -642,43 +676,57 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   buildCollectibles() {
-    const cx = 960;
     const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
+    const levelDefs =
+      this.currentLevel === 1
+        ? [
+            { kind: "bottle", x: 835, y: cy + 2, shadowY: cy + 30, qid: "objeto-1-botella" },
+            { kind: "vasija", x: 960, y: LAYOUT.GAME_TOP + 148, shadowY: LAYOUT.GAME_TOP + 180, qid: "objeto-2-vasija" },
+            { kind: "turquesa", x: 1098, y: cy + 4, shadowY: cy + 34, qid: "objeto-3-turquesa" },
+          ]
+        : [
+            { kind: "bottle", x: 736, y: LAYOUT.GAME_TOP + 224, shadowY: LAYOUT.GAME_TOP + 252, qid: "objeto-1-botella" },
+            { kind: "vasija", x: 1168, y: LAYOUT.GAME_TOP + 214, shadowY: LAYOUT.GAME_TOP + 244, qid: "objeto-2-vasija" },
+            { kind: "turquesa", x: 957, y: LAYOUT.GAME_TOP + 360, shadowY: LAYOUT.GAME_TOP + 392, qid: "objeto-3-turquesa" },
+          ];
 
-    this.add.ellipse(cx - 125, cy + 30, 58, 14, 0x081210, 0.38).setDepth(4);
-    const bottle = this.add.sprite(cx - 125, cy + 2, "ph_g1_bottle");
-    bottle.setScale(1.02);
-    bottle.setDepth(5);
-    this.decorateCollectible(bottle, "objeto-1-botella", 72, 92, "bottle");
-
-    this.add.ellipse(cx, LAYOUT.GAME_TOP + 180, 58, 18, 0x081210, 0.42).setDepth(4);
-    const vasija = this.add.sprite(cx, LAYOUT.GAME_TOP + 148, "ph_vessel");
-    vasija.setScale(1.52);
-    vasija.setDepth(6);
-    this.decorateCollectible(vasija, "objeto-2-vasija", 72, 92, "vasija");
-
-    this.add.ellipse(cx + 138, cy + 34, 58, 15, 0x081210, 0.42).setDepth(4);
-    const turq = this.add.container(cx + 138, cy + 4);
-    const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
-    neckSpr.setScale(1.12);
-    turq.add(neckSpr);
-    turq.setDepth(5);
-    turq.setData("questionId", "objeto-3-turquesa");
-    turq.setData("quizBusy", false);
-    turq.setData("overlapLock", false);
-    turq.setData("interactR", 78);
-    turq.setData("promptR", 96);
-    turq.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
-    turq.on("pointerdown", () => this.pointerExamine(turq));
-    this.collectibles.add(turq);
-    this.tweens.add({
-      targets: turq,
-      y: cy + 2,
-      duration: 1400,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
-    });
+    for (const def of levelDefs) {
+      const shadow = this.add.ellipse(def.x, def.shadowY, 58, 16, 0x081210, 0.4).setDepth(4);
+      this.levelCollectibleDecor.push(shadow);
+      if (def.kind === "bottle") {
+        const bottle = this.add.sprite(def.x, def.y, "ph_g1_bottle");
+        bottle.setScale(1.02);
+        bottle.setDepth(5);
+        this.decorateCollectible(bottle, def.qid, 72, 92, "bottle");
+      } else if (def.kind === "vasija") {
+        const vasija = this.add.sprite(def.x, def.y, "ph_vessel");
+        vasija.setScale(1.52);
+        vasija.setDepth(6);
+        this.decorateCollectible(vasija, def.qid, 72, 92, "vasija");
+      } else {
+        const turq = this.add.container(def.x, def.y);
+        const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
+        neckSpr.setScale(1.12);
+        turq.add(neckSpr);
+        turq.setDepth(5);
+        turq.setData("questionId", def.qid);
+        turq.setData("quizBusy", false);
+        turq.setData("overlapLock", false);
+        turq.setData("interactR", 78);
+        turq.setData("promptR", 96);
+        turq.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
+        turq.on("pointerdown", () => this.pointerExamine(turq));
+        this.collectibles.add(turq);
+        this.tweens.add({
+          targets: turq,
+          y: def.y - 2,
+          duration: 1400,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      }
+    }
   }
 
   decorateCollectible(sprite, qid, interactR, promptR, kind) {
@@ -808,10 +856,108 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   refreshHud() {
-    const found = 3 - this.collectibles.countActive(true);
+    const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
+    const found = total - this.collectibles.countActive(true);
     const score = this.registry.get("game1Score") ?? 0;
     this.hudPts.setText(`PUNTOS: ${String(score).padStart(3, "0")}`);
-    this.hudObj.setText(`OBJETOS: ${found} / 3`);
+    this.hudObj.setText(`NIVEL ${this.currentLevel}/${GAME1_LEVELS} · OBJETOS: ${found} / ${total}`);
+  }
+
+  showLevelTransition() {
+    if (this.levelTransitionActive || this.currentLevel >= GAME1_LEVELS) return;
+    this.levelTransitionActive = true;
+    this.pendingCollectible = null;
+    if (this.player?.body) {
+      this.player.setVelocity(0, 0);
+    }
+
+    const ui = [];
+    const depth = 220;
+    const dim = this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x05070c, 0.88)
+      .setScrollFactor(0)
+      .setDepth(depth)
+      .setInteractive({ useHandCursor: true });
+    ui.push(dim);
+
+    const panel = this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, 760, 300, 0x1a241a, 0.98)
+      .setScrollFactor(0)
+      .setDepth(depth + 1)
+      .setStrokeStyle(3, 0xc8921a);
+    ui.push(panel);
+
+    const title = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 76, "¡FELICIDADES!", {
+        fontSize: "58px",
+        color: "#6cfc8a",
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(depth + 2);
+    ui.push(title);
+
+    const subtitle = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 24, "MISIÓN SUPERADA\nCompletaste el Nivel 1.\nPrepárate para iniciar el Nivel 2.", {
+        fontSize: "28px",
+        color: "#f9f2dd",
+        align: "center",
+        lineSpacing: 8,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(depth + 2);
+    ui.push(subtitle);
+
+    const btnBg = this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 72, 360, 56, 0x2b482f, 1)
+      .setStrokeStyle(2, 0x8ceda2)
+      .setScrollFactor(0)
+      .setDepth(depth + 2)
+      .setInteractive({ useHandCursor: true });
+    ui.push(btnBg);
+    const btnTxt = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 72, "INICIAR NIVEL 2", {
+        fontSize: "22px",
+        color: "#eaffef",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(depth + 3);
+    ui.push(btnTxt);
+
+    const startLevel2 = () => this.startSecondLevel();
+    btnBg.on("pointerdown", startLevel2);
+    btnBg.on("pointerover", () => btnTxt.setColor("#ffffff"));
+    btnBg.on("pointerout", () => btnTxt.setColor("#eaffef"));
+    dim.on("pointerdown", startLevel2);
+
+    this.levelTransitionUi = ui;
+  }
+
+  startSecondLevel() {
+    if (!this.levelTransitionActive) return;
+    if (this.levelTransitionUi) {
+      this.levelTransitionUi.forEach((el) => el?.destroy());
+      this.levelTransitionUi = null;
+    }
+    this.levelTransitionActive = false;
+    this.currentLevel = 2;
+
+    this.collectibles.clear(true, true);
+    this.levelCollectibleDecor.forEach((el) => el?.destroy());
+    this.levelCollectibleDecor = [];
+    this.buildCollectibles();
+
+    this.player.setPosition(960, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 + 20);
+    if (this.player?.body) {
+      this.player.setVelocity(0, 0);
+    }
+    this.hint.setText("Nivel 2 iniciado. Examina los tres objetos para completar la misión.");
+    this.resultPrompt.setText("");
   }
 
   redrawMinimap() {
@@ -882,8 +1028,9 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   tryShowResults() {
-    const found = 3 - this.collectibles.countActive(true);
-    if (found < 3) return;
+    const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
+    const found = total - this.collectibles.countActive(true);
+    if (this.currentLevel < GAME1_LEVELS || found < total) return;
     const score = this.registry.get("game1Score") ?? 0;
     this.scene.start("ResultScene", { game: "explore", score });
   }
@@ -895,6 +1042,14 @@ export default class Game1Scene extends Phaser.Scene {
     }
     if (this.atmosphereTile) {
       this.atmosphereTile.tilePositionX += 0.012;
+    }
+    if (this.levelTransitionActive) {
+      if (this.player?.body) this.player.setVelocity(0, 0);
+      this.refreshHud();
+      this.redrawMinimap();
+      this._domActionPrev = !!this._domGame1?.action;
+      this._domResultPrev = !!this._domGame1?.result;
+      return;
     }
     const { vx, vy } = this.readGame1Steer();
     this.player.setVelocity(vx * this.player.speed, vy * this.player.speed);
@@ -917,19 +1072,28 @@ export default class Game1Scene extends Phaser.Scene {
     this.refreshHud();
     this.redrawMinimap();
 
-    const foundCount = 3 - this.collectibles.countActive(true);
+    const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
+    const foundCount = total - this.collectibles.countActive(true);
 
-    if (foundCount >= 3) {
-      if (!this.finishedAutoTransition) {
-        this.finishedAutoTransition = true;
-        const score = this.registry.get("game1Score") ?? 0;
-        this.scene.start("ResultScene", { game: "explore", score });
-        return;
+    if (foundCount >= total) {
+      if (this.currentLevel < GAME1_LEVELS) {
+        this.hint.setText("¡Nivel 1 completado! Pulsa para iniciar el nivel 2.");
+        this.resultPrompt.setText("Iniciar nivel 2");
+        if (!this.levelTransitionActive) {
+          this.showLevelTransition();
+        }
+      } else {
+        if (!this.finishedAutoTransition) {
+          this.finishedAutoTransition = true;
+          const score = this.registry.get("game1Score") ?? 0;
+          this.scene.start("ResultScene", { game: "explore", score });
+          return;
+        }
+        this.hint.setText(
+          "¡Misión completada! Terminaste los 2 niveles y encontraste todos los objetos arqueológicos.",
+        );
+        this.resultPrompt.setText("Ver resultados");
       }
-      this.hint.setText(
-        "¡Misión completada! Has encontrado los 3 objetos del descubrimiento de 2002. Pulsa [Enter] o toca abajo para ver resultados.",
-      );
-      this.resultPrompt.setText("Ver resultados");
     } else {
       const near = this.collectibles.getChildren().some((c) => {
         if (!c.active || c.getData("quizBusy")) return false;
@@ -937,7 +1101,9 @@ export default class Game1Scene extends Phaser.Scene {
         return Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y) <= pr;
       });
       this.hint.setText(
-        near ? TXT_PROMPT : "Explora el sitio Santa Ana – La Florida. Localiza los tres objetos del descubrimiento de 2002.",
+        near
+          ? TXT_PROMPT
+          : `Nivel ${this.currentLevel}: explora el sitio Santa Ana – La Florida y localiza los tres objetos del descubrimiento de 2002.`,
       );
       this.resultPrompt.setText("");
     }

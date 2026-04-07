@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { LAYOUT } from "../layout.js";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
+import { duckAmbientAudio } from "../../modules/audioManager.js";
 
 const MAZE_CULTURAL_FACTS = [
   "Santa Ana – La Florida: la evidencia más antigua del uso de cacao en el mundo. 5.500 AP.",
@@ -61,8 +62,8 @@ export default class ResultScene extends Phaser.Scene {
     const score = this.payload.score ?? 0;
 
     if (game === "explore") {
-      title = "¡Misión completada! Has encontrado los 3 objetos del descubrimiento de 2002.";
-      body = `Puntuación final: ${score} / 300 puntos\n\n${tierExplore(score)}`;
+      title = "¡FELICIDADES!";
+      body = `MISIÓN SUPERADA\nMisión 1 superada con éxito.\nYa puedes pasar a la siguiente misión.\n\nPuntuación final: ${score} / 300 puntos\n\n${tierExplore(score)}`;
     } else if (game === "runner_fail") {
       title = "GAME OVER";
       body = `Sin vidas.\n\nPuntos: ${score}\nVasijas: ${this.payload.vainas ?? 0}\nDatos históricos: ${this.payload.datos ?? 0} / 5\n\nEl camino del cacao no es fácil — ¡inténtalo otra vez!`;
@@ -70,16 +71,18 @@ export default class ResultScene extends Phaser.Scene {
       title = "¡FELICIDADES!";
       const vainas = this.payload.vainas ?? 0;
       const datos = this.payload.datos ?? 0;
-      body = `Misión 2 superada con éxito.\nYa puedes pasar a la siguiente misión.\n\nVasijas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
+      body = `MISIÓN SUPERADA\nMisión 2 superada con éxito.\nYa puedes pasar a la siguiente misión.\n\nVasijas recolectadas: ${vainas}\nDatos históricos: ${datos} / 5 zonas`;
       if (this.payload.allZones && score != null) {
         body += `\n\nPuntuación total: ${score} puntos\n\n¡Suerte en la siguiente misión, explorador del cacao ancestral!`;
       }
     } else if (game === "mazeWin") {
-      title = this.payload.finalLevel
-        ? "¡Felicidades! Superaste el nivel final del Cacao Maze."
-        : "¡Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón!";
+      title = "¡FELICIDADES!";
       const pt = this.payload.piecesTotal ?? 4;
-      body = `Todos los granos de cacao han sido recolectados.\n\nPiezas arqueológicas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
+      body = `MISIÓN SUPERADA\n${
+        this.payload.finalLevel
+          ? "Superaste el nivel final del Cacao Maze."
+          : "Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón."
+      }\n\nPiezas arqueológicas: ${this.payload.pieces ?? 0} / ${pt} | Puntos: ${score}`;
       if (this.payload.finalLevel) {
         body += "\n\nYa completaste la misión 3. Puedes continuar para obtener tu certificado.";
       }
@@ -91,8 +94,10 @@ export default class ResultScene extends Phaser.Scene {
       }
     }
 
-    const titleSize = game === "runner_fail" ? "42px" : game === "runner" ? "48px" : "22px";
-    const titleColor = game === "runner_fail" ? "#ff6b6b" : game === "runner" ? "#6cfc8a" : "#c8921a";
+    const titleSize =
+      game === "runner_fail" ? "42px" : game === "runner" || game === "explore" || game === "mazeWin" ? "48px" : "22px";
+    const titleColor =
+      game === "runner_fail" ? "#ff6b6b" : game === "runner" || game === "explore" || game === "mazeWin" ? "#6cfc8a" : "#c8921a";
     this.add
       .text(LAYOUT.WIDTH / 2, game === "runner_fail" ? 120 : 140, title, {
         fontSize: titleSize,
@@ -149,6 +154,10 @@ export default class ResultScene extends Phaser.Scene {
       (game === "runner" && this.payload.allZones === true) ||
       game === "mazeWin";
     const expeditionFail = game === "runner_fail" || game === "mazeLose";
+    if (game === "explore" && this.cache.audio.exists("sfx_mission_complete")) {
+      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
+      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+    }
 
     if (isExp) {
       if (expeditionSuccess) {
@@ -160,10 +169,15 @@ export default class ResultScene extends Phaser.Scene {
           this.resultBtn(y0, "[ VER DATOS CULTURALES ]", () => this.showMazeFacts());
         }
         const y1 = game === "explore" || game === "runner" || game === "mazeWin" ? y0 + 44 : y0;
-        const continueLabel = game === "runner" ? "[ IR A LA SIGUIENTE MISIÓN ]" : "[ CONTINUAR EXPEDICIÓN ]";
+        const continueLabel =
+          game === "mazeWin"
+            ? "[ VER MI CERTIFICADO ]"
+            : game === "runner" || game === "explore"
+              ? "[ IR A LA SIGUIENTE MISIÓN ]"
+              : "[ CONTINUAR EXPEDICIÓN ]";
         this.resultBtn(y1, continueLabel, () => {
           completeMissionByNumber(exp);
-          window.location.hash = "#/p04";
+          window.location.hash = game === "mazeWin" ? "#/p10" : "#/p04";
         });
       } else if (expeditionFail) {
         const replayLabel = game === "runner_fail" ? "[ VOLVER A JUGAR ]" : "[ REINTENTAR ]";

@@ -195,6 +195,9 @@ export default class QuizScene extends Phaser.Scene {
     this.setOptionsInteractive(false);
 
     if (ok) {
+      if (this.cache.audio.exists("sfx_ok")) {
+        this.sound.play("sfx_ok", { volume: 0.42 });
+      }
       this.lastCorrect = true;
       this.lastExhausted = false;
       const tryNumber = 4 - this.attemptsRemaining;
@@ -245,6 +248,9 @@ export default class QuizScene extends Phaser.Scene {
     this.refreshAttemptDots();
 
     if (this.attemptsRemaining > 0) {
+      if (this.cache.audio.exists("sfx_error")) {
+        this.sound.play("sfx_error", { volume: 0.42 });
+      }
       this.lastCorrect = false;
       this.lastExhausted = false;
       this.feedback.setColor("#ffaaaa");
@@ -259,6 +265,9 @@ export default class QuizScene extends Phaser.Scene {
 
     this.lastCorrect = false;
     this.lastExhausted = true;
+    if (this.cache.audio.exists("sfx_error")) {
+      this.sound.play("sfx_error", { volume: 0.42 });
+    }
     const letter = String.fromCharCode(65 + q.correctIndex);
     const corr = this.optionRows.find((r) => r.idx === q.correctIndex);
     if (corr) {

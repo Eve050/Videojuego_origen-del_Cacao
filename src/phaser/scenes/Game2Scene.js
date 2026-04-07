@@ -3,6 +3,7 @@ import { LAYOUT } from "../layout.js";
 import zonesConfig from "../data/zonesConfig.json";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
+import { duckAmbientAudio } from "../../modules/audioManager.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -268,6 +269,16 @@ export default class Game2Scene extends Phaser.Scene {
     rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
   }
 
+  playClippedSfx(key, volume = 0.4, maxMs = 2000) {
+    if (!this.cache.audio.exists(key)) return;
+    const s = this.sound.add(key);
+    s.play({ volume });
+    this.time.delayedCall(maxMs, () => {
+      if (s.isPlaying) s.stop();
+      s.destroy();
+    });
+  }
+
   runnerResultPayload() {
     return {
       game: "runner",
@@ -282,6 +293,10 @@ export default class Game2Scene extends Phaser.Scene {
     if (this._winOverlayActive) return;
     this._winOverlayActive = true;
     this._winBtnUsed = false;
+    if (this.cache.audio.exists("sfx_mission_complete")) {
+      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
+      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+    }
 
     const depth = 90;
     const cx = LAYOUT.WIDTH / 2;
@@ -525,6 +540,8 @@ export default class Game2Scene extends Phaser.Scene {
     this._gameOverBtnUsed = false;
     this.coyoteMs = 0;
     this.jumpBufferMs = 0;
+    this.lastOkSfxAt = 0;
+    this.lastErrorSfxAt = 0;
 
     const groundCenterY = GROUND_TOP_Y + 28;
     const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 1);
@@ -557,10 +574,16 @@ export default class Game2Scene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.pods, (_p, pod) => {
       if (this._gameOverActive || !this.runActive || this.runPaused || !pod.active || pod.getData("picking")) return;
       pod.setData("picking", true);
+      const now = this.time.now;
+      if (this.cache.audio.exists("sfx_ok") && now - this.lastOkSfxAt >= 90) {
+        this.sound.play("sfx_ok", { volume: 0.34 });
+        this.lastOkSfxAt = now;
+      }
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
 
       if (cultural) {
+        this.playClippedSfx("sfx_relic", 0.5, 2000);
         this.points += 50;
         const z = this.zones[this.zoneIndex];
         if (z?.zoneFact && !this.unlockedFacts.has(`piece_${z.id}`)) {
@@ -598,6 +621,11 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.physics.add.overlap(this.player, this.obstacles, (_player, obs) => {
       if (this._gameOverActive || this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
+      const now = this.time.now;
+      if (this.cache.audio.exists("sfx_error") && now - this.lastErrorSfxAt >= 120) {
+        this.sound.play("sfx_error", { volume: 0.4 });
+        this.lastErrorSfxAt = now;
+      }
       this.releaseObstacle(obs);
       this.lives -= 1;
       this.invulnerableMs = INVULN_MS;
