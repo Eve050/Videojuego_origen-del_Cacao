@@ -41,7 +41,7 @@ export default class ResultScene extends Phaser.Scene {
 
     if (isExp) {
       this.add
-        .text(LAYOUT.WIDTH / 2, 32, `◆ ARCADE · MISION ${exp} DE 3 · EXPEDICION ◆`, {
+        .text(LAYOUT.WIDTH / 2, 32, `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`, {
           fontSize: "11px",
           color: "#6cfc8a",
           fontStyle: "bold",
@@ -156,7 +156,7 @@ export default class ResultScene extends Phaser.Scene {
     const expeditionFail = game === "runner_fail" || game === "mazeLose";
     if (game === "explore" && this.cache.audio.exists("sfx_mission_complete")) {
       duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+      this.sound.play("sfx_mission_complete", { volume: 0.66 });
     }
 
     if (isExp) {

@@ -152,6 +152,22 @@ body:has(.mission-arcade) {
   cursor: pointer;
 }
 
+.p04-intro-button {
+  position: absolute;
+  left: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 4;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(230, 220, 196, 0.24);
+  border-radius: 10px;
+  background: rgba(12, 19, 16, 0.72);
+  color: #f7f4eb;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .p04-progress-card {
   width: min(90vw, 320px);
   margin: 0 auto 0.65rem;
@@ -377,21 +393,33 @@ body:has(.mission-arcade) {
 .p04-header {
   width: min(96vw, 1120px);
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
   align-items: center;
   gap: 0.8rem;
+}
+
+.p04-intro-button {
+  position: static;
+  width: 42px;
+  height: 42px;
+  grid-column: 1;
+  justify-self: start;
 }
 
 .p04-help-button {
   position: static;
   width: 42px;
   height: 42px;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .p04-progress-card {
   margin: 0;
   width: min(76vw, 340px);
+  grid-column: 2;
+  justify-self: center;
 }
 
 .p04-layout {
@@ -929,6 +957,74 @@ body:has(.mission-arcade) {
   font-size: clamp(0.5rem, 1.35vw, 0.65rem);
   color: #ffcc66;
   box-shadow: 0 3px 0 #0d0804;
+}
+
+.screen--p04 .p04-intro-button {
+  border-radius: 2px;
+  border: 3px solid #6b4a28;
+  background: #1a0e08;
+  font-family: var(--p04-pixel);
+  font-size: clamp(0.5rem, 1.35vw, 0.65rem);
+  color: #ffcc66;
+  box-shadow: 0 3px 0 #0d0804;
+}
+
+.p04-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.p04-info-modal.is-hidden {
+  display: none;
+}
+
+.p04-info-modal-card {
+  position: relative;
+  width: min(92vw, 660px);
+  border: 3px solid #6b4a28;
+  background: linear-gradient(180deg, #121a14 0%, #0a0f0c 100%);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.42);
+  padding: 1.2rem 1.1rem 1rem;
+  color: #f6f0df;
+}
+
+.p04-info-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.55rem;
+  border: 2px solid #6b4a28;
+  background: #1a0e08;
+  color: #ffcc66;
+  font-weight: 800;
+  cursor: pointer;
+  width: 34px;
+  height: 30px;
+}
+
+.p04-info-title {
+  margin: 0 0 0.8rem;
+  color: #6cfc8a;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.p04-info-text {
+  margin: 0.5rem 0 0.6rem;
+  color: #f4edd6;
+  line-height: 1.45;
+}
+
+.p04-info-list {
+  margin: 0.25rem 0 0.7rem 1rem;
+  padding: 0;
+  line-height: 1.5;
 }
 
 .screen--p04 .p04-map-board {

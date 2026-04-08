@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { LAYOUT } from "../layout.js";
 import Player from "../entities/Player.js";
 import { exitToMainMap } from "../data/introCopy.js";
+import { completeMissionByNumber } from "../../modules/gameState.js";
+import { duckAmbientAudio } from "../../modules/audioManager.js";
 
 /** Doc §2.7 — prompt exacto */
 const TXT_PROMPT = "¡Objeto arqueológico encontrado! Presiona [E] o toca para examinar";
@@ -15,7 +17,7 @@ const PLAZA_INNER_R = 48;
 const HOUSE_RING_R = PLAZA_OUTER_R - 76;
 /** Área de juego documentada */
 const AREA_LABEL = "PLAZA CIRCULAR HUNDIDA";
-const GAME1_LEVELS = 2;
+const GAME1_LEVELS = 1;
 const LEVEL_ITEMS_TOTAL = 3;
 
 /**
@@ -122,7 +124,7 @@ export default class Game1Scene extends Phaser.Scene {
     this.levelTransitionUi = null;
     this.levelCollectibleDecor = [];
     this.currentLevel = 1;
-    this.levelTotals = { 1: LEVEL_ITEMS_TOTAL, 2: LEVEL_ITEMS_TOTAL };
+    this.levelTotals = { 1: LEVEL_ITEMS_TOTAL };
     this.joystickActive = false;
     this.stickCx = 0;
     this.stickCy = 0;
@@ -134,7 +136,7 @@ export default class Game1Scene extends Phaser.Scene {
       this.pendingCollectible = null;
       if (item && item.active) {
         if (data.correct || data.exhausted) {
-          this.playClippedSfx("sfx_relic", 0.52, 2000);
+          this.playClippedSfx("sfx_relic", 0.46, 2000);
           item.destroy();
         } else {
           item.setData("quizBusy", false);
@@ -860,13 +862,17 @@ export default class Game1Scene extends Phaser.Scene {
     const found = total - this.collectibles.countActive(true);
     const score = this.registry.get("game1Score") ?? 0;
     this.hudPts.setText(`PUNTOS: ${String(score).padStart(3, "0")}`);
-    this.hudObj.setText(`NIVEL ${this.currentLevel}/${GAME1_LEVELS} · OBJETOS: ${found} / ${total}`);
+    this.hudObj.setText(`OBJETOS: ${found} / ${total}`);
   }
 
   showLevelTransition() {
-    if (this.levelTransitionActive || this.currentLevel >= GAME1_LEVELS) return;
+    if (this.levelTransitionActive) return;
     this.levelTransitionActive = true;
     this.pendingCollectible = null;
+    if (this.cache.audio.exists("sfx_mission_complete")) {
+      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
+      this.sound.play("sfx_mission_complete", { volume: 0.66 });
+    }
     if (this.player?.body) {
       this.player.setVelocity(0, 0);
     }
@@ -881,15 +887,16 @@ export default class Game1Scene extends Phaser.Scene {
     ui.push(dim);
 
     const panel = this.add
-      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, 760, 300, 0x1a241a, 0.98)
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, 780, 330, 0x1a241a, 0.98)
       .setScrollFactor(0)
       .setDepth(depth + 1)
       .setStrokeStyle(3, 0xc8921a);
     ui.push(panel);
 
     const title = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 76, "¡FELICIDADES!", {
-        fontSize: "58px",
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 98, "¡FELICIDADES!", {
+        fontSize: "54px",
+        fontFamily: "Arial, sans-serif",
         color: "#6cfc8a",
         fontStyle: "bold",
         align: "center",
@@ -900,64 +907,46 @@ export default class Game1Scene extends Phaser.Scene {
     ui.push(title);
 
     const subtitle = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 24, "MISIÓN SUPERADA\nCompletaste el Nivel 1.\nPrepárate para iniciar el Nivel 2.", {
-        fontSize: "28px",
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 6, "MISIÓN 1 SUPERADA\nYa puedes continuar con la Misión 2.", {
+        fontSize: "36px",
+        fontFamily: "Arial, sans-serif",
         color: "#f9f2dd",
         align: "center",
-        lineSpacing: 8,
+        lineSpacing: 10,
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(depth + 2);
     ui.push(subtitle);
 
-    const btnBg = this.add
-      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 72, 360, 56, 0x2b482f, 1)
-      .setStrokeStyle(2, 0x8ceda2)
+    const mapBg = this.add
+      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 118, 360, 54, 0x2a2418, 1)
+      .setStrokeStyle(2, 0xc8921a)
       .setScrollFactor(0)
       .setDepth(depth + 2)
       .setInteractive({ useHandCursor: true });
-    ui.push(btnBg);
-    const btnTxt = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 72, "INICIAR NIVEL 2", {
-        fontSize: "22px",
-        color: "#eaffef",
+    ui.push(mapBg);
+    const mapTxt = this.add
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 118, "VOLVER AL MAPA", {
+        fontSize: "21px",
+        fontFamily: "Arial, sans-serif",
+        color: "#f9f2dd",
         fontStyle: "bold",
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(depth + 3);
-    ui.push(btnTxt);
+    ui.push(mapTxt);
 
-    const startLevel2 = () => this.startSecondLevel();
-    btnBg.on("pointerdown", startLevel2);
-    btnBg.on("pointerover", () => btnTxt.setColor("#ffffff"));
-    btnBg.on("pointerout", () => btnTxt.setColor("#eaffef"));
-    dim.on("pointerdown", startLevel2);
+    mapBg.on("pointerdown", () => {
+      completeMissionByNumber(1);
+      exitToMainMap();
+    });
+    mapBg.on("pointerover", () => mapTxt.setColor("#fff8cc"));
+    mapBg.on("pointerout", () => mapTxt.setColor("#f9f2dd"));
+    dim.on("pointerdown", () => {});
 
     this.levelTransitionUi = ui;
-  }
-
-  startSecondLevel() {
-    if (!this.levelTransitionActive) return;
-    if (this.levelTransitionUi) {
-      this.levelTransitionUi.forEach((el) => el?.destroy());
-      this.levelTransitionUi = null;
-    }
-    this.levelTransitionActive = false;
-    this.currentLevel = 2;
-
-    this.collectibles.clear(true, true);
-    this.levelCollectibleDecor.forEach((el) => el?.destroy());
-    this.levelCollectibleDecor = [];
-    this.buildCollectibles();
-
-    this.player.setPosition(960, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 + 20);
-    if (this.player?.body) {
-      this.player.setVelocity(0, 0);
-    }
-    this.hint.setText("Nivel 2 iniciado. Examina los tres objetos para completar la misión.");
-    this.resultPrompt.setText("");
   }
 
   redrawMinimap() {
@@ -1030,9 +1019,8 @@ export default class Game1Scene extends Phaser.Scene {
   tryShowResults() {
     const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
     const found = total - this.collectibles.countActive(true);
-    if (this.currentLevel < GAME1_LEVELS || found < total) return;
-    const score = this.registry.get("game1Score") ?? 0;
-    this.scene.start("ResultScene", { game: "explore", score });
+    if (found < total) return;
+    this.showLevelTransition();
   }
 
   update() {
@@ -1076,23 +1064,10 @@ export default class Game1Scene extends Phaser.Scene {
     const foundCount = total - this.collectibles.countActive(true);
 
     if (foundCount >= total) {
-      if (this.currentLevel < GAME1_LEVELS) {
-        this.hint.setText("¡Nivel 1 completado! Pulsa para iniciar el nivel 2.");
-        this.resultPrompt.setText("Iniciar nivel 2");
-        if (!this.levelTransitionActive) {
-          this.showLevelTransition();
-        }
-      } else {
-        if (!this.finishedAutoTransition) {
-          this.finishedAutoTransition = true;
-          const score = this.registry.get("game1Score") ?? 0;
-          this.scene.start("ResultScene", { game: "explore", score });
-          return;
-        }
-        this.hint.setText(
-          "¡Misión completada! Terminaste los 2 niveles y encontraste todos los objetos arqueológicos.",
-        );
-        this.resultPrompt.setText("Ver resultados");
+      this.hint.setText("¡Misión 1 completada! Pulsa VOLVER AL MAPA para continuar.");
+      this.resultPrompt.setText("Misión completada");
+      if (!this.levelTransitionActive) {
+        this.showLevelTransition();
       }
     } else {
       const near = this.collectibles.getChildren().some((c) => {
@@ -1103,7 +1078,7 @@ export default class Game1Scene extends Phaser.Scene {
       this.hint.setText(
         near
           ? TXT_PROMPT
-          : `Nivel ${this.currentLevel}: explora el sitio Santa Ana – La Florida y localiza los tres objetos del descubrimiento de 2002.`,
+          : "Explora el sitio Santa Ana – La Florida y localiza los tres objetos del descubrimiento de 2002.",
       );
       this.resultPrompt.setText("");
     }

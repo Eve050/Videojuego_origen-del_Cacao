@@ -134,24 +134,34 @@ export default class QuizScene extends Phaser.Scene {
       color: "#7a7088",
     }).setOrigin(0.5);
 
-    this.add.text(PCX, PTOP + PH - 38, "Al responder correctamente: DATO CIENTÍFICO DESBLOQUEADO", {
-      fontSize: "11px",
-      color: "#b8943a",
-      fontStyle: "bold",
-    }).setOrigin(0.5);
+    this.infoBg = this.add
+      .rectangle(PCX, PTOP + 480, PW - 90, 88, 0x0f151d, 0.86)
+      .setStrokeStyle(1, 0x5a4a28)
+      .setDepth(1);
 
     this.feedback = this.add.text(PCX, PTOP + 410, "", {
-      fontSize: "15px",
-      color: "#d0d8e0",
+      fontSize: "20px",
+      color: "#e4f3e8",
       align: "center",
+      fontFamily: "Arial, sans-serif",
+      fontStyle: "bold",
       wordWrap: { width: PW - 40 },
     }).setOrigin(0.5);
 
     this.sourceLine = this.add.text(PCX, PTOP + 478, "", {
-      fontSize: "13px",
-      color: "#c4b898",
+      fontSize: "16px",
+      color: "#f2e7c9",
       align: "center",
-      wordWrap: { width: PW - 48 },
+      fontFamily: "Arial, sans-serif",
+      lineSpacing: 5,
+      wordWrap: { width: PW - 120 },
+    }).setOrigin(0.5);
+
+    this.add.text(PCX, PTOP + PH - 38, "Al responder correctamente: DATO CIENTÍFICO DESBLOQUEADO", {
+      fontSize: "12px",
+      color: "#d7b35a",
+      fontStyle: "bold",
+      fontFamily: "Arial, sans-serif",
     }).setOrigin(0.5);
   }
 
@@ -196,7 +206,7 @@ export default class QuizScene extends Phaser.Scene {
 
     if (ok) {
       if (this.cache.audio.exists("sfx_ok")) {
-        this.sound.play("sfx_ok", { volume: 0.42 });
+        this.sound.play("sfx_ok", { volume: 0.36 });
       }
       this.lastCorrect = true;
       this.lastExhausted = false;
@@ -249,7 +259,7 @@ export default class QuizScene extends Phaser.Scene {
 
     if (this.attemptsRemaining > 0) {
       if (this.cache.audio.exists("sfx_error")) {
-        this.sound.play("sfx_error", { volume: 0.42 });
+        this.sound.play("sfx_error", { volume: 0.38 });
       }
       this.lastCorrect = false;
       this.lastExhausted = false;
@@ -266,7 +276,7 @@ export default class QuizScene extends Phaser.Scene {
     this.lastCorrect = false;
     this.lastExhausted = true;
     if (this.cache.audio.exists("sfx_error")) {
-      this.sound.play("sfx_error", { volume: 0.42 });
+      this.sound.play("sfx_error", { volume: 0.38 });
     }
     const letter = String.fromCharCode(65 + q.correctIndex);
     const corr = this.optionRows.find((r) => r.idx === q.correctIndex);

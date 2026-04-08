@@ -148,6 +148,7 @@ export function renderP04(container) {
           </div>
         </article>
 
+        <button class="p04-intro-button" id="p04IntroButton" type="button">↩</button>
         <button class="p04-help-button" id="p04HelpButton" type="button">?</button>
       </header>
 
@@ -261,6 +262,24 @@ export function renderP04(container) {
           </div>
         </article>
       </div>
+
+      <div class="p04-info-modal is-hidden" id="p04InfoModal" role="dialog" aria-modal="true" aria-label="Información del juego">
+        <article class="p04-info-modal-card">
+          <button class="p04-info-close" id="p04InfoClose" type="button" aria-label="Cerrar información">✕</button>
+          <h3 class="p04-info-title">Información del juego</h3>
+          <p class="p04-info-text">
+            Completa las 3 misiones para desbloquear el certificado final:
+          </p>
+          <ul class="p04-info-list">
+            <li><strong>Misión 1:</strong> Explora Santa Ana y completa el quiz arqueológico.</li>
+            <li><strong>Misión 2:</strong> Viaja con el cacao, esquiva obstáculos y reúne datos históricos.</li>
+            <li><strong>Misión 3:</strong> Supera el Cacao Maze recolectando orbes ancestrales.</li>
+          </ul>
+          <p class="p04-info-text">
+            Cuando termines las tres misiones, podrás ver tu certificado en la pantalla final.
+          </p>
+        </article>
+      </div>
     </section>
   `;
   let selectedStopIndex = activeStopIndex;
@@ -282,6 +301,7 @@ export function renderP04(container) {
   const modalHero = container.querySelector("#p04ModalHero");
   const modalHeroImg = container.querySelector("#p04ModalHeroImg");
   const exploreZoneButton = container.querySelector("#p04ExploreZoneButton");
+  const infoModal = container.querySelector("#p04InfoModal");
 
   const getMissionRouteForProgress = () => {
     if (missionsCompleted <= 0) {
@@ -396,6 +416,12 @@ export function renderP04(container) {
   const closeStopModal = () => {
     stopModal?.classList.add("is-hidden");
   };
+  const openInfoModal = () => {
+    infoModal?.classList.remove("is-hidden");
+  };
+  const closeInfoModal = () => {
+    infoModal?.classList.add("is-hidden");
+  };
 
   container.querySelectorAll(".p04-step-card, .p04-stop").forEach((button) => {
     button.addEventListener("click", () => {
@@ -454,8 +480,13 @@ export function renderP04(container) {
   container.querySelector("#p04ModalBackToMap")?.addEventListener("click", closeStopModal);
   container.querySelector("#p04ModalMaybeLater")?.addEventListener("click", closeStopModal);
 
-  container.querySelector("#p04HelpButton")?.addEventListener("click", () => {
-    window.location.hash = "#/p01";
+  container.querySelector("#p04HelpButton")?.addEventListener("click", openInfoModal);
+  container.querySelector("#p04InfoClose")?.addEventListener("click", closeInfoModal);
+  infoModal?.addEventListener("click", (event) => {
+    if (event.target === infoModal) closeInfoModal();
+  });
+  container.querySelector("#p04IntroButton")?.addEventListener("click", () => {
+    window.location.hash = "#/p03";
   });
 
   container.querySelector("#p04FinaleBtn")?.addEventListener("click", () => {

@@ -876,7 +876,7 @@ export default class Game3Scene extends Phaser.Scene {
       const py = pod.y;
       this.tweens.killTweensOf(pod);
       pod.destroy();
-      this.playClippedSfx("sfx_relic", 0.5, 2000);
+      this.playClippedSfx("sfx_relic", 0.46, 2000);
       this.powerPodsCollected += 1;
       this.score += 5;
       this.playPickupFx(px, py, 0xffdc66, "PODER");
@@ -1051,7 +1051,7 @@ export default class Game3Scene extends Phaser.Scene {
     this.vasijaReached = true;
     if (this.cache.audio.exists("sfx_mission_complete")) {
       duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+      this.sound.play("sfx_mission_complete", { volume: 0.66 });
     }
     if (this.level < MAX_MAZE_LEVEL) {
       this.score += 120;
@@ -1145,7 +1145,7 @@ export default class Game3Scene extends Phaser.Scene {
       const sx = piece.x;
       const sy = piece.y;
       piece.destroy();
-      this.playClippedSfx("sfx_relic", 0.52, 2000);
+      this.playClippedSfx("sfx_relic", 0.46, 2000);
       this.piecesFound += 1;
       this.score += 50;
       this.playPickupFx(sx, sy, 0xb78cff, "+50");

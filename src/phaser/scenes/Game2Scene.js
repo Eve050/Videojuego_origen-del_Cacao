@@ -3,7 +3,7 @@ import { LAYOUT } from "../layout.js";
 import zonesConfig from "../data/zonesConfig.json";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
-import { duckAmbientAudio } from "../../modules/audioManager.js";
+import { applyAmbientZoneProfile, duckAmbientAudio } from "../../modules/audioManager.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -18,6 +18,7 @@ const ITEM_GAP_MIN = 160;
 const ITEM_GAP_MAX = 420;
 /** Salto en aire adicional (patrón Feronato / endless runner). */
 const MAX_AIR_JUMPS = 2;
+const MIX = { ok: 0.36, error: 0.38, relic: 0.46, mission: 0.66, jump: 0.32 };
 
 /** Capas de color por zona (cielo / suelo) — alineado a diseño de 5 zonas. */
 const ZONE_SCENERY = [
@@ -80,6 +81,11 @@ export default class Game2Scene extends Phaser.Scene {
     this.player.setVelocityY(-620);
     this.playerJumps += 1;
     this.coyoteMs = 0;
+    const now = this.time.now;
+    if (this.cache.audio.exists("sfx_jump") && now - (this.lastJumpSfxAt ?? 0) >= 90) {
+      this.sound.play("sfx_jump", { volume: MIX.jump });
+      this.lastJumpSfxAt = now;
+    }
     return true;
   }
 
@@ -295,7 +301,7 @@ export default class Game2Scene extends Phaser.Scene {
     this._winBtnUsed = false;
     if (this.cache.audio.exists("sfx_mission_complete")) {
       duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.62 });
+      this.sound.play("sfx_mission_complete", { volume: MIX.mission });
     }
 
     const depth = 90;
@@ -326,7 +332,7 @@ export default class Game2Scene extends Phaser.Scene {
     });
 
     this.add
-      .text(cx, cy - 48, "MISION SUPERADA", {
+      .text(cx, cy - 48, "MISIÓN SUPERADA", {
         fontFamily: "Arial, sans-serif",
         fontSize: "30px",
         color: "#c2ffd0",
@@ -337,7 +343,7 @@ export default class Game2Scene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.add
-      .text(cx, cy + 6, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente mision.", {
+      .text(cx, cy + 6, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.", {
         fontFamily: "Arial, sans-serif",
         fontSize: "22px",
         color: "#f5fff7",
@@ -366,7 +372,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     const expMission = this.registry.get("expeditionMission");
     if (expMission === 2) {
-      this.addWinOverlayBtn(cx, cy + 160, 460, 52, "[ IR A LA SIGUIENTE MISION ]", () => {
+      this.addWinOverlayBtn(cx, cy + 160, 460, 52, "[ IR A LA SIGUIENTE MISIÓN ]", () => {
         completeMissionByNumber(2);
         window.location.hash = "#/p04";
       });
@@ -542,6 +548,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.jumpBufferMs = 0;
     this.lastOkSfxAt = 0;
     this.lastErrorSfxAt = 0;
+    this.lastJumpSfxAt = 0;
 
     const groundCenterY = GROUND_TOP_Y + 28;
     const ground = this.add.rectangle(LAYOUT.WIDTH / 2, groundCenterY, LAYOUT.WIDTH, 56, 0x2a1a12, 1);
@@ -576,14 +583,14 @@ export default class Game2Scene extends Phaser.Scene {
       pod.setData("picking", true);
       const now = this.time.now;
       if (this.cache.audio.exists("sfx_ok") && now - this.lastOkSfxAt >= 90) {
-        this.sound.play("sfx_ok", { volume: 0.34 });
+        this.sound.play("sfx_ok", { volume: MIX.ok });
         this.lastOkSfxAt = now;
       }
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
 
       if (cultural) {
-        this.playClippedSfx("sfx_relic", 0.5, 2000);
+        this.playClippedSfx("sfx_relic", MIX.relic, 2000);
         this.points += 50;
         const z = this.zones[this.zoneIndex];
         if (z?.zoneFact && !this.unlockedFacts.has(`piece_${z.id}`)) {
@@ -623,7 +630,7 @@ export default class Game2Scene extends Phaser.Scene {
       if (this._gameOverActive || this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
       const now = this.time.now;
       if (this.cache.audio.exists("sfx_error") && now - this.lastErrorSfxAt >= 120) {
-        this.sound.play("sfx_error", { volume: 0.4 });
+        this.sound.play("sfx_error", { volume: MIX.error });
         this.lastErrorSfxAt = now;
       }
       this.releaseObstacle(obs);
@@ -798,6 +805,7 @@ export default class Game2Scene extends Phaser.Scene {
       .on("pointerdown", () => exitToMainMap());
 
     this.applyZoneVisuals();
+    applyAmbientZoneProfile(this.zoneIndex, { instant: true });
     this.flashBanner(this.zones[0].bannerText);
     this.scheduleMistIfPalanda();
     this.updateHud();
@@ -1068,6 +1076,7 @@ export default class Game2Scene extends Phaser.Scene {
       const z = this.zones[this.zoneIndex];
       this.scrollSpeed = z.scrollSpeed;
       this.applyZoneVisuals();
+      applyAmbientZoneProfile(this.zoneIndex);
       this.flashBanner(z.bannerText);
       if (this.zoneIndex === 4) {
         this.flashHint("¡Tramo final!", "Europa alcanzada. Último esfuerzo para completar el viaje.");
