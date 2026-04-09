@@ -970,14 +970,15 @@ body:has(.mission-arcade) {
 }
 
 .p04-info-modal {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 90;
+  z-index: 18;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.2rem;
+  padding: 0.9rem;
   background: rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
 }
 
 .p04-info-modal.is-hidden {
@@ -986,7 +987,9 @@ body:has(.mission-arcade) {
 
 .p04-info-modal-card {
   position: relative;
-  width: min(92vw, 660px);
+  width: min(100%, 1040px);
+  max-height: calc(100% - 0.6rem);
+  overflow: auto;
   border: 3px solid #6b4a28;
   background: linear-gradient(180deg, #121a14 0%, #0a0f0c 100%);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.42);

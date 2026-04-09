@@ -148,8 +148,8 @@ export function renderP04(container) {
           </div>
         </article>
 
-        <button class="p04-intro-button" id="p04IntroButton" type="button">↩</button>
-        <button class="p04-help-button" id="p04HelpButton" type="button">?</button>
+        <button class="p04-intro-button" id="p04IntroButton" type="button" aria-label="Volver a introducción">↩</button>
+        <button class="p04-help-button" id="p04HelpButton" type="button" aria-label="Ver información del juego">?</button>
       </header>
 
       ${
@@ -194,6 +194,27 @@ export function renderP04(container) {
               </button>
             `;
           }).join("")}
+
+          <div class="p04-info-modal is-hidden" id="p04InfoModal" role="dialog" aria-modal="true" aria-label="Información del juego">
+            <article class="p04-info-modal-card">
+              <button class="p04-info-close" id="p04InfoClose" type="button" aria-label="Cerrar información">✕</button>
+              <h3 class="p04-info-title">Información del juego</h3>
+              <p class="p04-info-text">
+                Guía rápida para jugar y completar la expedición:
+              </p>
+              <ul class="p04-info-list">
+                <li><strong>Misión 1 — Origen del Cacao:</strong> explora Santa Ana, encuentra 3 objetos y completa el quiz arqueológico.</li>
+                <li><strong>Misión 2 — Viaje del Cacao:</strong> salta obstáculos (↑ / W / ESPACIO), recolecta vasijas y desbloquea datos históricos.</li>
+                <li><strong>Misión 3 — Cacao Maze:</strong> recolecta orbes ancestrales, evita guardianes y supera el laberinto cultural.</li>
+              </ul>
+              <p class="p04-info-text">
+                <strong>Cómo iniciar:</strong> selecciona la parada activa del mapa y pulsa <em>Iniciar misión</em>.
+              </p>
+              <p class="p04-info-text">
+                Al completar las 3 misiones, se habilita la pantalla final para ver y descargar tu certificado.
+              </p>
+            </article>
+          </div>
         </article>
 
         <aside class="p04-focus-card">
@@ -263,23 +284,6 @@ export function renderP04(container) {
         </article>
       </div>
 
-      <div class="p04-info-modal is-hidden" id="p04InfoModal" role="dialog" aria-modal="true" aria-label="Información del juego">
-        <article class="p04-info-modal-card">
-          <button class="p04-info-close" id="p04InfoClose" type="button" aria-label="Cerrar información">✕</button>
-          <h3 class="p04-info-title">Información del juego</h3>
-          <p class="p04-info-text">
-            Completa las 3 misiones para desbloquear el certificado final:
-          </p>
-          <ul class="p04-info-list">
-            <li><strong>Misión 1:</strong> Explora Santa Ana y completa el quiz arqueológico.</li>
-            <li><strong>Misión 2:</strong> Viaja con el cacao, esquiva obstáculos y reúne datos históricos.</li>
-            <li><strong>Misión 3:</strong> Supera el Cacao Maze recolectando orbes ancestrales.</li>
-          </ul>
-          <p class="p04-info-text">
-            Cuando termines las tres misiones, podrás ver tu certificado en la pantalla final.
-          </p>
-        </article>
-      </div>
     </section>
   `;
   let selectedStopIndex = activeStopIndex;
