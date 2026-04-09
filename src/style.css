@@ -4463,6 +4463,109 @@ body:has(.screen--phaser-lab) {
   justify-content: center;
 }
 
+.mission-arcade-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.8rem, 2.8vw, 1.6rem);
+  background: rgba(6, 8, 8, 0.82);
+}
+
+.mission-arcade-intro.is-hidden {
+  display: none;
+}
+
+.mission-arcade-intro-card {
+  width: min(92%, 760px);
+  max-height: 94%;
+  overflow: auto;
+  border-radius: 12px;
+  border: 2px solid rgba(201, 160, 80, 0.95);
+  background: linear-gradient(165deg, rgba(26, 17, 10, 0.98) 0%, rgba(10, 7, 5, 0.98) 100%);
+  box-shadow: 0 16px 46px rgba(0, 0, 0, 0.5);
+  padding: clamp(0.9rem, 2.2vw, 1.6rem);
+  text-align: center;
+}
+
+.mission-arcade-intro-kicker {
+  margin: 0;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(0.42rem, 1.2vw, 0.58rem);
+  color: #7cfc9a;
+}
+
+.mission-arcade-intro-title {
+  margin: 0.45rem 0 0.3rem;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(0.75rem, 2vw, 1.1rem);
+  line-height: 1.5;
+  color: #fff3d8;
+}
+
+.mission-arcade-intro-sub {
+  margin: 0;
+  font-size: clamp(0.82rem, 2vw, 1rem);
+  color: rgba(232, 220, 200, 0.92);
+}
+
+.mission-arcade-intro-help {
+  margin-top: 0.75rem;
+  text-align: left;
+}
+
+.mission-arcade-intro-help.is-hidden {
+  display: none;
+}
+
+.mission-arcade-intro-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  font-size: clamp(0.82rem, 2vw, 0.98rem);
+  line-height: 1.45;
+  color: #f3e8d0;
+}
+
+.mission-arcade-intro-actions {
+  margin-top: 0.95rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mission-arcade-intro-btn {
+  border: 2px solid #c9a050;
+  border-radius: 8px;
+  padding: 0.62rem 0.9rem;
+  background: #3a2414;
+  color: #f9f2dd;
+  font-family: "Nunito", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.mission-arcade-intro-btn--primary {
+  background: linear-gradient(180deg, #c9a060, #8a6230);
+  color: #1a1008;
+  border-color: #5a4020;
+}
+
+.mission-arcade-intro-btn--secondary {
+  background: #22160c;
+}
+
+.mission-arcade-touchpad {
+  display: none;
+}
+
+.mission-arcade-touchpad.is-hidden {
+  display: none;
+}
+
 .mission-arcade-phaser-host canvas {
   border-radius: 4px;
   filter: contrast(1.05) saturate(1.08);
@@ -4615,6 +4718,243 @@ body:has(.screen--phaser-lab) {
 
 .mission-arcade-exit:hover {
   filter: brightness(1.08);
+}
+
+@media (max-width: 700px) {
+  .mission-arcade {
+    gap: 0.3rem;
+    padding: 0.3rem;
+  }
+
+  .mission-arcade-top {
+    max-width: 100%;
+  }
+
+  .mission-arcade-brand {
+    margin-bottom: 0.25rem;
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+  }
+
+  .mission-arcade-marquee {
+    font-size: 0.56rem;
+  }
+
+  .mission-arcade-title {
+    margin-top: 0.2rem;
+    font-size: 0.6rem;
+  }
+
+  .mission-arcade-sub {
+    font-size: 0.72rem;
+  }
+
+  .mission-arcade-coin {
+    margin-top: 0.2rem;
+    font-size: 0.34rem;
+    line-height: 1.35;
+  }
+
+  .mission-arcade-machine {
+    width: 100%;
+    min-height: 64dvh;
+    padding: 0.35rem;
+  }
+
+  .mission-arcade-screen-wrap {
+    min-height: 58dvh;
+    border-width: 3px;
+  }
+
+  .mission-arcade-crt {
+    overflow: hidden;
+  }
+
+  .mission-arcade-phaser-host {
+    overflow: hidden;
+  }
+
+  .mission-arcade-phaser-host canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 auto;
+  }
+
+  .mission-arcade-intro-card {
+    width: min(96%, 620px);
+    padding: 0.8rem;
+  }
+
+  .mission-arcade-intro-title {
+    font-size: clamp(0.72rem, 3vw, 0.96rem);
+  }
+
+  .mission-arcade-intro-sub {
+    font-size: clamp(0.8rem, 2.8vw, 0.92rem);
+  }
+
+  .mission-arcade-intro-list {
+    font-size: clamp(0.8rem, 2.6vw, 0.92rem);
+  }
+
+  .mission-arcade--mobile-split .mission-arcade-crt {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mission-arcade--mobile-split .mission-arcade-phaser-host {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 52%;
+    z-index: 1;
+    align-items: flex-start;
+  }
+
+  .mission-arcade--mobile-split .mission-arcade-phaser-host canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .mission-arcade--mobile-split .mission-arcade-touchpad {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 52%;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    background: linear-gradient(180deg, rgba(8, 10, 10, 0.22) 0%, rgba(8, 10, 10, 0.78) 100%);
+  }
+
+  .mission-arcade--mobile-split .mission-arcade-touchpad.is-hidden {
+    display: none;
+  }
+
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-phaser-host {
+    top: 0;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-phaser-host canvas {
+    width: auto !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: 100% !important;
+    margin: 0 auto !important;
+    display: block;
+  }
+
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-screen-wrap,
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-crt,
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-phaser-host {
+    overflow: hidden;
+  }
+
+  .mission-arcade--mobile-split.is-quiz-open .mission-arcade-touchpad {
+    display: none;
+  }
+
+  .mission-arcade-touchpad-grid {
+    position: relative;
+    width: min(68vw, 260px);
+    height: min(38vw, 156px);
+  }
+
+  .mission-arcade-touch-btn {
+    position: absolute;
+    width: min(16vw, 64px);
+    height: min(16vw, 64px);
+    border-radius: 12px;
+    border: 2px solid #8ed1ff;
+    background:
+      radial-gradient(circle at 30% 25%, rgba(188, 236, 255, 0.5), transparent 42%),
+      linear-gradient(165deg, #19447a 0%, #0d2f5a 100%);
+    color: #f0f8ff;
+    font-size: clamp(1rem, 4vw, 1.6rem);
+    font-weight: 800;
+    line-height: 1;
+    touch-action: none;
+    box-shadow:
+      0 8px 20px rgba(6, 20, 45, 0.55),
+      inset 0 1px 0 rgba(216, 242, 255, 0.45);
+  }
+
+  .mission-arcade-touch-btn:active,
+  .mission-arcade-touch-btn.is-pressed {
+    background:
+      radial-gradient(circle at 30% 25%, rgba(210, 244, 255, 0.55), transparent 40%),
+      linear-gradient(165deg, #22599b 0%, #123f79 100%);
+    box-shadow:
+      0 5px 14px rgba(6, 20, 45, 0.5),
+      inset 0 1px 0 rgba(220, 246, 255, 0.5);
+  }
+
+  .mission-arcade-touch-btn--up {
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+  }
+
+  .mission-arcade-touch-btn--left {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .mission-arcade-touch-btn--right {
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .mission-arcade-touch-btn--down {
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+  }
+
+  .mission-arcade-touch-action {
+    min-width: min(38vw, 170px);
+    height: min(14vw, 58px);
+    border-radius: 10px;
+    border: 2px solid #d4a574;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 233, 196, 0.4), transparent 44%),
+      linear-gradient(165deg, #8a5127 0%, #61371b 100%);
+    color: #fff8f0;
+    font-size: clamp(0.86rem, 3.3vw, 1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    touch-action: none;
+    box-shadow:
+      0 8px 20px rgba(40, 16, 6, 0.55),
+      inset 0 1px 0 rgba(255, 235, 205, 0.4);
+  }
+
+  .mission-arcade-touch-action:active,
+  .mission-arcade-touch-action.is-pressed {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(255, 240, 214, 0.45), transparent 42%),
+      linear-gradient(165deg, #9d6030 0%, #704222 100%);
+  }
+
+  .mission-arcade-panel {
+    margin-top: 0.25rem;
+    padding-top: 0.25rem;
+    gap: 0.35rem 0.65rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

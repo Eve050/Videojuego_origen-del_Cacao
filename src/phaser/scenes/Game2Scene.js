@@ -776,6 +776,7 @@ export default class Game2Scene extends Phaser.Scene {
       window.addEventListener("keyup", this._domKeyUp, { capture: true });
     }
 
+    const isMobile = !this.sys.game.device.os.desktop;
     this.input.on("pointerdown", (p) => {
       if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
       const canvas = this.game?.canvas;
@@ -787,6 +788,9 @@ export default class Game2Scene extends Phaser.Scene {
         }
       }
       if (this.runPaused) return;
+      if (isMobile) {
+        return;
+      }
       if (p.y >= LAYOUT.GAME_TOP && p.y < LAYOUT.HINT_TOP) {
         this.doJump();
       }

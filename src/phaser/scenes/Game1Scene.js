@@ -45,7 +45,24 @@ export default class Game1Scene extends Phaser.Scene {
       KeyE: "action",
       Enter: "result",
     };
-    const slot = byCode[ev.code];
+    const byKey = {
+      ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+      w: "up",
+      W: "up",
+      s: "down",
+      S: "down",
+      a: "left",
+      A: "left",
+      d: "right",
+      D: "right",
+      e: "action",
+      E: "action",
+      Enter: "result",
+    };
+    const slot = byCode[ev.code] ?? byKey[ev.key];
     if (!slot || !this._domGame1) return;
     ev.preventDefault();
     if (isDown) this.ensureSfxUnlocked();
@@ -55,6 +72,10 @@ export default class Game1Scene extends Phaser.Scene {
   readGame1Steer() {
     const d = this._domGame1;
     const m = this.game1Keys;
+    const t = this.touchGame1;
+    const ex = this.externalTouchpadState;
+    const tHasDirection = !!(t && (t.left || t.right || t.up || t.down));
+    const exHasDirection = !!(ex && (ex.left || ex.right || ex.up || ex.down));
     let vx = 0;
     let vy = 0;
     const j = this.player?.stickVector;
@@ -66,6 +87,16 @@ export default class Game1Scene extends Phaser.Scene {
         vx /= len;
         vy /= len;
       }
+    } else if (exHasDirection) {
+      if (ex.left) vx = -1;
+      else if (ex.right) vx = 1;
+      if (ex.up) vy = -1;
+      else if (ex.down) vy = 1;
+    } else if (tHasDirection) {
+      if (t.left) vx = -1;
+      else if (t.right) vx = 1;
+      if (t.up) vy = -1;
+      else if (t.down) vy = 1;
     } else if (d) {
       if (d.left || m?.left?.isDown || m?.a?.isDown) vx = -1;
       else if (d.right || m?.right?.isDown || m?.d?.isDown) vx = 1;
@@ -129,9 +160,22 @@ export default class Game1Scene extends Phaser.Scene {
     this.stickCx = 0;
     this.stickCy = 0;
     this.stickR = 60;
+    this.touchGame1 = { up: false, down: false, left: false, right: false };
+    this.externalTouchpadState =
+      this.registry.get("externalTouchpad") === true && typeof window !== "undefined"
+        ? window.__enigmaTouchpadState || null
+        : null;
+    this.externalActionPrev = false;
 
     this.events.off("quiz-finished");
     this.events.on("quiz-finished", (data) => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("enigma-quiz-visibility", {
+            detail: { visible: false },
+          }),
+        );
+      }
       const item = this.pendingCollectible;
       this.pendingCollectible = null;
       if (item && item.active) {
@@ -805,56 +849,63 @@ export default class Game1Scene extends Phaser.Scene {
   setupTouchControls() {
     const mobile = !this.sys.game.device.os.desktop;
     if (!mobile) return;
+    if (this.registry.get("externalTouchpad") === true) return;
 
-    const jx = 118;
-    const jy = LAYOUT.CONTROLS_TOP + 72;
-    this.stickCx = jx;
-    this.stickCy = jy;
+    const padX = 132;
+    const padY = LAYOUT.CONTROLS_TOP + 72;
+    const size = 64;
+    const gap = 72;
 
-    this.stickBase = this.add.circle(jx, jy, this.stickR, 0x2a3038, 0.55).setStrokeStyle(2, 0x5a6570).setScrollFactor(0).setDepth(112);
-    this.stickThumb = this.add.circle(jx, jy, 26, 0x8899aa, 0.9).setScrollFactor(0).setDepth(113);
-    this.stickBase.setInteractive({ useHandCursor: true });
+    this.createTouchArrowButton(padX, padY - gap, size, "↑", "up");
+    this.createTouchArrowButton(padX - gap, padY, size, "←", "left");
+    this.createTouchArrowButton(padX + gap, padY, size, "→", "right");
+    this.createTouchArrowButton(padX, padY + gap, size, "↓", "down");
 
-    this.stickBase.on("pointerdown", (p) => {
-      this.joystickActive = true;
-      this.updateJoystick(p);
-    });
-    this.input.on("pointermove", (p) => {
-      if (this.joystickActive) this.updateJoystick(p);
-    });
-    this.input.on("pointerup", () => {
-      this.joystickActive = false;
-      if (this.player) this.player.stickVector = null;
-      if (this.stickThumb) this.stickThumb.setPosition(this.stickCx, this.stickCy);
-    });
-
-    const ax = LAYOUT.WIDTH - 96;
+    const ax = LAYOUT.WIDTH - 104;
     const ay = LAYOUT.CONTROLS_TOP + 72;
     const actBtn = this.add
-      .rectangle(ax, ay, 132, 52, 0x7a4a24, 1)
+      .rectangle(ax, ay, 148, 58, 0x7a4a24, 1)
       .setStrokeStyle(2, 0xd4a574)
       .setScrollFactor(0)
       .setDepth(112)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(ax, ay, "ACCIÓN", { fontSize: "14px", color: "#fff8f0", fontStyle: "bold" })
+      .text(ax, ay, "ACCION", { fontSize: "14px", color: "#fff8f0", fontStyle: "bold" })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(113);
     actBtn.on("pointerdown", () => this.tryExamineNearest());
+    actBtn.on("pointerup", () => actBtn.setFillStyle(0x7a4a24, 1));
+    actBtn.on("pointerout", () => actBtn.setFillStyle(0x7a4a24, 1));
   }
 
-  updateJoystick(pointer) {
-    if (!this.player || !this.stickThumb) return;
-    const dx = pointer.x - this.stickCx;
-    const dy = pointer.y - this.stickCy;
-    const len = Math.hypot(dx, dy) || 1;
-    const clamp = Math.min(this.stickR, len);
-    const ang = Math.atan2(dy, dx);
-    this.stickThumb.setPosition(this.stickCx + Math.cos(ang) * clamp, this.stickCy + Math.sin(ang) * clamp);
-    const nx = (Math.cos(ang) * clamp) / this.stickR;
-    const ny = (Math.sin(ang) * clamp) / this.stickR;
-    this.player.stickVector = { x: nx, y: ny };
+  createTouchArrowButton(x, y, size, label, dir) {
+    const btn = this.add
+      .rectangle(x, y, size, size, 0x1f3a6d, 0.95)
+      .setStrokeStyle(2, 0x9cc8ff)
+      .setScrollFactor(0)
+      .setDepth(112)
+      .setInteractive({ useHandCursor: true });
+    this.add
+      .text(x, y, label, { fontSize: "24px", color: "#f0f8ff", fontStyle: "bold" })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(113);
+
+    const press = () => {
+      if (!this.touchGame1) return;
+      this.touchGame1[dir] = true;
+      btn.setFillStyle(0x2b5ca6, 1);
+    };
+    const release = () => {
+      if (!this.touchGame1) return;
+      this.touchGame1[dir] = false;
+      btn.setFillStyle(0x1f3a6d, 0.95);
+    };
+
+    btn.on("pointerdown", press);
+    btn.on("pointerup", release);
+    btn.on("pointerout", release);
   }
 
   refreshHud() {
@@ -1004,9 +1055,21 @@ export default class Game1Scene extends Phaser.Scene {
   openQuiz(item) {
     if (!item.active || item.getData("quizBusy")) return;
     if (item.getData("overlapLock")) return;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("enigma-quiz-visibility", {
+          detail: { visible: true },
+        }),
+      );
+    }
     this.joystickActive = false;
+    if (this.touchGame1) {
+      this.touchGame1.up = false;
+      this.touchGame1.down = false;
+      this.touchGame1.left = false;
+      this.touchGame1.right = false;
+    }
     if (this.player) this.player.stickVector = null;
-    if (this.stickThumb) this.stickThumb.setPosition(this.stickCx, this.stickCy);
     item.setData("quizBusy", true);
     this.pendingCollectible = item;
     this.scene.pause();
@@ -1051,9 +1114,15 @@ export default class Game1Scene extends Phaser.Scene {
 
     const doAction =
       (this.keyE && Phaser.Input.Keyboard.JustDown(this.keyE)) ||
-      (this._domGame1?.action && !this._domActionPrev);
+      (this._domGame1?.action && !this._domActionPrev) ||
+      (this.externalTouchpadState?.action && !this.externalActionPrev) ||
+      this.externalTouchpadState?.actionPulse;
     if (doAction) {
       this.tryExamineNearest();
+    }
+    if (this.externalTouchpadState) {
+      this.externalActionPrev = !!this.externalTouchpadState.action;
+      this.externalTouchpadState.actionPulse = false;
     }
     this._domActionPrev = !!this._domGame1?.action;
 

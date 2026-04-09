@@ -37,7 +37,7 @@ export const INTRO_COPY = {
     title: "CACAO MAZE",
     subtitle:
       "El laberinto sagrado de la cultura Mayo Chinchipe – Marañón. Palanda, Ecuador – 5.500 años de historia.",
-    missionTitle: "PANTALLA: SELECCIÓN DE NIVEL",
+    missionTitle: "SELECCIÓN DE NIVEL",
     missionLines: [
       "Laberinto tipo vista cenital (estilo Pac-Man cultural).",
       "Recoge granos de cacao y piezas arqueológicas; evita a los cuatro guardianes espirituales.",

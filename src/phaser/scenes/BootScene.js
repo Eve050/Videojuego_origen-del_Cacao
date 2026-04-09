@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import questions from "../data/questions.json";
 import culturalData from "../data/culturalData.json";
 import zonesConfig from "../data/zonesConfig.json";
-import { takePendingExpeditionMission, takePendingDirectRunner } from "../missionContext.js";
+import { takePendingExpeditionMission, takePendingDirectRunner, takePendingExternalTouchpad } from "../missionContext.js";
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -27,7 +27,9 @@ export default class BootScene extends Phaser.Scene {
 
     const expeditionMission = takePendingExpeditionMission();
     const directRunner = takePendingDirectRunner();
+    const externalTouchpad = takePendingExternalTouchpad();
     this.registry.set("expeditionMission", expeditionMission);
+    this.registry.set("externalTouchpad", externalTouchpad === true);
 
     if (directRunner && (expeditionMission === 2 || expeditionMission == null)) {
       this.scene.start("Game2Scene");
@@ -35,16 +37,16 @@ export default class BootScene extends Phaser.Scene {
     }
 
     if (expeditionMission === 1) {
-      this.scene.start("MiniIntroScene", { pack: "game1", fromExpedition: true });
+      this.scene.start("Game1Scene");
       return;
     }
     if (expeditionMission === 2) {
-      this.scene.start("MiniIntroScene", { pack: "game2", fromExpedition: true });
+      this.scene.start("Game2Scene");
       return;
     }
     if (expeditionMission === 3) {
       this.registry.set("mazeLevel", 1);
-      this.scene.start("MiniIntroScene", { pack: "game3", fromExpedition: true });
+      this.scene.start("Game3Scene");
       return;
     }
 

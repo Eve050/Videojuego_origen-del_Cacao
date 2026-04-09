@@ -9,7 +9,7 @@ import {
 } from "../../modules/audioManager.js";
 
 const HELP_STEPS = [
-  "Escribe tu nombre en la siguiente pantalla para registrar tu aventura.",
+  "Escribe tu nombre en el siguiente paso para registrar tu aventura.",
   "Lee la historia inicial y acepta la mision para desbloquear el mapa.",
   "Completa las tres misiones educativas para descubrir la reliquia.",
   "Al terminar, podras descargar tu certificado en PDF.",
@@ -32,7 +32,7 @@ export function renderP01(container) {
   markScreenVisited("p01Visited");
 
   container.innerHTML = `
-    <section class="screen screen--p01" aria-label="Pantalla de inicio">
+    <section class="screen screen--p01" aria-label="Inicio del juego">
       <aside class="${audioOverlayClass}" id="audioOverlay">
         <div class="p01-audio-panel">
           <p class="p01-audio-title">Activar experiencia inmersiva</p>
@@ -79,7 +79,6 @@ export function renderP01(container) {
           <p class="audio-hint" id="audioStatus">Musica en OFF.</p>
         </article>
 
-        <footer class="screen-footer">VERSION 0.3.0 - PROTOTIPO P01</footer>
       </div>
     </section>
 

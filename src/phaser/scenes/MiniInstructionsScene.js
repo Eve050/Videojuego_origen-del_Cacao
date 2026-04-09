@@ -253,7 +253,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(LAYOUT.WIDTH / 2, 56, "PANTALLA: INSTRUCCIONES", {
+      .text(LAYOUT.WIDTH / 2, 56, "INSTRUCCIONES", {
         fontSize: "14px",
         color: "#c8921a",
         fontStyle: "bold",

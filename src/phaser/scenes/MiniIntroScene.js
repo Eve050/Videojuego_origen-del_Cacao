@@ -48,7 +48,7 @@ export default class MiniIntroScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 20, "PANTALLA NEGRA TEMPORAL\n(AQUÍ IRÁ EL VIDEO DE INTRO)", {
+      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 20, "ESPACIO TEMPORAL\n(AQUÍ IRÁ EL VIDEO DE INTRO)", {
         fontFamily: "Arial, sans-serif",
         fontSize: "20px",
         color: "#cfcfcf",

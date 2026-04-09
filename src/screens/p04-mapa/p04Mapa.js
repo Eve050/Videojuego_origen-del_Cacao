@@ -211,7 +211,7 @@ export function renderP04(container) {
                 <strong>Cómo iniciar:</strong> selecciona la parada activa del mapa y pulsa <em>Iniciar misión</em>.
               </p>
               <p class="p04-info-text">
-                Al completar las 3 misiones, se habilita la pantalla final para ver y descargar tu certificado.
+                Al completar las 3 misiones, se habilita la fase final para ver y descargar tu certificado.
               </p>
             </article>
           </div>

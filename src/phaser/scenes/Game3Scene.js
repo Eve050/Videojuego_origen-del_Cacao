@@ -154,6 +154,66 @@ export default class Game3Scene extends Phaser.Scene {
     this._domMaze[slot] = isDown;
   }
 
+  setupTouchControls() {
+    const mobile = !this.sys.game.device.os.desktop;
+    if (!mobile) return;
+
+    const jx = 118;
+    const jy = LAYOUT.CONTROLS_TOP + 72;
+    this.mazeStickCx = jx;
+    this.mazeStickCy = jy;
+    this.mazeStickR = 58;
+    this.mazeStickActive = false;
+    this.mazeStickPointerId = null;
+
+    this.mazeStickBase = this.add
+      .circle(jx, jy, this.mazeStickR, 0x2a3038, 0.58)
+      .setStrokeStyle(2, 0x5a6570)
+      .setDepth(24);
+    this.mazeStickThumb = this.add.circle(jx, jy, 25, 0x8899aa, 0.9).setDepth(25);
+    this.mazeStickBase.setInteractive({ useHandCursor: true });
+    this.mazeStickThumb.setInteractive({ useHandCursor: true });
+
+    const beginStick = (pointer) => {
+      this.mazeStickActive = true;
+      this.mazeStickPointerId = pointer.id;
+      this.updateMazeStick(pointer);
+    };
+    this.mazeStickBase.on("pointerdown", beginStick);
+    this.mazeStickThumb.on("pointerdown", beginStick);
+
+    this._mazePointerMoveHandler = (pointer) => {
+      if (!this.mazeStickActive) return;
+      if (this.mazeStickPointerId !== null && pointer.id !== this.mazeStickPointerId) return;
+      this.updateMazeStick(pointer);
+    };
+    this._mazePointerUpHandler = (pointer) => {
+      if (!this.mazeStickActive) return;
+      if (this.mazeStickPointerId !== null && pointer.id !== this.mazeStickPointerId) return;
+      this.mazeStickActive = false;
+      this.mazeStickPointerId = null;
+      if (this.player) this.player.stickVector = null;
+      if (this.mazeStickThumb) this.mazeStickThumb.setPosition(this.mazeStickCx, this.mazeStickCy);
+    };
+
+    this.input.on("pointermove", this._mazePointerMoveHandler);
+    this.input.on("pointerup", this._mazePointerUpHandler);
+    this.input.on("pointerupoutside", this._mazePointerUpHandler);
+  }
+
+  updateMazeStick(pointer) {
+    if (!this.player || !this.mazeStickThumb) return;
+    const dx = pointer.x - this.mazeStickCx;
+    const dy = pointer.y - this.mazeStickCy;
+    const len = Math.hypot(dx, dy) || 1;
+    const clamp = Math.min(this.mazeStickR, len);
+    const ang = Math.atan2(dy, dx);
+    this.mazeStickThumb.setPosition(this.mazeStickCx + Math.cos(ang) * clamp, this.mazeStickCy + Math.sin(ang) * clamp);
+    const nx = (Math.cos(ang) * clamp) / this.mazeStickR;
+    const ny = (Math.sin(ang) * clamp) / this.mazeStickR;
+    this.player.stickVector = { x: nx, y: ny };
+  }
+
   findWalkableNear(anchorR, anchorC, maxRadius = 6) {
     if (this.walkable(anchorR, anchorC)) return { r: anchorR, c: anchorC };
     for (let rad = 1; rad <= maxRadius; rad += 1) {
@@ -659,6 +719,7 @@ export default class Game3Scene extends Phaser.Scene {
     }
 
     this._domMaze = { up: false, down: false, left: false, right: false };
+    this.setupTouchControls();
     this.input.on("pointerdown", () => {
       this.ensureSfxUnlocked();
       if (this.input.keyboard && !this.input.keyboard.enabled) this.input.keyboard.enabled = true;
@@ -682,8 +743,17 @@ export default class Game3Scene extends Phaser.Scene {
         window.removeEventListener("keydown", this._domKeyDown, { capture: true });
         window.removeEventListener("keyup", this._domKeyUp, { capture: true });
       }
+      if (this._mazePointerMoveHandler) {
+        this.input.off("pointermove", this._mazePointerMoveHandler);
+      }
+      if (this._mazePointerUpHandler) {
+        this.input.off("pointerup", this._mazePointerUpHandler);
+        this.input.off("pointerupoutside", this._mazePointerUpHandler);
+      }
       this._domKeyDown = null;
       this._domKeyUp = null;
+      this._mazePointerMoveHandler = null;
+      this._mazePointerUpHandler = null;
     });
 
     const vx = this.offsetX + this.vasijaCell.c * TILE + TILE / 2;
@@ -1091,11 +1161,20 @@ export default class Game3Scene extends Phaser.Scene {
    * Entrada: listeners DOM (ev.code) + teclas Phaser. Movimiento Arcade con collider a muros.
    */
   readMazeSteer() {
+    const j = this.player?.stickVector;
     const d = this._domMaze;
     const m = this.mazeKeys;
     let vx = 0;
     let vy = 0;
-    if (d) {
+    if (j && (j.x !== 0 || j.y !== 0)) {
+      vx = j.x;
+      vy = j.y;
+      const len = Math.hypot(vx, vy) || 1;
+      if (len > 1) {
+        vx /= len;
+        vy /= len;
+      }
+    } else if (d) {
       if (d.left || m?.left?.isDown || m?.a?.isDown) vx = -1;
       else if (d.right || m?.right?.isDown || m?.d?.isDown) vx = 1;
       if (d.up || m?.up?.isDown || m?.w?.isDown) vy = -1;

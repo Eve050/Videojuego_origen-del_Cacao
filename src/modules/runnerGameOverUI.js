@@ -40,7 +40,7 @@ export function bindRunnerGameOverUI(container, { sectionSelector, wrapSelector,
             <button type="button" class="mission-arcade-runner-go-btn" data-runner-map>
               VOLVER AL MAPA
             </button>
-            <p class="mission-arcade-runner-go-micro">Sales del minijuego y vuelves al mapa principal de la expedición (P04).</p>
+            <p class="mission-arcade-runner-go-micro">Sales del minijuego y vuelves al mapa principal de la expedición.</p>
           </div>
         </div>
       `;

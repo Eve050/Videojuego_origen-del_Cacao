@@ -9,7 +9,7 @@ import Game3Scene from "./scenes/Game3Scene.js";
 import QuizScene from "./scenes/QuizScene.js";
 import ResultScene from "./scenes/ResultScene.js";
 import { LAYOUT } from "./layout.js";
-import { setPendingExpeditionMission, setPendingDirectRunner } from "./missionContext.js";
+import { setPendingExpeditionMission, setPendingDirectRunner, setPendingExternalTouchpad } from "./missionContext.js";
 
 /** @type {Phaser.Game | null} */
 let gameInstance = null;
@@ -27,11 +27,13 @@ export function destroyPhaserGame() {
  * @param {object} [options]
  * @param {1|2|3} [options.expeditionMission] - Si se define, salta menú e intro y abre ese minijuego (P06–P08).
  * @param {boolean} [options.directRunner] - Tras game over: solo reinicia el auto-runner (Game2) sin instrucciones ni menú.
+ * @param {boolean} [options.externalTouchpad] - Usa controles táctiles HTML externos (misión 1 móvil).
  */
 export function startPhaserGame(parent, options = {}) {
   destroyPhaserGame();
   setPendingExpeditionMission(options.expeditionMission ?? null);
   setPendingDirectRunner(options.directRunner === true);
+  setPendingExternalTouchpad(options.externalTouchpad === true);
   const el = typeof parent === "string" ? document.getElementById(parent) : parent;
   if (!el) {
     throw new Error("startPhaserGame: contenedor no encontrado");

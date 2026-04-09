@@ -22,6 +22,7 @@ export default class QuizScene extends Phaser.Scene {
     this.optionRows = [];
     this.attemptDots = [];
     this.panelY = 0;
+    this.mobileQuizMode = false;
   }
 
   create() {
@@ -43,33 +44,35 @@ export default class QuizScene extends Phaser.Scene {
 
     this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x000000, 0.85).setOrigin(0);
 
+    const mobileQuizMode = this.registry.get("externalTouchpad") === true;
+    this.mobileQuizMode = mobileQuizMode;
     const PCX = LAYOUT.WIDTH / 2;
     const PCY = LAYOUT.HEIGHT / 2 - 8;
-    const PW = 1040;
-    const PH = 580;
+    const PW = mobileQuizMode ? 500 : 1040;
+    const PH = mobileQuizMode ? 690 : 580;
     this.panelY = PCY;
 
     this.panelFrame = this.add.rectangle(PCX, PCY, PW + 10, PH + 10, 0x000000, 0).setStrokeStyle(5, 0xd4af37);
-    this.panelBg = this.add.rectangle(PCX, PCY, PW, PH, 0x121820, 0.98).setStrokeStyle(2, 0x6a5528);
+    this.panelBg = this.add.rectangle(PCX, PCY, PW, PH, 0x171109, 0.98).setStrokeStyle(2, 0x6a5528);
 
     const PTOP = PCY - PH / 2;
     const objName = q.objectLabel || q.objectKey || "Objeto";
 
     this.headerLeft = this.add.text(PCX - PW / 2 + 28, PTOP + 22, `PREGUNTA ${this.qIndex} / 3`, {
-      fontSize: "17px",
+      fontSize: mobileQuizMode ? "14px" : "17px",
       color: "#e8c058",
       fontStyle: "bold",
     });
 
     this.headerRight = this.add.text(PCX + PW / 2 - 28, PTOP + 22, `PUNTOS: ${score}`, {
-      fontSize: "17px",
+      fontSize: mobileQuizMode ? "14px" : "17px",
       color: "#e8c058",
       fontStyle: "bold",
     }).setOrigin(1, 0);
 
-    this.add
-      .text(PCX, PTOP + 52, `Has encontrado: ${objName.toUpperCase()}`, {
-        fontSize: "15px",
+    const foundLine = this.add
+      .text(PCX, mobileQuizMode ? PTOP + 46 : PTOP + 52, `Has encontrado: ${objName.toUpperCase()}`, {
+        fontSize: mobileQuizMode ? "14px" : "15px",
         color: "#f0e8d8",
         fontStyle: "bold",
         align: "center",
@@ -77,92 +80,127 @@ export default class QuizScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const disc = q.discoveryText || "";
-    this.add
-      .text(PCX, PTOP + 78, disc, {
-        fontSize: "13px",
+    const discoveryLine = this.add
+      .text(PCX, mobileQuizMode ? PTOP + 74 : PTOP + 78, disc, {
+        fontSize: mobileQuizMode ? "12px" : "13px",
         color: "#c8c4b8",
         align: "center",
-        wordWrap: { width: PW - 56 },
+        wordWrap: { width: mobileQuizMode ? PW - 70 : PW - 56 },
       })
       .setOrigin(0.5);
+    if (mobileQuizMode) {
+      foundLine.setVisible(false);
+      discoveryLine.setVisible(false);
+    }
 
-    this.add.text(PCX, PTOP + 142, q.question, {
-      fontSize: "16px",
+    const questionY = mobileQuizMode ? PTOP + 150 : PTOP + 142;
+    this.add.text(PCX, questionY, q.question, {
+      fontSize: mobileQuizMode ? "18px" : "16px",
       color: "#ffffff",
       align: "center",
       fontStyle: "bold",
-      wordWrap: { width: PW - 80 },
+      wordWrap: { width: mobileQuizMode ? PW - 96 : PW - 80 },
     }).setOrigin(0.5);
 
-    const yTop = PTOP + 210;
-    const yBot = PTOP + 278;
-    const xLeft = PCX - 210;
-    const xRight = PCX + 210;
-    const layoutPos = [
-      { idx: 0, x: xLeft, y: yTop },
-      { idx: 2, x: xLeft, y: yBot },
-      { idx: 1, x: xRight, y: yTop },
-      { idx: 3, x: xRight, y: yBot },
-    ];
+    const layoutPos = mobileQuizMode
+      ? [
+          { idx: 0, x: PCX, y: PTOP + 258 },
+          { idx: 1, x: PCX, y: PTOP + 338 },
+          { idx: 2, x: PCX, y: PTOP + 418 },
+          { idx: 3, x: PCX, y: PTOP + 498 },
+        ]
+      : [
+          { idx: 0, x: PCX - 210, y: PTOP + 210 },
+          { idx: 2, x: PCX - 210, y: PTOP + 278 },
+          { idx: 1, x: PCX + 210, y: PTOP + 210 },
+          { idx: 3, x: PCX + 210, y: PTOP + 278 },
+        ];
 
     this.optionRows = [];
     for (const { idx, x, y } of layoutPos) {
       const letter = String.fromCharCode(65 + idx);
       const opt = q.options[idx];
-      const bg = this.add.rectangle(x, y, 400, 46, 0x243038, 1).setStrokeStyle(1, 0x5a6068);
+      const optWidth = mobileQuizMode ? PW - 50 : 400;
+      const optHeight = mobileQuizMode ? 62 : 46;
+      const hitWidth = mobileQuizMode ? PW - 36 : 410;
+      const hitHeight = mobileQuizMode ? 66 : 52;
+      const bg = this.add.rectangle(x, y, optWidth, optHeight, 0x2a1d12, 1).setStrokeStyle(1, 0x7a5f3b);
       const txt = this.add
         .text(x, y, `[ ${letter} ]  ${opt}`, {
-          fontSize: "14px",
+          fontSize: mobileQuizMode ? "13px" : "14px",
           color: "#f0f0e8",
-          wordWrap: { width: 360 },
+          wordWrap: { width: mobileQuizMode ? PW - 96 : 360 },
         })
         .setOrigin(0.5);
-      const zone = this.add.zone(x, y, 410, 52).setInteractive({ useHandCursor: true });
+      const zone = this.add.zone(x, y, hitWidth, hitHeight).setInteractive({ useHandCursor: true });
       zone.on("pointerdown", () => this.pickAnswer(idx));
       this.optionRows.push({ zone, bg, txt, idx });
     }
 
-    const dotY = PTOP + 350;
+    const dotY = mobileQuizMode ? PTOP + 588 : PTOP + 350;
     for (let i = 0; i < 3; i += 1) {
-      const dot = this.add.circle(PCX - 36 + i * 36, dotY, 10, 0xffb020, 1).setStrokeStyle(2, 0xfff0c0);
+      const gap = mobileQuizMode ? 44 : 36;
+      const r = mobileQuizMode ? 12 : 10;
+      const dot = this.add.circle(PCX - gap + i * gap, dotY, r, 0xffb020, 1).setStrokeStyle(2, 0xfff0c0);
       this.attemptDots.push(dot);
     }
     this.refreshAttemptDots();
 
-    this.add.text(PCX, PTOP + 378, "INTENTOS RESTANTES", {
-      fontSize: "10px",
+    this.attemptLabel = this.add.text(PCX, mobileQuizMode ? PTOP + 616 : PTOP + 378, "INTENTOS RESTANTES", {
+      fontSize: mobileQuizMode ? "10px" : "10px",
       color: "#7a7088",
     }).setOrigin(0.5);
 
     this.infoBg = this.add
-      .rectangle(PCX, PTOP + 480, PW - 90, 88, 0x0f151d, 0.86)
-      .setStrokeStyle(1, 0x5a4a28)
-      .setDepth(1);
+      .rectangle(
+        PCX,
+        mobileQuizMode ? PTOP + 628 : PTOP + 492,
+        PW - (mobileQuizMode ? 38 : 80),
+        mobileQuizMode ? 104 : 144,
+        0x24180f,
+        0.95,
+      )
+      .setStrokeStyle(2, 0xc8a85a, 0.9)
+      .setDepth(1)
+      .setVisible(false);
 
-    this.feedback = this.add.text(PCX, PTOP + 410, "", {
-      fontSize: "20px",
-      color: "#e4f3e8",
+    this.feedbackYInside = mobileQuizMode ? PTOP + 610 : PTOP + 418;
+    this.feedbackYTop = mobileQuizMode ? PTOP + 564 : PTOP + 392;
+    this.feedback = this.add.text(PCX, this.feedbackYInside, "", {
+      fontSize: mobileQuizMode ? "17px" : "20px",
+      color: "#fff2d2",
       align: "center",
       fontFamily: "Arial, sans-serif",
       fontStyle: "bold",
-      wordWrap: { width: PW - 40 },
-    }).setOrigin(0.5);
+      wordWrap: { width: mobileQuizMode ? PW - 64 : PW - 120 },
+    }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 4, true, true).setVisible(false);
 
-    this.sourceLine = this.add.text(PCX, PTOP + 478, "", {
-      fontSize: "16px",
-      color: "#f2e7c9",
+    this.factLine = this.add.text(PCX, mobileQuizMode ? PTOP + 616 : PTOP + 484, "", {
+      fontSize: mobileQuizMode ? "12px" : "16px",
+      color: "#f8ead2",
       align: "center",
       fontFamily: "Arial, sans-serif",
-      lineSpacing: 5,
-      wordWrap: { width: PW - 120 },
-    }).setOrigin(0.5);
+      fontStyle: "bold",
+      lineSpacing: mobileQuizMode ? 0 : 4,
+      wordWrap: { width: mobileQuizMode ? PW - 88 : PW - 200 },
+    }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 5, true, true).setVisible(false);
 
-    this.add.text(PCX, PTOP + PH - 38, "Al responder correctamente: DATO CIENTÍFICO DESBLOQUEADO", {
-      fontSize: "12px",
-      color: "#d7b35a",
+    this.sourceLine = this.add.text(PCX, mobileQuizMode ? PTOP + 636 : PTOP + 532, "", {
+      fontSize: mobileQuizMode ? "9px" : "13px",
+      color: "#f8ead2",
+      align: "center",
+      fontFamily: "Arial, sans-serif",
+      fontStyle: "bold",
+      lineSpacing: mobileQuizMode ? 0 : 4,
+      wordWrap: { width: mobileQuizMode ? PW - 146 : PW - 260 },
+    }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 5, true, true).setVisible(false);
+
+    this.unlockHint = this.add.text(PCX, PTOP + PH - 22, "Al responder correctamente: DATO CIENTÍFICO DESBLOQUEADO", {
+      fontSize: mobileQuizMode ? "12px" : "14px",
+      color: "#ffd46b",
       fontStyle: "bold",
       fontFamily: "Arial, sans-serif",
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(2).setShadow(0, 1, "#000000", 4, true, true);
   }
 
   refreshAttemptDots() {
@@ -188,8 +226,8 @@ export default class QuizScene extends Phaser.Scene {
 
   resetOptionStyles() {
     this.optionRows.forEach(({ bg, txt }) => {
-      bg.setFillStyle(0x243038, 1);
-      bg.setStrokeStyle(1, 0x5a6068);
+      bg.setFillStyle(0x2a1d12, 1);
+      bg.setStrokeStyle(1, 0x7a5f3b);
       txt.setColor("#f0f0e8");
     });
   }
@@ -222,25 +260,24 @@ export default class QuizScene extends Phaser.Scene {
         row.txt.setColor("#e8fff0");
         row.txt.setText(`${row.txt.text}   OK`);
       }
-      this.feedback.setColor("#c8dcc8");
+      this.attemptDots.forEach((dot) => dot.setVisible(false));
+      this.attemptLabel?.setVisible(false);
+      this.infoBg.setVisible(true);
+      this.feedback.setVisible(true);
+      this.feedback.setY(this.feedbackYTop);
+      this.feedback.setColor("#d7ffd9");
       this.feedback.setText(`¡Correcto! +${add} puntos`);
-      const fx = this.add
-        .text(row?.bg.x ?? LAYOUT.WIDTH / 2, (row?.bg.y ?? this.panelY) - 36, `+${add}`, {
-          fontSize: "28px",
-          color: "#ffdd66",
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5);
-      this.tweens.add({
-        targets: fx,
-        y: fx.y - 56,
-        alpha: 0,
-        duration: 1100,
-        onComplete: () => fx.destroy(),
-      });
+      this.factLine.setVisible(false);
+      this.factLine.setText("");
+      this.sourceLine.setVisible(false);
+      this.sourceLine.setText("");
       const src = q.source || "Zarrillo et al., 2018";
       this.time.delayedCall(1500, () => {
-        this.sourceLine.setText(`DATO DESBLOQUEADO — ${src}\n\n${q.fact}`);
+        this.unlockHint?.setVisible(false);
+        this.factLine.setVisible(true);
+        this.factLine.setText(`${q.fact}`);
+        this.sourceLine.setVisible(true);
+        this.sourceLine.setText(`Fuente: ${this.formatSourceLine(src)}`);
       });
       this.time.delayedCall(4200, () => this.close());
       return;
@@ -263,8 +300,16 @@ export default class QuizScene extends Phaser.Scene {
       }
       this.lastCorrect = false;
       this.lastExhausted = false;
-      this.feedback.setColor("#ffaaaa");
+      this.attemptDots.forEach((dot) => dot.setVisible(true));
+      this.attemptLabel?.setVisible(true);
+      this.infoBg.setVisible(true);
+      this.feedback.setVisible(true);
+      this.feedback.setY(this.feedbackYInside);
+      this.feedback.setColor("#ffd0d0");
       this.feedback.setText(`Respuesta incorrecta. Te quedan ${this.attemptsRemaining} intentos.`);
+      this.factLine.setVisible(false);
+      this.factLine.setText("");
+      this.sourceLine.setVisible(false);
       this.sourceLine.setText("");
       this.time.delayedCall(950, () => {
         this.resetOptionStyles();
@@ -286,12 +331,30 @@ export default class QuizScene extends Phaser.Scene {
       corr.txt.setColor("#e8fff0");
       corr.txt.setText(`${corr.txt.text}   CORRECTA`);
     }
-    this.feedback.setColor("#ffddaa");
+    this.feedback.setColor("#ffe5bc");
     this.feedback.setText(
       `La respuesta correcta era: ${letter}. No te preocupes, el conocimiento se construye paso a paso.`,
     );
-    this.sourceLine.setText(`DATO DESBLOQUEADO\n\n${q.fact}`);
+    this.attemptDots.forEach((dot) => dot.setVisible(false));
+    this.attemptLabel?.setVisible(false);
+    this.infoBg.setVisible(true);
+    this.feedback.setVisible(true);
+    this.feedback.setY(this.feedbackYInside);
+    this.unlockHint?.setVisible(false);
+    this.factLine.setVisible(true);
+    this.factLine.setText(`${q.fact}`);
+    this.sourceLine.setVisible(true);
+    this.sourceLine.setText("");
     this.time.delayedCall(4200, () => this.close());
+  }
+
+  formatSourceLine(src) {
+    if (!this.mobileQuizMode) return src;
+    const compact = src
+      .replace("Nature Ecology & Evolution", "Nat. Ecol. Evol.")
+      .replace("Nature Ecology and Evolution", "Nat. Ecol. Evol.")
+      .replace(", 2018", " (2018)");
+    return compact.length > 34 ? "Zarrillo et al. (2018)" : compact;
   }
 
   close() {
