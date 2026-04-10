@@ -155,22 +155,23 @@ export default class Game3Scene extends Phaser.Scene {
   }
 
   setupTouchControls() {
-    const mobile = !this.sys.game.device.os.desktop;
+    const mobile = this.isMobileMazeUi || !this.sys.game.device.os.desktop;
     if (!mobile) return;
+    if (this.registry.get("externalTouchpad") === true) return;
 
     const jx = 118;
-    const jy = LAYOUT.CONTROLS_TOP + 72;
+    const jy = Math.min(LAYOUT.HEIGHT - 92, LAYOUT.CONTROLS_TOP + 36);
     this.mazeStickCx = jx;
     this.mazeStickCy = jy;
-    this.mazeStickR = 58;
+    this.mazeStickR = 66;
     this.mazeStickActive = false;
     this.mazeStickPointerId = null;
 
     this.mazeStickBase = this.add
-      .circle(jx, jy, this.mazeStickR, 0x2a3038, 0.58)
-      .setStrokeStyle(2, 0x5a6570)
+      .circle(jx, jy, this.mazeStickR, 0x273548, 0.78)
+      .setStrokeStyle(2, 0xaec7df)
       .setDepth(24);
-    this.mazeStickThumb = this.add.circle(jx, jy, 25, 0x8899aa, 0.9).setDepth(25);
+    this.mazeStickThumb = this.add.circle(jx, jy, 28, 0xc9d9ea, 0.94).setDepth(25);
     this.mazeStickBase.setInteractive({ useHandCursor: true });
     this.mazeStickThumb.setInteractive({ useHandCursor: true });
 
@@ -372,6 +373,11 @@ export default class Game3Scene extends Phaser.Scene {
     bean.destroy();
     this.beansLeft -= 1;
     this.score += 10;
+    const now = this.time.now;
+    if (this.cache.audio.exists("sfx_ok") && now - this.lastOkSfxAt >= 70) {
+      this.sound.play("sfx_ok", { volume: 0.28 });
+      this.lastOkSfxAt = now;
+    }
     this.playPickupFx(bx, by, 0xffb347, "+10");
     this.updateHud();
     if (this.beansLeft === 0) {
@@ -568,6 +574,14 @@ export default class Game3Scene extends Phaser.Scene {
   }
 
   create() {
+    this.isMobileMazeUi = !this.sys.game.device.os.desktop && this.registry.get("expeditionMission") === 3;
+    this.externalTouchpadState =
+      this.registry.get("externalTouchpad") === true && typeof window !== "undefined"
+        ? window.__enigmaTouchpadState || null
+        : null;
+    this.panelWidth = this.isMobileMazeUi ? 0 : PANEL_W;
+    this.lastOkSfxAt = 0;
+    this.lastErrorSfxAt = 0;
     this._levelWinOverlayActive = false;
     this._levelWinOverlayUsed = false;
     let lv = Number(this.registry.get("mazeLevel")) || 1;
@@ -631,7 +645,7 @@ export default class Game3Scene extends Phaser.Scene {
     const rows = this.maze.length;
     const cols = this.maze[0].length;
     const mazePxW = cols * TILE;
-    const leftMax = LAYOUT.WIDTH - PANEL_W - 16;
+    const leftMax = LAYOUT.WIDTH - this.panelWidth - 16;
     this.offsetX = Math.max(10, Math.floor((leftMax - mazePxW) / 2));
     this.offsetY = LAYOUT.GAME_TOP + (LAYOUT.GAME_H - rows * TILE) / 2;
 
@@ -913,6 +927,11 @@ export default class Game3Scene extends Phaser.Scene {
       const name = g.guardianType || "KUNKU";
       this.hitCooldown = 1800;
       this.lives -= 1;
+      const now = this.time.now;
+      if (this.cache.audio.exists("sfx_error") && now - this.lastErrorSfxAt >= 120) {
+        this.sound.play("sfx_error", { volume: 0.36 });
+        this.lastErrorSfxAt = now;
+      }
       this.hint.setText(GUARDIAN_CATCH[name] || GUARDIAN_CATCH.KUNKU);
       this.time.delayedCall(2800, () => {
         this.hint.setText(
@@ -977,7 +996,9 @@ export default class Game3Scene extends Phaser.Scene {
       }
     });
 
-    this.buildSidePanel();
+    if (!this.isMobileMazeUi) {
+      this.buildSidePanel();
+    }
 
     this.add
       .text(LAYOUT.WIDTH - 12, LAYOUT.GAME_TOP + 12, "[ VOLVER AL MAPA ]", { fontSize: "10px", color: "#c8921a" })
@@ -991,7 +1012,7 @@ export default class Game3Scene extends Phaser.Scene {
         fontSize: "12px",
         color: "#d8d0c8",
         align: "center",
-        wordWrap: { width: mazePxW + PANEL_W * 0.35 },
+        wordWrap: { width: mazePxW + this.panelWidth * 0.35 },
       })
       .setOrigin(0.5)
       .setDepth(25);
@@ -1007,7 +1028,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.hudLeft = this.add.text(16, 22, "", { fontSize: "11px", color: "#ffdd44" }).setDepth(25);
     this.hudMid = this.add
-      .text(LAYOUT.WIDTH / 2 - PANEL_W / 2, 22, "", { fontSize: "11px", color: "#eeeeee" })
+      .text(LAYOUT.WIDTH / 2 - this.panelWidth / 2, 22, "", { fontSize: "11px", color: "#eeeeee" })
       .setOrigin(0.5, 0)
       .setDepth(25);
     this.hudTime = this.add
@@ -1015,7 +1036,7 @@ export default class Game3Scene extends Phaser.Scene {
       .setOrigin(0.5, 0)
       .setDepth(25);
     this.hudRight = this.add
-      .text(LAYOUT.WIDTH - PANEL_W - 28, 22, "", { fontSize: "11px", color: "#ffaaaa" })
+      .text(LAYOUT.WIDTH - this.panelWidth - 28, 22, "", { fontSize: "11px", color: "#ffaaaa" })
       .setOrigin(1, 0)
       .setDepth(25);
 
@@ -1087,25 +1108,27 @@ export default class Game3Scene extends Phaser.Scene {
     this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151018, 0.92).setOrigin(0);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0610, 0.95).setOrigin(0);
 
-    this.add
-      .text(
-        20,
-        LAYOUT.CONTROLS_TOP + 14,
-        "Flechas / WASD = Moverse | Joystick virtual en móvil",
-        {
-          fontSize: "10px",
-          color: "#7a7288",
-          wordWrap: { width: 820 },
-        },
-      )
-      .setOrigin(0, 0);
+    if (!this.isMobileMazeUi) {
+      this.add
+        .text(
+          20,
+          LAYOUT.CONTROLS_TOP + 14,
+          "Flechas / WASD = Moverse | Joystick virtual en móvil",
+          {
+            fontSize: "10px",
+            color: "#7a7288",
+            wordWrap: { width: 820 },
+          },
+        )
+        .setOrigin(0, 0);
 
-    this.add
-      .text(LAYOUT.WIDTH - 24, LAYOUT.CONTROLS_TOP + 18, "Palanda, Ecuador — Mayo Chinchipe · Marañón — 5.500 AP", {
-        fontSize: "10px",
-        color: "#9a8a68",
-      })
-      .setOrigin(1, 0);
+      this.add
+        .text(LAYOUT.WIDTH - 24, LAYOUT.CONTROLS_TOP + 18, "Palanda, Ecuador — Mayo Chinchipe · Marañón — 5.500 AP", {
+          fontSize: "10px",
+          color: "#9a8a68",
+        })
+        .setOrigin(1, 0);
+    }
   }
 
   heartsLine() {
@@ -1164,6 +1187,8 @@ export default class Game3Scene extends Phaser.Scene {
     const j = this.player?.stickVector;
     const d = this._domMaze;
     const m = this.mazeKeys;
+    const ex = this.externalTouchpadState;
+    const exHasDirection = !!(ex && (ex.left || ex.right || ex.up || ex.down));
     let vx = 0;
     let vy = 0;
     if (j && (j.x !== 0 || j.y !== 0)) {
@@ -1174,6 +1199,11 @@ export default class Game3Scene extends Phaser.Scene {
         vx /= len;
         vy /= len;
       }
+    } else if (exHasDirection) {
+      if (ex.left) vx = -1;
+      else if (ex.right) vx = 1;
+      if (ex.up) vy = -1;
+      else if (ex.down) vy = 1;
     } else if (d) {
       if (d.left || m?.left?.isDown || m?.a?.isDown) vx = -1;
       else if (d.right || m?.right?.isDown || m?.d?.isDown) vx = 1;

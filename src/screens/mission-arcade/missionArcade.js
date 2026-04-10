@@ -59,7 +59,8 @@ export function renderMissionArcade(container, missionNumber) {
   ensureAmbientAudioState();
   const state = getGameState();
   const isCoarsePointer = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-  const useMobileSplit = missionNumber === 1 && isCoarsePointer;
+  const useMobileSplit = (missionNumber === 1 || missionNumber === 3) && isCoarsePointer;
+  const useMobileMaze = false;
   const useMobileRunner = missionNumber === 2 && isCoarsePointer;
   const ensureTouchpadState = () => {
     if (typeof window === "undefined") return null;
@@ -103,7 +104,7 @@ export function renderMissionArcade(container, missionNumber) {
   }
 
   container.innerHTML = `
-    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
+    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""} ${useMobileMaze ? "mission-arcade--mobile-maze" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
       <div class="mission-arcade-vignette" aria-hidden="true"></div>
       <header class="mission-arcade-top">
         <p class="mission-arcade-brand">EL ENIGMA DE SANTA ANA · LA FLORIDA</p>
@@ -153,6 +154,14 @@ export function renderMissionArcade(container, missionNumber) {
               useMobileSplit
                 ? `
             <div class="mission-arcade-touchpad is-hidden" id="missionTouchpad">
+              ${
+                missionNumber === 3
+                  ? `
+              <div class="mission-arcade-touch-stick" id="missionTouchStick" aria-label="Joystick tactil">
+                <div class="mission-arcade-touch-stick-thumb" id="missionTouchThumb"></div>
+              </div>
+              `
+                  : `
               <div class="mission-arcade-touchpad-grid">
                 <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--up" data-touch-key="ArrowUp">↑</button>
                 <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--left" data-touch-key="ArrowLeft">←</button>
@@ -160,6 +169,8 @@ export function renderMissionArcade(container, missionNumber) {
                 <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--down" data-touch-key="ArrowDown">↓</button>
               </div>
               <button type="button" class="mission-arcade-touch-action" data-touch-key="KeyE">ACCION</button>
+              `
+              }
             </div>
             `
                 : ""
@@ -251,6 +262,69 @@ export function renderMissionArcade(container, missionNumber) {
     button.addEventListener("touchend", up, { passive: false });
     button.addEventListener("touchcancel", up, { passive: false });
   };
+  const bindVirtualStick = (stick, thumb) => {
+    if (!stick || !thumb) return;
+    const state = ensureTouchpadState();
+    if (!state) return;
+    let activePointerId = null;
+    const resetStick = () => {
+      state.up = false;
+      state.down = false;
+      state.left = false;
+      state.right = false;
+      thumb.style.transform = "translate(-50%, -50%)";
+      stick.classList.remove("is-active");
+    };
+    const applyFromPointer = (pointerLike) => {
+      const rect = stick.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const max = Math.max(16, rect.width * 0.32);
+      const dead = Math.max(8, rect.width * 0.1);
+      const dx = pointerLike.clientX - cx;
+      const dy = pointerLike.clientY - cy;
+      const len = Math.hypot(dx, dy);
+      const clamped = len > max ? max / len : 1;
+      const sx = dx * clamped;
+      const sy = dy * clamped;
+      thumb.style.transform = `translate(calc(-50% + ${sx}px), calc(-50% + ${sy}px))`;
+      if (len < dead) {
+        state.up = false;
+        state.down = false;
+        state.left = false;
+        state.right = false;
+        return;
+      }
+      const nx = dx / (len || 1);
+      const ny = dy / (len || 1);
+      state.up = ny < -0.35;
+      state.down = ny > 0.35;
+      state.left = nx < -0.35;
+      state.right = nx > 0.35;
+    };
+    stick.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      activePointerId = ev.pointerId;
+      stick.setPointerCapture?.(ev.pointerId);
+      stick.classList.add("is-active");
+      applyFromPointer(ev);
+    });
+    stick.addEventListener("pointermove", (ev) => {
+      if (activePointerId === null || ev.pointerId !== activePointerId) return;
+      ev.preventDefault();
+      applyFromPointer(ev);
+    });
+    const stop = (ev) => {
+      if (activePointerId === null || ev.pointerId !== activePointerId) return;
+      ev.preventDefault();
+      activePointerId = null;
+      resetStick();
+    };
+    stick.addEventListener("pointerup", stop);
+    stick.addEventListener("pointercancel", stop);
+    stick.addEventListener("pointerleave", stop);
+    resetStick();
+  };
 
   if (useMobileSplit) {
     resetTouchpadState();
@@ -275,6 +349,9 @@ export function renderMissionArcade(container, missionNumber) {
                 : "action";
       bindVirtualKey(btn, keyName);
     });
+    if (missionNumber === 3) {
+      bindVirtualStick(container.querySelector("#missionTouchStick"), container.querySelector("#missionTouchThumb"));
+    }
   }
 
   const startMission = () => {

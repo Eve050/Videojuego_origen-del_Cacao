@@ -715,14 +715,19 @@ export default class Game2Scene extends Phaser.Scene {
       .setDepth(22)
       .setScrollFactor(0);
     this.hudLives = this.add
-      .text(this.isMobileRunnerUi ? LAYOUT.WIDTH / 2 : hudRightX, this.isMobileRunnerUi ? 28 : 26, "", {
-        fontSize: this.isMobileRunnerUi ? "15px" : "13px",
-        color: "#ffb56b",
+      .text(this.isMobileRunnerUi ? 208 : hudRightX, this.isMobileRunnerUi ? 26 : 26, "", {
+        fontSize: this.isMobileRunnerUi ? "14px" : "13px",
+        color: "#ffd7a0",
         fontStyle: "bold",
-        align: this.isMobileRunnerUi ? "center" : "right",
+        align: "right",
       })
-      .setOrigin(this.isMobileRunnerUi ? 0.5 : 1, 0)
+      .setOrigin(1, 0)
       .setDepth(22)
+      .setScrollFactor(0);
+    this.hudLivesBg = this.add
+      .rectangle(this.isMobileRunnerUi ? 136 : hudRightX - 56, 33, this.isMobileRunnerUi ? 154 : 112, 24, 0x0a1015, this.isMobileRunnerUi ? 0.78 : 0)
+      .setStrokeStyle(this.isMobileRunnerUi ? 1 : 0, 0x684a1f, 0.9)
+      .setDepth(21)
       .setScrollFactor(0);
 
     this.routeBarY = LAYOUT.GAME_TOP + LAYOUT.GAME_H - 34;
@@ -1259,7 +1264,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.hudVainas.setText(`VASIJAS: ${this.vainasCount.toString().padStart(2, "0")}`);
     this.hudZona.setText(`ZONA: ${z.name.toUpperCase()}`);
     this.hudDatos.setText(this.isMobileRunnerUi ? `DATOS: ${datosN} / 5` : `DATOS: ${datosN} / 5 desbloqueados`);
-    this.hudLives?.setText(`VIDAS: ${this.lives}  ${this.heartsLine()}`);
+    this.hudLives?.setText(`VIDAS: ${this.lives} ${this.heartsLine()}`);
     if (this.hudVesselIcon && !this.tweens.isTweening(this.hudVesselIcon)) {
       this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
     }

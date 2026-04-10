@@ -1449,24 +1449,28 @@ body:has(.mission-arcade) {
 }
 
 .screen--p01 .p01-title-light {
-  font-size: clamp(0.52rem, 2.4vw, 0.78rem);
-  line-height: 1.5;
+  font-size: clamp(0.82rem, 3.8vw, 1.2rem);
+  line-height: 1.35;
   color: #f5f0e6;
 }
 
 .screen--p01 .p01-title-gold {
   margin-top: 0.35rem;
-  font-size: clamp(0.58rem, 2.8vw, 0.88rem);
-  line-height: 1.45;
+  font-size: clamp(0.96rem, 4.4vw, 1.42rem);
+  line-height: 1.28;
   color: #ffcc33;
 }
 
 .screen--p01 .p01-title-sub {
   margin-top: 0.35rem;
-  font-size: clamp(0.45rem, 2vw, 0.65rem);
-  line-height: 1.5;
+  font-size: clamp(0.68rem, 3vw, 0.98rem);
+  line-height: 1.3;
   letter-spacing: 0.12em;
   color: #c8e8d0;
+}
+
+.screen--p01 .p01-actions-box {
+  transform: translateY(-88px);
 }
 
 .screen--p01 .btn--p01-primary,
@@ -3152,19 +3156,19 @@ body:has(.mission-arcade) {
 .p01-title-light {
   color: #f0f0ea;
   text-shadow: 0 4px 20px rgba(1, 6, 10, 0.9);
-  font-size: clamp(2.2rem, 8vw, 5.2rem);
+  font-size: clamp(2.5rem, 9vw, 6rem);
 }
 
 .p01-title-gold {
   margin-top: 0.22rem;
   color: #d2a11f;
   text-shadow: 0 3px 16px rgba(0, 0, 0, 0.75);
-  font-size: clamp(2.3rem, 8vw, 5.4rem);
+  font-size: clamp(2.7rem, 9.2vw, 6.2rem);
 }
 
 .p01-title-sub {
   margin-top: 0.22rem;
-  font-size: clamp(1.7rem, 4.1vw, 3rem);
+  font-size: clamp(1.9rem, 4.5vw, 3.4rem);
   letter-spacing: 0.22em;
 }
 
@@ -3173,6 +3177,7 @@ body:has(.mission-arcade) {
   display: flex;
   flex-direction: column;
   gap: 0.72rem;
+  transform: translateY(-54px);
 }
 
 .btn {
@@ -3423,6 +3428,14 @@ body:has(.mission-arcade) {
   .btn--p01-primary,
   .btn--p01-secondary {
     font-size: 1rem;
+  }
+
+  .p01-actions-box {
+    transform: translateY(-36px);
+  }
+
+  .screen--p01 .p01-actions-box {
+    transform: translateY(-52px);
   }
 
   .screen-footer {
@@ -4919,6 +4932,29 @@ body:has(.screen--phaser-lab) {
     display: block;
   }
 
+  .mission-arcade--mobile-maze .mission-arcade-machine {
+    min-height: 64dvh;
+  }
+
+  .mission-arcade--mobile-maze .mission-arcade-screen-wrap {
+    min-height: 58dvh;
+  }
+
+  .mission-arcade--mobile-maze .mission-arcade-phaser-host {
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mission-arcade--mobile-maze .mission-arcade-phaser-host canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 auto !important;
+    display: block;
+  }
+
   .mission-arcade-touchpad-grid {
     position: relative;
     width: min(68vw, 260px);
@@ -5004,6 +5040,48 @@ body:has(.screen--phaser-lab) {
     background:
       radial-gradient(circle at 30% 20%, rgba(255, 240, 214, 0.45), transparent 42%),
       linear-gradient(165deg, #9d6030 0%, #704222 100%);
+  }
+
+  .mission-arcade-touch-stick {
+    position: relative;
+    width: min(34vw, 136px);
+    height: min(34vw, 136px);
+    border-radius: 50%;
+    border: 2px solid rgba(181, 214, 244, 0.88);
+    background:
+      radial-gradient(circle at 28% 22%, rgba(189, 219, 244, 0.28), transparent 42%),
+      linear-gradient(180deg, rgba(18, 38, 60, 0.84) 0%, rgba(10, 24, 40, 0.92) 100%);
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.46),
+      inset 0 1px 0 rgba(220, 240, 255, 0.26);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .mission-arcade-touch-stick.is-active {
+    border-color: rgba(203, 232, 255, 0.95);
+    box-shadow:
+      0 10px 22px rgba(0, 0, 0, 0.5),
+      0 0 18px rgba(139, 195, 255, 0.3),
+      inset 0 1px 0 rgba(238, 248, 255, 0.34);
+  }
+
+  .mission-arcade-touch-stick-thumb {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(14vw, 54px);
+    height: min(14vw, 54px);
+    border-radius: 50%;
+    border: 2px solid rgba(227, 240, 255, 0.95);
+    background:
+      radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.6), transparent 46%),
+      linear-gradient(180deg, rgba(196, 224, 246, 0.95) 0%, rgba(162, 198, 226, 0.9) 100%);
+    transform: translate(-50%, -50%);
+    box-shadow:
+      0 4px 10px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    pointer-events: none;
   }
 
   .mission-arcade-panel {
