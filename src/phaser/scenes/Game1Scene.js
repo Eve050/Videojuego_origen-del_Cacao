@@ -218,6 +218,8 @@ export default class Game1Scene extends Phaser.Scene {
 
     this.cameras.main.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+    const mobileGameplayView = this.registry.get("externalTouchpad") === true;
+    this.cameras.main.setFollowOffset(mobileGameplayView ? -42 : 0, 0);
     this.cameras.main.setZoom(1);
     this.cameras.main.setBackgroundColor(0x1a2e22);
 

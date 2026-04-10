@@ -38,6 +38,12 @@ export default class Game2Scene extends Phaser.Scene {
     super({ key: "Game2Scene" });
   }
 
+  zoneScrollSpeedAt(index) {
+    const z = this.zones?.[index];
+    const base = z?.scrollSpeed || 280;
+    return this.isMobileRunnerUi ? Math.round(base * 0.78) : base;
+  }
+
   onRunnerDomKey(ev, isDown) {
     const el = ev.target;
     if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
@@ -76,9 +82,10 @@ export default class Game2Scene extends Phaser.Scene {
     if (grounded) {
       this.playerJumps = 0;
     }
-    const canAirJump = this.playerJumps > 0 && this.playerJumps < MAX_AIR_JUMPS;
+    const maxJumps = this.maxAirJumpsCurrent ?? MAX_AIR_JUMPS;
+    const canAirJump = this.playerJumps > 0 && this.playerJumps < maxJumps;
     if (!grounded && !canAirJump) return false;
-    this.player.setVelocityY(-620);
+    this.player.setVelocityY(this.jumpVelocity ?? -620);
     this.playerJumps += 1;
     this.coyoteMs = 0;
     const now = this.time.now;
@@ -307,15 +314,27 @@ export default class Game2Scene extends Phaser.Scene {
     const depth = 90;
     const cx = LAYOUT.WIDTH / 2;
     const cy = LAYOUT.HEIGHT / 2;
+    const mobile = this.isMobileRunnerUi === true;
+    const titleSize = mobile ? "48px" : "74px";
+    const subtitleSize = mobile ? "22px" : "30px";
+    const bodySize = mobile ? "16px" : "22px";
+    const statsSize = mobile ? "14px" : "18px";
+    const titleY = mobile ? cy - 168 : cy - 132;
+    const subtitleY = mobile ? cy - 96 : cy - 48;
+    const bodyY = mobile ? cy - 42 : cy + 6;
+    const statsY = mobile ? cy + 16 : cy + 84;
+    const btnW = mobile ? 540 : 460;
+    const btnY1 = mobile ? cy + 88 : cy + 160;
+    const btnY2 = mobile ? cy + 146 : cy + 224;
     this.add
       .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x07110b, 0.9)
       .setDepth(depth)
       .setScrollFactor(0);
 
     const title = this.add
-      .text(cx, cy - 132, "¡FELICIDADES!", {
+      .text(cx, titleY, "¡FELICIDADES!", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "74px",
+        fontSize: titleSize,
         color: "#6cfc8a",
         fontStyle: "bold",
       })
@@ -332,9 +351,9 @@ export default class Game2Scene extends Phaser.Scene {
     });
 
     this.add
-      .text(cx, cy - 48, "MISIÓN SUPERADA", {
+      .text(cx, subtitleY, "MISIÓN SUPERADA", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "30px",
+        fontSize: subtitleSize,
         color: "#c2ffd0",
         fontStyle: "bold",
       })
@@ -343,12 +362,12 @@ export default class Game2Scene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.add
-      .text(cx, cy + 6, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.", {
+      .text(cx, bodyY, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.", {
         fontFamily: "Arial, sans-serif",
-        fontSize: "22px",
+        fontSize: bodySize,
         color: "#f5fff7",
         align: "center",
-        lineSpacing: 6,
+        lineSpacing: mobile ? 4 : 6,
       })
       .setOrigin(0.5)
       .setDepth(depth + 1)
@@ -357,13 +376,14 @@ export default class Game2Scene extends Phaser.Scene {
     this.add
       .text(
         cx,
-        cy + 84,
+        statsY,
         `Puntos: ${this.points}   |   Vasijas: ${this.vainasCount}   |   Datos: ${this.countDatosUnlocked()} / 5`,
         {
           fontFamily: "Arial, sans-serif",
-          fontSize: "18px",
+          fontSize: statsSize,
           color: "#d3ffe0",
           align: "center",
+          wordWrap: { width: mobile ? 560 : 900 },
         },
       )
       .setOrigin(0.5)
@@ -372,11 +392,11 @@ export default class Game2Scene extends Phaser.Scene {
 
     const expMission = this.registry.get("expeditionMission");
     if (expMission === 2) {
-      this.addWinOverlayBtn(cx, cy + 160, 460, 52, "[ IR A LA SIGUIENTE MISIÓN ]", () => {
+      this.addWinOverlayBtn(cx, btnY1, btnW, 52, "[ IR A LA SIGUIENTE MISIÓN ]", () => {
         completeMissionByNumber(2);
         window.location.hash = "#/p04";
       });
-      this.addWinOverlayBtn(cx, cy + 224, 460, 48, "[ VER RESULTADOS ]", () => {
+      this.addWinOverlayBtn(cx, btnY2, btnW, 48, "[ VER RESULTADOS ]", () => {
         this.scene.start("ResultScene", this.runnerResultPayload());
       });
     } else {
@@ -486,6 +506,9 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   create() {
+    this.isMobileRunnerUi = !this.sys.game.device.os.desktop && this.registry.get("expeditionMission") === 2;
+    this.jumpVelocity = this.isMobileRunnerUi ? -520 : -620;
+    this.maxAirJumpsCurrent = this.isMobileRunnerUi ? 1 : MAX_AIR_JUMPS;
     this.drawChrome();
 
     if (this.textures.exists("bg_selva_run")) {
@@ -524,7 +547,7 @@ export default class Game2Scene extends Phaser.Scene {
       .setScrollFactor(0);
 
     this.physics.world.setBounds(0, LAYOUT.GAME_TOP, LAYOUT.WIDTH + 320, LAYOUT.GAME_H);
-    this.physics.world.gravity.y = 1200;
+    this.physics.world.gravity.y = this.isMobileRunnerUi ? 1450 : 1200;
 
     this.zoneIndex = 0;
     this.zones = zonesConfig;
@@ -557,8 +580,8 @@ export default class Game2Scene extends Phaser.Scene {
     this.groundBodyTop = groundCenterY - 28;
 
     this.player = this.physics.add.sprite(220, GROUND_TOP_Y - 44, "ph_player");
-    this.player.setDepth(9);
-    this.player.setScale(1.12);
+    this.player.setDepth(this.isMobileRunnerUi ? 20 : 9);
+    this.player.setScale(this.isMobileRunnerUi ? 1.18 : 1.12);
     this.player.setCollideWorldBounds(true);
     if (this.player.body) {
       const pw = 26;
@@ -572,6 +595,9 @@ export default class Game2Scene extends Phaser.Scene {
     this.physics.add.collider(this.player, ground, () => {
       this.playerJumps = 0;
     });
+    if (this.isMobileRunnerUi) {
+      this.cameras.main.setZoom(1);
+    }
 
     this.obstacles = this.physics.add.group();
     this.pods = this.physics.add.group();
@@ -655,17 +681,20 @@ export default class Game2Scene extends Phaser.Scene {
       }
     });
 
-    this.scrollSpeed = this.zones[0].scrollSpeed || 280;
+    this.scrollSpeed = this.zoneScrollSpeedAt(0);
 
     this.hudVesselIcon = this.add
       .image(38, 20, "ph_vessel")
       .setDepth(22)
       .setOrigin(0.5)
-      .setScale(0.34);
+      .setScale(0.34)
+      .setScrollFactor(0);
 
+    const hudRightX = this.isMobileRunnerUi ? LAYOUT.WIDTH - 40 : LAYOUT.WIDTH - 20;
     this.hudVainas = this.add
       .text(68, 8, "", { fontSize: "14px", color: "#ffdd44", fontStyle: "bold" })
-      .setDepth(22);
+      .setDepth(22)
+      .setScrollFactor(0);
     this.hudZona = this.add
       .text(LAYOUT.WIDTH / 2, 8, "", {
         fontSize: "13px",
@@ -673,20 +702,32 @@ export default class Game2Scene extends Phaser.Scene {
         fontStyle: "bold",
       })
       .setOrigin(0.5, 0)
-      .setDepth(22);
+      .setDepth(22)
+      .setScrollFactor(0);
     this.hudDatos = this.add
-      .text(LAYOUT.WIDTH - 20, 8, "", {
+      .text(hudRightX, 8, "", {
         fontSize: "13px",
         color: "#e8e4dc",
         fontStyle: "bold",
         align: "right",
       })
       .setOrigin(1, 0)
-      .setDepth(22);
+      .setDepth(22)
+      .setScrollFactor(0);
+    this.hudLives = this.add
+      .text(this.isMobileRunnerUi ? LAYOUT.WIDTH / 2 : hudRightX, this.isMobileRunnerUi ? 28 : 26, "", {
+        fontSize: this.isMobileRunnerUi ? "15px" : "13px",
+        color: "#ffb56b",
+        fontStyle: "bold",
+        align: this.isMobileRunnerUi ? "center" : "right",
+      })
+      .setOrigin(this.isMobileRunnerUi ? 0.5 : 1, 0)
+      .setDepth(22)
+      .setScrollFactor(0);
 
     this.routeBarY = LAYOUT.GAME_TOP + LAYOUT.GAME_H - 34;
     this.routeNodes = [];
-    this.routeProgress = this.add.graphics().setDepth(7);
+    this.routeProgress = this.add.graphics().setDepth(7).setScrollFactor(0);
     this.buildRouteBar();
 
     this.hintLine = this.add
@@ -697,6 +738,7 @@ export default class Game2Scene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(22);
+    this.hintLine.setVisible(!this.isMobileRunnerUi);
 
     this.bannerText = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H * 0.22, "", {
@@ -711,6 +753,9 @@ export default class Game2Scene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlpha(0)
       .setDepth(18);
+    if (this.isMobileRunnerUi) {
+      this.bannerText.setVisible(false);
+    }
 
     const pauseBg = this.add
       .rectangle(LAYOUT.WIDTH / 2, LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2, LAYOUT.WIDTH - 40, LAYOUT.GAME_H - 24, 0x000811, 0.55)
@@ -728,16 +773,20 @@ export default class Game2Scene extends Phaser.Scene {
       .setVisible(false);
     this.pauseOverlayElts = [pauseBg, this.pauseLabel];
 
-    const jumpY = LAYOUT.CONTROLS_TOP + Math.min(72, LAYOUT.CONTROLS_H_ACTUAL * 0.35);
+    const jumpY = this.isMobileRunnerUi
+      ? LAYOUT.HINT_TOP + LAYOUT.HINT_BAR_H + 18
+      : LAYOUT.CONTROLS_TOP + Math.min(72, LAYOUT.CONTROLS_H_ACTUAL * 0.35);
+    const jumpW = this.isMobileRunnerUi ? 220 : 168;
+    const jumpX = this.isMobileRunnerUi ? LAYOUT.WIDTH / 2 : LAYOUT.WIDTH - 96;
     const jumpBtn = this.add
-      .rectangle(LAYOUT.WIDTH - 96, jumpY, 168, 54, 0x2563a8, 1)
-      .setStrokeStyle(2, 0x8ec5ff)
+      .rectangle(jumpX, jumpY, jumpW, 54, 0x7a4a24, 1)
+      .setStrokeStyle(2, 0xd4a574)
       .setDepth(24)
       .setInteractive({ useHandCursor: true });
     const jumpLabel = this.add
       .text(jumpBtn.x, jumpBtn.y, "SALTAR", {
         fontSize: "14px",
-        color: "#f0f8ff",
+        color: "#fff8f0",
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -799,6 +848,14 @@ export default class Game2Scene extends Phaser.Scene {
     if (this.game?.canvas) {
       this.game.canvas.setAttribute("tabindex", "0");
       this.game.canvas.style.outline = "none";
+    }
+
+    if (this.isMobileRunnerUi) {
+      this.player.setX(500);
+      this.player.setY(GROUND_TOP_Y - 44);
+      this.mobilePlayerAura = this.add
+        .ellipse(this.player.x, this.player.y - 12, 58, 26, 0xffe6a8, 0.16)
+        .setDepth(19);
     }
 
     this.add
@@ -890,6 +947,16 @@ export default class Game2Scene extends Phaser.Scene {
    * groundCenterY + offset; offsets más negativos = más arriba.
    */
   pickCollectibleYJitter() {
+    if (this.isMobileRunnerUi) {
+      const rMobile = Math.random();
+      if (rMobile < 0.58) {
+        return Phaser.Math.Between(-34, -58);
+      }
+      if (rMobile < 0.88) {
+        return Phaser.Math.Between(-64, -96);
+      }
+      return Phaser.Math.Between(-98, -132);
+    }
     const r = Math.random();
     if (r < 0.5) {
       return Phaser.Math.Between(-88, -118);
@@ -954,9 +1021,13 @@ export default class Game2Scene extends Phaser.Scene {
 
   buildRouteBar() {
     const labels = ["PALANDA", "ANDES", "COL./PAN.", "MESOAMÉR.", "EUROPA"];
-    const totalW = Math.min(720, LAYOUT.WIDTH - 80);
+    const totalW = this.isMobileRunnerUi ? 360 : Math.min(720, LAYOUT.WIDTH - 80);
     const startX = (LAYOUT.WIDTH - totalW) / 2;
-    this.add.rectangle(LAYOUT.WIDTH / 2, this.routeBarY, totalW + 24, 5, 0x2a3238, 1).setOrigin(0.5).setDepth(6);
+    this.add
+      .rectangle(LAYOUT.WIDTH / 2, this.routeBarY, totalW + 24, 5, 0x2a3238, 1)
+      .setOrigin(0.5)
+      .setDepth(6)
+      .setScrollFactor(0);
     const step = totalW / (labels.length - 1);
     this.routeStepPx = step;
     this.routeStartX = startX;
@@ -964,14 +1035,17 @@ export default class Game2Scene extends Phaser.Scene {
       const x = startX + i * step;
       const dot = this.add.circle(x, this.routeBarY, 9, 0x2a2824, 1).setStrokeStyle(2, 0x5a6050).setDepth(6);
       const lbl = this.add
-        .text(x, this.routeBarY + 20, labels[i], { fontSize: "8px", color: "#9a9a88" })
+        .text(x, this.routeBarY + 20, labels[i], { fontSize: this.isMobileRunnerUi ? "7px" : "8px", color: "#9a9a88" })
         .setOrigin(0.5)
-        .setDepth(6);
+        .setDepth(6)
+        .setScrollFactor(0);
+      dot.setScrollFactor(0);
       this.routeNodes.push({ dot, lbl, x });
     }
   }
 
   updateRouteBar() {
+    if (!this.routeNodes.length) return;
     const pro = Phaser.Math.Clamp(this.runDistance / (5 * DIST_PER_ZONE), 0, 1);
     this.routeProgress.clear();
     const totalW = this.routeStepPx * (this.routeNodes.length - 1);
@@ -992,8 +1066,12 @@ export default class Game2Scene extends Phaser.Scene {
   drawChrome() {
     this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0);
     this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.96).setOrigin(0).setDepth(15);
-    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.92).setOrigin(0).setDepth(15);
+    this.add
+      .rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, this.isMobileRunnerUi ? 0.35 : 0.92)
+      .setOrigin(0)
+      .setDepth(15);
     this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setDepth(15);
+    if (this.isMobileRunnerUi) return;
     this.add
       .text(24, LAYOUT.CONTROLS_TOP + 14, "P/ESC pausa · ↑/W/ESPACIO salta · táctil: toca pista · vasijas en el aire · DOBLE SALTO · Vasija +10 · Dorada +30 + dato · Pieza +50 · Ruta completa +200", {
         fontSize: "10px",
@@ -1022,6 +1100,7 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   flashHint(title, sub) {
+    if (this.isMobileRunnerUi || !this.hintLine) return;
     if (title) {
       this.hintLine.setText(`${title}\n${sub}`);
     } else {
@@ -1035,6 +1114,7 @@ export default class Game2Scene extends Phaser.Scene {
   }
 
   flashBanner(text) {
+    if (this.isMobileRunnerUi || !this.bannerText) return;
     if (!text) return;
     this.bannerText.setText(text);
     this.tweens.killTweensOf(this.bannerText);
@@ -1078,7 +1158,7 @@ export default class Game2Scene extends Phaser.Scene {
     while (this.zoneIndex < targetZone) {
       this.zoneIndex += 1;
       const z = this.zones[this.zoneIndex];
-      this.scrollSpeed = z.scrollSpeed;
+      this.scrollSpeed = this.zoneScrollSpeedAt(this.zoneIndex);
       this.applyZoneVisuals();
       applyAmbientZoneProfile(this.zoneIndex);
       this.flashBanner(z.bannerText);
@@ -1109,7 +1189,11 @@ export default class Game2Scene extends Phaser.Scene {
     const o = this.obtainObstacle();
     o.setPosition(x, y);
     o.setDepth(8);
-    o.setScale(1, scaleY);
+    if (this.isMobileRunnerUi) {
+      o.setScale(0.8, scaleY * 0.82);
+    } else {
+      o.setScale(1, scaleY);
+    }
     o.setVelocity(0, 0);
     const bw = 48;
     const bh = Math.round(30 * scaleY);
@@ -1127,7 +1211,11 @@ export default class Game2Scene extends Phaser.Scene {
 
     const isCultural = canCultural && !hasPiece;
     const isGold = !isCultural && Math.random() < 0.125;
-    const yJitter = isCultural ? Phaser.Math.Between(-100, -178) : this.pickCollectibleYJitter();
+    const yJitter = isCultural
+      ? this.isMobileRunnerUi
+        ? Phaser.Math.Between(-82, -126)
+        : Phaser.Math.Between(-100, -178)
+      : this.pickCollectibleYJitter();
 
     const fitVesselBody = (p) => {
       if (!p.body) return;
@@ -1170,13 +1258,16 @@ export default class Game2Scene extends Phaser.Scene {
     const datosN = this.countDatosUnlocked();
     this.hudVainas.setText(`VASIJAS: ${this.vainasCount.toString().padStart(2, "0")}`);
     this.hudZona.setText(`ZONA: ${z.name.toUpperCase()}`);
-    this.hudDatos.setText(`DATOS: ${datosN} / 5 desbloqueados\n${this.heartsLine()}`);
+    this.hudDatos.setText(this.isMobileRunnerUi ? `DATOS: ${datosN} / 5` : `DATOS: ${datosN} / 5 desbloqueados`);
+    this.hudLives?.setText(`VIDAS: ${this.lives}  ${this.heartsLine()}`);
     if (this.hudVesselIcon && !this.tweens.isTweening(this.hudVesselIcon)) {
       this.hudVesselIcon.setScale(this.hudVesselScaleForCount());
     }
-    this.hintLine.setText(
-      "P o ESC = pausa. ARRIBA/W/ESPACIO = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
-    );
+    if (!this.isMobileRunnerUi && this.hintLine) {
+      this.hintLine.setText(
+        "P o ESC = pausa. ARRIBA/W/ESPACIO = salto y doble salto. Táctil: pista. Vasijas solo en el aire — esquiva rocas.",
+      );
+    }
   }
 
   update(_t, dt) {
@@ -1224,12 +1315,16 @@ export default class Game2Scene extends Phaser.Scene {
       this.bgParallaxNear.tilePositionX += ds * 0.48;
     }
 
+    const baseScale = this.isMobileRunnerUi ? 1.18 : 1.12;
     if (this.player.body.touching.down && this.invulnerableMs <= 0) {
       this.playerRunPhase += delta * 0.014;
       const bob = Math.sin(this.playerRunPhase) * 0.04;
-      this.player.setScale(1.12 + bob);
+      this.player.setScale(baseScale + bob);
     } else if (this.invulnerableMs <= 0) {
-      this.player.setScale(1.12);
+      this.player.setScale(baseScale);
+    }
+    if (this.isMobileRunnerUi && this.mobilePlayerAura) {
+      this.mobilePlayerAura.setPosition(this.player.x, this.player.y - 12);
     }
 
     this.tryAdvanceZoneFromDistance();

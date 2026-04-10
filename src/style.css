@@ -3436,6 +3436,12 @@ body:has(.mission-arcade) {
 
   .p04-header {
     width: 100%;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "progress progress"
+      "intro help";
+    align-items: start;
+    gap: 0.5rem;
   }
 
   .p04-layout {
@@ -3445,6 +3451,27 @@ body:has(.mission-arcade) {
 
   .p04-map-board {
     height: 330px;
+  }
+
+  .p04-progress-card {
+    grid-area: progress;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .p04-intro-button {
+    grid-area: intro;
+    justify-self: start;
+    width: 38px;
+    height: 38px;
+  }
+
+  .p04-help-button {
+    grid-area: help;
+    justify-self: end;
+    width: 38px;
+    height: 38px;
   }
 
   .p04-focus-card {
@@ -4809,23 +4836,26 @@ body:has(.screen--phaser-lab) {
     left: 0;
     right: 0;
     top: 0;
-    height: 52%;
+    height: 62%;
     z-index: 1;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
   }
 
   .mission-arcade--mobile-split .mission-arcade-phaser-host canvas {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
+    width: auto !important;
+    height: 100% !important;
+    max-width: none !important;
     max-height: 100% !important;
+    margin: 0 auto !important;
+    display: block;
   }
 
   .mission-arcade--mobile-split .mission-arcade-touchpad {
     position: absolute;
     left: 0;
     right: 0;
-    top: 52%;
+    top: 62%;
     bottom: 0;
     z-index: 3;
     display: flex;
@@ -4866,6 +4896,29 @@ body:has(.screen--phaser-lab) {
     display: none;
   }
 
+  .mission-arcade--mobile-runner .mission-arcade-machine {
+    min-height: 76dvh;
+  }
+
+  .mission-arcade--mobile-runner .mission-arcade-screen-wrap {
+    min-height: 70dvh;
+  }
+
+  .mission-arcade--mobile-runner .mission-arcade-phaser-host {
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mission-arcade--mobile-runner .mission-arcade-phaser-host canvas {
+    width: auto !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: 100% !important;
+    margin: 0 auto !important;
+    display: block;
+  }
+
   .mission-arcade-touchpad-grid {
     position: relative;
     width: min(68vw, 260px);
@@ -4876,29 +4929,32 @@ body:has(.screen--phaser-lab) {
     position: absolute;
     width: min(16vw, 64px);
     height: min(16vw, 64px);
-    border-radius: 12px;
-    border: 2px solid #8ed1ff;
+    border-radius: 14px;
+    border: 2px solid #8b6425;
     background:
-      radial-gradient(circle at 30% 25%, rgba(188, 236, 255, 0.5), transparent 42%),
-      linear-gradient(165deg, #19447a 0%, #0d2f5a 100%);
-    color: #f0f8ff;
+      radial-gradient(circle at 30% 24%, rgba(255, 215, 145, 0.26), transparent 44%),
+      linear-gradient(165deg, #342819 0%, #1c150d 100%);
+    color: #fff8ea;
     font-size: clamp(1rem, 4vw, 1.6rem);
     font-weight: 800;
     line-height: 1;
     touch-action: none;
     box-shadow:
-      0 8px 20px rgba(6, 20, 45, 0.55),
-      inset 0 1px 0 rgba(216, 242, 255, 0.45);
+      0 9px 18px rgba(0, 0, 0, 0.45),
+      inset 0 1px 0 rgba(255, 228, 173, 0.3),
+      inset 0 -3px 0 rgba(0, 0, 0, 0.28);
   }
 
   .mission-arcade-touch-btn:active,
   .mission-arcade-touch-btn.is-pressed {
     background:
-      radial-gradient(circle at 30% 25%, rgba(210, 244, 255, 0.55), transparent 40%),
-      linear-gradient(165deg, #22599b 0%, #123f79 100%);
+      radial-gradient(circle at 30% 24%, rgba(255, 224, 163, 0.32), transparent 42%),
+      linear-gradient(165deg, #3f2f1d 0%, #241b11 100%);
+    border-color: #b88d3d;
     box-shadow:
-      0 5px 14px rgba(6, 20, 45, 0.5),
-      inset 0 1px 0 rgba(220, 246, 255, 0.5);
+      0 5px 12px rgba(0, 0, 0, 0.38),
+      inset 0 1px 0 rgba(255, 232, 184, 0.34),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.22);
   }
 
   .mission-arcade-touch-btn--up {

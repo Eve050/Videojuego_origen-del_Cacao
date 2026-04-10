@@ -60,6 +60,7 @@ export function renderMissionArcade(container, missionNumber) {
   const state = getGameState();
   const isCoarsePointer = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   const useMobileSplit = missionNumber === 1 && isCoarsePointer;
+  const useMobileRunner = missionNumber === 2 && isCoarsePointer;
   const ensureTouchpadState = () => {
     if (typeof window === "undefined") return null;
     if (!window.__enigmaTouchpadState) {
@@ -102,7 +103,7 @@ export function renderMissionArcade(container, missionNumber) {
   }
 
   container.innerHTML = `
-    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
+    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
       <div class="mission-arcade-vignette" aria-hidden="true"></div>
       <header class="mission-arcade-top">
         <p class="mission-arcade-brand">EL ENIGMA DE SANTA ANA · LA FLORIDA</p>
