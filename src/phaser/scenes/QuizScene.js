@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { LAYOUT } from "../layout.js";
+import { SFX_VOL } from "../../modules/sfxVolumes.js";
 
 const GAME1_ORDER = ["objeto-1-botella", "objeto-2-vasija", "objeto-3-turquesa"];
 
@@ -11,6 +12,14 @@ const PUNTOS_POR_INTENTO = [100, 60, 30];
 export default class QuizScene extends Phaser.Scene {
   constructor() {
     super({ key: "QuizScene" });
+  }
+
+  ensureSfxUnlocked() {
+    const ctx = this.sound?.context;
+    if (!ctx) return;
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => {});
+    }
   }
 
   init(data) {
@@ -170,7 +179,7 @@ export default class QuizScene extends Phaser.Scene {
       fontSize: mobileQuizMode ? "17px" : "20px",
       color: "#fff2d2",
       align: "center",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "Exo 2, sans-serif",
       fontStyle: "bold",
       wordWrap: { width: mobileQuizMode ? PW - 64 : PW - 120 },
     }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 4, true, true).setVisible(false);
@@ -179,7 +188,7 @@ export default class QuizScene extends Phaser.Scene {
       fontSize: mobileQuizMode ? "12px" : "16px",
       color: "#f8ead2",
       align: "center",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "Nunito, sans-serif",
       fontStyle: "bold",
       lineSpacing: mobileQuizMode ? 0 : 4,
       wordWrap: { width: mobileQuizMode ? PW - 88 : PW - 200 },
@@ -189,7 +198,7 @@ export default class QuizScene extends Phaser.Scene {
       fontSize: mobileQuizMode ? "9px" : "13px",
       color: "#f8ead2",
       align: "center",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "Nunito, sans-serif",
       fontStyle: "bold",
       lineSpacing: mobileQuizMode ? 0 : 4,
       wordWrap: { width: mobileQuizMode ? PW - 146 : PW - 260 },
@@ -199,7 +208,7 @@ export default class QuizScene extends Phaser.Scene {
       fontSize: mobileQuizMode ? "12px" : "14px",
       color: "#ffd46b",
       fontStyle: "bold",
-      fontFamily: "Arial, sans-serif",
+      fontFamily: "Exo 2, sans-serif",
     }).setOrigin(0.5).setDepth(2).setShadow(0, 1, "#000000", 4, true, true);
   }
 
@@ -238,13 +247,14 @@ export default class QuizScene extends Phaser.Scene {
 
   pickAnswer(index) {
     if (!this.q) return;
+    this.ensureSfxUnlocked();
     const q = this.q;
     const ok = index === q.correctIndex;
     this.setOptionsInteractive(false);
 
     if (ok) {
       if (this.cache.audio.exists("sfx_ok")) {
-        this.sound.play("sfx_ok", { volume: 0.36 });
+        this.sound.play("sfx_ok", { volume: SFX_VOL.quizOk });
       }
       this.lastCorrect = true;
       this.lastExhausted = false;
@@ -296,7 +306,7 @@ export default class QuizScene extends Phaser.Scene {
 
     if (this.attemptsRemaining > 0) {
       if (this.cache.audio.exists("sfx_error")) {
-        this.sound.play("sfx_error", { volume: 0.38 });
+        this.sound.play("sfx_error", { volume: SFX_VOL.quizError });
       }
       this.lastCorrect = false;
       this.lastExhausted = false;
@@ -321,7 +331,7 @@ export default class QuizScene extends Phaser.Scene {
     this.lastCorrect = false;
     this.lastExhausted = true;
     if (this.cache.audio.exists("sfx_error")) {
-      this.sound.play("sfx_error", { volume: 0.38 });
+      this.sound.play("sfx_error", { volume: SFX_VOL.quizError });
     }
     const letter = String.fromCharCode(65 + q.correctIndex);
     const corr = this.optionRows.find((r) => r.idx === q.correctIndex);

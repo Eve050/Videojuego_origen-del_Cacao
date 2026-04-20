@@ -62,7 +62,7 @@ export function renderP10(container) {
     <section class="screen screen--p10" aria-label="Certificado digital">
       <article class="p10-stack">
         <header class="p10-hero">
-          <p class="p10-hero-kicker">Expedicion finalizada</p>
+          <p class="p10-hero-kicker">Expedición finalizada</p>
           <h1 class="p10-hero-title">¡Misterio resuelto!</h1>
         </header>
 
@@ -78,9 +78,9 @@ export function renderP10(container) {
               <p class="p10-cert-honor">Certificado de honor</p>
               <p class="p10-cert-name">${nameDisplay}</p>
               <p class="p10-cert-body">
-                Este documento certifica que <strong>${safeName}</strong> ha completado con exito la
-                expedicion por las tierras ancestrales, descifrando los secretos ocultos entre las
-                sombras de la selva, y ha obtenido el rango honorifico de:
+                Este documento certifica que <strong>${safeName}</strong> ha completado con éxito la
+                expedición por las tierras ancestrales, descifrando los secretos ocultos entre las
+                sombras de la selva, y ha obtenido el rango honorífico de:
               </p>
               <p class="p10-cert-badge">
                 <span class="p10-cert-badge-text">Explorador del Cacao</span>
@@ -95,7 +95,7 @@ export function renderP10(container) {
               </div>
 
               <footer class="p10-cert-footer">
-                <span class="p10-cert-sign">Ruta Origenes del Cacao</span>
+                <span class="p10-cert-sign">Ruta Orígenes del Cacao</span>
                 <span class="p10-cert-date">${certDate}</span>
               </footer>
             </div>
@@ -109,7 +109,7 @@ export function renderP10(container) {
         >
           ${
             downloaded
-              ? "Certificado descargado. Gracias por completar la expedicion."
+              ? "Certificado descargado. Gracias por completar la expedición."
               : "Genera tu PDF en un clic. Todo ocurre en tu navegador, sin enviar datos."
           }
         </p>
@@ -134,7 +134,7 @@ export function renderP10(container) {
         </div>
 
         <button class="p10-back-link" id="p10FinaleBtn" type="button">
-          Volver a la revelacion
+          Volver a la revelación
         </button>
       </article>
     </section>

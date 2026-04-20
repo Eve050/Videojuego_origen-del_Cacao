@@ -4,6 +4,7 @@ import Player from "../entities/Player.js";
 import Guardian from "../entities/Guardian.js";
 import { exitToMainMap } from "../data/introCopy.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
+import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
 
 /**
  * Laberinto ampliado (~5–8 min a ritmo calmado). Leyenda: # muro · o grano · . vacío · p pieza · * poder · V vasija.
@@ -26,6 +27,12 @@ const MAZE_L1 = [
 ];
 
 const TILE = 36;
+/** Guía tipográfica: pixel = HUD corto; heading = títulos; body = lectura. */
+const FONT = {
+  pixel: '"Press Start 2P", monospace',
+  heading: '"Exo 2", sans-serif',
+  body: '"Nunito", sans-serif',
+};
 const PANEL_W = 300;
 const WALL_COLOR_BORDER = 0x8855cc;
 const MAX_MAZE_LEVEL = 2;
@@ -97,7 +104,7 @@ export default class Game3Scene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio("sfx_relic", "/assets/audio/reliquia-encontrada.mp3");
+    this.load.audio("sfx_relic", PHASE_SFX_FILES.sfx_relic);
   }
 
   ensureSfxUnlocked() {
@@ -288,6 +295,7 @@ export default class Game3Scene extends Phaser.Scene {
         fontSize: "11px",
         color: "#fff7dd",
         fontStyle: "bold",
+        fontFamily: FONT.pixel,
       })
       .setOrigin(0.5)
       .setDepth(19);
@@ -329,7 +337,7 @@ export default class Game3Scene extends Phaser.Scene {
     }
   }
 
-  playClippedSfx(key, volume = 0.4, maxMs = 2000) {
+  playClippedSfx(key, volume = SFX_VOL.relic, maxMs = 2000) {
     this.ensureSfxUnlocked();
     if (!this.cache.audio.exists(key)) return;
     const s = this.sound.add(key);
@@ -375,7 +383,8 @@ export default class Game3Scene extends Phaser.Scene {
     this.score += 10;
     const now = this.time.now;
     if (this.cache.audio.exists("sfx_ok") && now - this.lastOkSfxAt >= 70) {
-      this.sound.play("sfx_ok", { volume: 0.28 });
+      this.ensureSfxUnlocked();
+      this.sound.play("sfx_ok", { volume: SFX_VOL.ok });
       this.lastOkSfxAt = now;
     }
     this.playPickupFx(bx, by, 0xffb347, "+10");
@@ -421,7 +430,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     const title = this.add
       .text(cx, cy - 132, "¡FELICIDADES!", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "74px",
         color: "#6cfc8a",
         fontStyle: "bold",
@@ -440,7 +449,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.add
       .text(cx, cy - 48, "MISIÓN SUPERADA", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "30px",
         color: "#c2ffd0",
         fontStyle: "bold",
@@ -451,7 +460,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.add
       .text(cx, cy + 6, `Ya superaste este nivel del Cacao Maze.\nPresiona para iniciar el Nivel ${nextLevel}.`, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "22px",
         color: "#f5fff7",
         align: "center",
@@ -463,7 +472,7 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.add
       .text(cx, cy + 84, `Puntos: ${this.score}   |   Vidas: ${this.lives}   |   Nivel: ${this.level}/${MAX_MAZE_LEVEL}`, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "18px",
         color: "#d3ffe0",
         align: "center",
@@ -481,7 +490,7 @@ export default class Game3Scene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
     const txt = this.add
       .text(cx, cy + 160, `[ INICIAR NIVEL ${nextLevel} ]`, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#eaffef",
         fontStyle: "bold",
@@ -675,6 +684,7 @@ export default class Game3Scene extends Phaser.Scene {
               .text(wx, wy, "◆", {
                 fontSize: `${Math.round(TILE * 0.22)}px`,
                 color: "#9f87d8",
+                fontFamily: FONT.pixel,
               })
               .setOrigin(0.5)
               .setDepth(2);
@@ -790,6 +800,7 @@ export default class Game3Scene extends Phaser.Scene {
         fontSize: "9px",
         color: "#ffecc8",
         fontStyle: "bold",
+        fontFamily: FONT.pixel,
       })
       .setOrigin(0.5)
       .setDepth(4);
@@ -799,6 +810,7 @@ export default class Game3Scene extends Phaser.Scene {
         fontSize: "8px",
         color: "#e8c896",
         fontStyle: "bold",
+        fontFamily: FONT.pixel,
       })
       .setOrigin(0.5)
       .setDepth(4);
@@ -906,6 +918,7 @@ export default class Game3Scene extends Phaser.Scene {
           fontSize: "8px",
           color: "#f0e8d8",
           fontStyle: "bold",
+          fontFamily: FONT.pixel,
         })
         .setOrigin(0.5)
         .setDepth(5);
@@ -929,7 +942,7 @@ export default class Game3Scene extends Phaser.Scene {
       this.lives -= 1;
       const now = this.time.now;
       if (this.cache.audio.exists("sfx_error") && now - this.lastErrorSfxAt >= 120) {
-        this.sound.play("sfx_error", { volume: 0.36 });
+        this.sound.play("sfx_error", { volume: SFX_VOL.error });
         this.lastErrorSfxAt = now;
       }
       this.hint.setText(GUARDIAN_CATCH[name] || GUARDIAN_CATCH.KUNKU);
@@ -965,7 +978,7 @@ export default class Game3Scene extends Phaser.Scene {
       const py = pod.y;
       this.tweens.killTweensOf(pod);
       pod.destroy();
-      this.playClippedSfx("sfx_relic", 0.46, 2000);
+      this.playClippedSfx("sfx_relic", SFX_VOL.relic, 2000);
       this.powerPodsCollected += 1;
       this.score += 5;
       this.playPickupFx(px, py, 0xffdc66, "PODER");
@@ -1001,7 +1014,11 @@ export default class Game3Scene extends Phaser.Scene {
     }
 
     this.add
-      .text(LAYOUT.WIDTH - 12, LAYOUT.GAME_TOP + 12, "[ VOLVER AL MAPA ]", { fontSize: "10px", color: "#c8921a" })
+      .text(LAYOUT.WIDTH - 12, LAYOUT.GAME_TOP + 12, "[ VOLVER AL MAPA ]", {
+        fontSize: "10px",
+        color: "#c8921a",
+        fontFamily: FONT.heading,
+      })
       .setOrigin(1, 0)
       .setDepth(25)
       .setInteractive({ useHandCursor: true })
@@ -1013,6 +1030,7 @@ export default class Game3Scene extends Phaser.Scene {
         color: "#d8d0c8",
         align: "center",
         wordWrap: { width: mazePxW + this.panelWidth * 0.35 },
+        fontFamily: FONT.body,
       })
       .setOrigin(0.5)
       .setDepth(25);
@@ -1022,21 +1040,32 @@ export default class Game3Scene extends Phaser.Scene {
         fontSize: "11px",
         color: "#c5a3ff",
         fontStyle: "bold",
+        fontFamily: FONT.pixel,
       })
       .setOrigin(0.5, 0)
       .setDepth(25);
 
-    this.hudLeft = this.add.text(16, 22, "", { fontSize: "11px", color: "#ffdd44" }).setDepth(25);
+    this.hudLeft = this.add
+      .text(16, 22, "", { fontSize: "11px", color: "#ffdd44", fontFamily: FONT.pixel })
+      .setDepth(25);
     this.hudMid = this.add
-      .text(LAYOUT.WIDTH / 2 - this.panelWidth / 2, 22, "", { fontSize: "11px", color: "#eeeeee" })
+      .text(LAYOUT.WIDTH / 2 - this.panelWidth / 2, 22, "", {
+        fontSize: "11px",
+        color: "#eeeeee",
+        fontFamily: FONT.pixel,
+      })
       .setOrigin(0.5, 0)
       .setDepth(25);
     this.hudTime = this.add
-      .text(LAYOUT.WIDTH / 2, 40, "", { fontSize: "10px", color: "#aaa0c8" })
+      .text(LAYOUT.WIDTH / 2, 40, "", { fontSize: "10px", color: "#aaa0c8", fontFamily: FONT.pixel })
       .setOrigin(0.5, 0)
       .setDepth(25);
     this.hudRight = this.add
-      .text(LAYOUT.WIDTH - this.panelWidth - 28, 22, "", { fontSize: "11px", color: "#ffaaaa" })
+      .text(LAYOUT.WIDTH - this.panelWidth - 28, 22, "", {
+        fontSize: "11px",
+        color: "#ffaaaa",
+        fontFamily: FONT.pixel,
+      })
       .setOrigin(1, 0)
       .setDepth(25);
 
@@ -1060,6 +1089,7 @@ export default class Game3Scene extends Phaser.Scene {
         color: "#e8c048",
         fontStyle: "bold",
         lineSpacing: 4,
+        fontFamily: FONT.heading,
       })
       .setDepth(7);
 
@@ -1071,6 +1101,7 @@ export default class Game3Scene extends Phaser.Scene {
           fontSize: "9px",
           color: "#121212",
           fontStyle: "bold",
+          fontFamily: FONT.pixel,
         })
         .setOrigin(0.5)
         .setDepth(8);
@@ -1079,6 +1110,7 @@ export default class Game3Scene extends Phaser.Scene {
           fontSize: "19px",
           color: row.color,
           fontStyle: "bold",
+          fontFamily: FONT.heading,
         })
         .setDepth(7);
       this.add
@@ -1087,6 +1119,7 @@ export default class Game3Scene extends Phaser.Scene {
           color: "#d8d0c8",
           fontStyle: "bold",
           wordWrap: { width: PANEL_W - 36 },
+          fontFamily: FONT.body,
         })
         .setDepth(7);
       this.add
@@ -1095,6 +1128,7 @@ export default class Game3Scene extends Phaser.Scene {
           color: "#9a9488",
           wordWrap: { width: PANEL_W - 36 },
           lineSpacing: 1,
+          fontFamily: FONT.body,
         })
         .setDepth(7);
       y += 88;
@@ -1118,6 +1152,7 @@ export default class Game3Scene extends Phaser.Scene {
             fontSize: "10px",
             color: "#7a7288",
             wordWrap: { width: 820 },
+            fontFamily: FONT.body,
           },
         )
         .setOrigin(0, 0);
@@ -1126,6 +1161,7 @@ export default class Game3Scene extends Phaser.Scene {
         .text(LAYOUT.WIDTH - 24, LAYOUT.CONTROLS_TOP + 18, "Palanda, Ecuador — Mayo Chinchipe · Marañón — 5.500 AP", {
           fontSize: "10px",
           color: "#9a8a68",
+          fontFamily: FONT.body,
         })
         .setOrigin(1, 0);
     }
@@ -1143,8 +1179,13 @@ export default class Game3Scene extends Phaser.Scene {
     if (this.vasijaReached) return;
     this.vasijaReached = true;
     if (this.cache.audio.exists("sfx_mission_complete")) {
-      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.66 });
+      this.ensureSfxUnlocked();
+      duckAmbientAudio({
+        duckTo: SFX_VOL.duckMissionTo,
+        holdMs: SFX_VOL.duckMissionHoldMs,
+        restoreMs: SFX_VOL.duckMissionRestoreMs,
+      });
+      this.sound.play("sfx_mission_complete", { volume: SFX_VOL.mission });
     }
     if (this.level < MAX_MAZE_LEVEL) {
       this.score += 120;
@@ -1254,7 +1295,7 @@ export default class Game3Scene extends Phaser.Scene {
       const sx = piece.x;
       const sy = piece.y;
       piece.destroy();
-      this.playClippedSfx("sfx_relic", 0.46, 2000);
+      this.playClippedSfx("sfx_relic", SFX_VOL.relic, 2000);
       this.piecesFound += 1;
       this.score += 50;
       this.playPickupFx(sx, sy, 0xb78cff, "+50");

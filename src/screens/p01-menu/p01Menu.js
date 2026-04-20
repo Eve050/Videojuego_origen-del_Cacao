@@ -10,9 +10,9 @@ import {
 
 const HELP_STEPS = [
   "Escribe tu nombre en el siguiente paso para registrar tu aventura.",
-  "Lee la historia inicial y acepta la mision para desbloquear el mapa.",
+  "Lee la historia inicial y acepta la misión para desbloquear el mapa.",
   "Completa las tres misiones educativas para descubrir la reliquia.",
-  "Al terminar, podras descargar tu certificado en PDF.",
+  "Al terminar, podrás descargar tu certificado en PDF.",
 ];
 export function renderP01(container) {
   const state = getGameState();
@@ -20,8 +20,8 @@ export function renderP01(container) {
   const playLabel = "JUGAR";
   const explorerName = hasPlayerName ? state.playerName : "";
   const missionStatus = state.missionAccepted
-    ? "Mision aceptada"
-    : "Esperando mision";
+    ? "Misión aceptada"
+    : "Esperando misión";
   const audioPreviouslyUnlocked = isAudioUnlocked();
   const audioEnabledByDefault = isAudioEnabled();
   const audioOverlayClass = audioPreviouslyUnlocked
@@ -36,7 +36,7 @@ export function renderP01(container) {
       <aside class="${audioOverlayClass}" id="audioOverlay">
         <div class="p01-audio-panel">
           <p class="p01-audio-title">Activar experiencia inmersiva</p>
-          <p class="p01-audio-copy">Pulsa para iniciar la musica ambiental del juego.</p>
+          <p class="p01-audio-copy">Pulsa para iniciar la música ambiental del juego.</p>
           <button class="btn btn--p01-primary" id="unlockAudioButton" type="button">
             ACTIVAR AUDIO
           </button>
@@ -45,7 +45,7 @@ export function renderP01(container) {
 
       <div class="p01-shell">
         <button class="btn p01-audio-toggle" id="audioToggleButton" type="button">
-          MUSICA: ${audioEnabledByDefault ? "ON" : "OFF"}
+          MÚSICA: ${audioEnabledByDefault ? "ON" : "OFF"}
         </button>
 
         <span class="p01-corner p01-corner--tl" aria-hidden="true"></span>
@@ -60,7 +60,7 @@ export function renderP01(container) {
           </article>
 
           <article class="p01-chip p01-chip--right">
-            <p class="p01-chip-title">MISION <span class="p01-dot" aria-hidden="true"></span></p>
+            <p class="p01-chip-title">MISIÓN <span class="p01-dot" aria-hidden="true"></span></p>
             <p class="p01-chip-copy">${missionStatus}</p>
           </article>
         </header>
@@ -76,7 +76,7 @@ export function renderP01(container) {
         <article class="p01-actions-box">
           <button class="btn btn--p01-primary" id="playButton" type="button">${playLabel}</button>
           <button class="btn btn--p01-secondary" id="helpButton" type="button">AYUDA</button>
-          <p class="audio-hint" id="audioStatus">Musica en OFF.</p>
+          <p class="audio-hint" id="audioStatus">Música en OFF.</p>
         </article>
 
       </div>
@@ -84,7 +84,7 @@ export function renderP01(container) {
 
     <dialog class="help-modal" id="helpModal" aria-label="Instrucciones del juego">
       <div class="help-panel">
-        <h2 class="help-title">Como jugar</h2>
+        <h2 class="help-title">Cómo jugar</h2>
         <ol class="help-list">
           ${HELP_STEPS.map((step) => `<li>${step}</li>`).join("")}
         </ol>
@@ -136,14 +136,14 @@ export function renderP01(container) {
       return;
     }
 
-    audioToggleButton.textContent = `MUSICA ${audioEnabled ? "ON" : "OFF"}`;
+    audioToggleButton.textContent = `MÚSICA ${audioEnabled ? "ON" : "OFF"}`;
     audioToggleButton.classList.toggle("is-off", !audioEnabled);
   };
 
   const stopAmbientAudio = () => {
     pauseGlobalAmbientAudio(true);
     if (audioStatus) {
-      audioStatus.textContent = "Musica en OFF.";
+      audioStatus.textContent = "Música en OFF.";
     }
   };
 
@@ -157,12 +157,12 @@ export function renderP01(container) {
     try {
       await playAmbientAudio();
       if (audioStatus) {
-        audioStatus.textContent = "Musica activada: ambiente de selva nocturna.";
+        audioStatus.textContent = "Música activada: ambiente de selva nocturna.";
       }
       audioOverlay?.classList.add("is-hidden");
     } catch {
       if (audioStatus) {
-        audioStatus.textContent = "Pulsa Activar audio para iniciar la musica.";
+        audioStatus.textContent = "Pulsa Activar audio para iniciar la música.";
       }
       audioOverlay?.classList.remove("is-hidden");
     }
@@ -186,7 +186,7 @@ export function renderP01(container) {
       } else {
         audioOverlay?.classList.remove("is-hidden");
         if (audioStatus) {
-          audioStatus.textContent = "Pulsa Activar audio para iniciar la musica.";
+          audioStatus.textContent = "Pulsa Activar audio para iniciar la música.";
         }
       }
       return;

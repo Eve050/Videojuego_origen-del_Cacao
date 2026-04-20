@@ -26,18 +26,18 @@ const MISSION_INTRO_COPY = {
     title: "EL ORIGEN DEL CACAO",
     subtitle: "Santa Ana - La Florida, Palanda",
     bullets: [
-      "Explora la zona arqueologica y encuentra 3 objetos clave.",
+      "Explora la zona arqueológica y encuentra 3 objetos clave.",
       "Acercate a cada objeto y usa ACCION para examinarlo.",
-      "Responde el quiz para sumar puntos y completar la mision.",
+      "Responde el quiz para sumar puntos y completar la misión.",
     ],
   },
   2: {
     title: "EL VIAJE DEL CACAO",
     subtitle: "De Palanda hacia el mundo",
     bullets: [
-      "Esquiva obstaculos y manten el ritmo del recorrido.",
+      "Esquiva obstáculos y mantén el ritmo del recorrido.",
       "Recolecta vasijas y piezas especiales para sumar puntos.",
-      "En celular, usa el boton SALTAR para avanzar.",
+      "En celular, usa el botón SALTAR para avanzar.",
     ],
   },
   3: {
@@ -45,7 +45,7 @@ const MISSION_INTRO_COPY = {
     subtitle: "Laberinto cultural",
     bullets: [
       "Recoge granos y piezas sin tocar a los guardianes.",
-      "Usa el joystick tactil para moverte por el laberinto.",
+      "Usa el joystick táctil para moverte por el laberinto.",
       "Activa el poder ancestral y llega a la meta final.",
     ],
   },
@@ -111,7 +111,7 @@ export function renderMissionArcade(container, missionNumber) {
         <p class="mission-arcade-marquee">${copy.marquee}</p>
         <h1 class="mission-arcade-title">${copy.title}</h1>
         <p class="mission-arcade-sub">${copy.sub}</p>
-        <p class="mission-arcade-coin">◆ MISION ${missionNumber} DE 3 — SUPERALA PARA DESBLOQUEAR LA SIGUIENTE ◆</p>
+        <p class="mission-arcade-coin">◆ MISIÓN ${missionNumber} DE 3 — SUPÉRALA PARA DESBLOQUEAR LA SIGUIENTE ◆</p>
       </header>
 
       <div class="mission-arcade-machine">
@@ -126,7 +126,7 @@ export function renderMissionArcade(container, missionNumber) {
             <div class="mission-arcade-scanlines" aria-hidden="true"></div>
             <div class="mission-arcade-intro" id="missionIntroPanel">
               <div class="mission-arcade-intro-card">
-                <p class="mission-arcade-intro-kicker">INTRODUCCION</p>
+                <p class="mission-arcade-intro-kicker">INTRODUCCIÓN</p>
                 <h2 class="mission-arcade-intro-title">${intro?.title || copy.title}</h2>
                 <p class="mission-arcade-intro-sub">${intro?.subtitle || copy.sub}</p>
                 <div class="mission-arcade-intro-help is-hidden" id="missionIntroHelp">
@@ -157,7 +157,7 @@ export function renderMissionArcade(container, missionNumber) {
               ${
                 missionNumber === 3
                   ? `
-              <div class="mission-arcade-touch-stick" id="missionTouchStick" aria-label="Joystick tactil">
+              <div class="mission-arcade-touch-stick" id="missionTouchStick" aria-label="Joystick táctil">
                 <div class="mission-arcade-touch-stick-thumb" id="missionTouchThumb"></div>
               </div>
               `

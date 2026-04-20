@@ -1,13 +1,16 @@
+import { AMBIENT_LOOP_URL, SFX_VOL } from "./sfxVolumes.js";
+
 const AUDIO_ELEMENT_ID = "globalAmbientAudio";
 const AUDIO_UNLOCK_KEY = "enigma_audio_unlocked";
 const AUDIO_ENABLED_KEY = "enigma_audio_enabled";
-const DEFAULT_VOLUME = 0.35;
+const DEFAULT_VOLUME = SFX_VOL.ambientBase;
+/** Perfil por tramo del runner (índice = order en zonesConfig). Más contraste = cambio audible al cruzar zona. */
 const AMBIENT_ZONE_PROFILES = [
-  { volumeMul: 1.0, rate: 1.0 }, // Selva / Palanda
-  { volumeMul: 0.92, rate: 0.985 }, // Andes
-  { volumeMul: 0.96, rate: 1.015 }, // Colombia/Panamá
-  { volumeMul: 0.94, rate: 0.99 }, // Mesoamérica
-  { volumeMul: 0.9, rate: 0.97 }, // Europa
+  { volumeMul: 1.0, rate: 1.0 }, // 0 palanda — selva
+  { volumeMul: 0.88, rate: 0.98 }, // 1 andes — más seco
+  { volumeMul: 0.93, rate: 1.02 }, // 2 colombia-panamá
+  { volumeMul: 0.86, rate: 0.99 }, // 3 mesoamérica
+  { volumeMul: 0.82, rate: 0.965 }, // 4 europa — más tenue
 ];
 let restoreAmbientTimer = null;
 let ambientBaseVolume = DEFAULT_VOLUME;
@@ -23,7 +26,7 @@ function getOrCreateAudioElement() {
   audio.id = AUDIO_ELEMENT_ID;
   audio.loop = true;
   audio.preload = "auto";
-  audio.src = "/assets/audio/selva-loop.mp3";
+  audio.src = AMBIENT_LOOP_URL;
   audio.volume = DEFAULT_VOLUME;
   document.body.appendChild(audio);
 
@@ -123,9 +126,9 @@ export function duckAmbientAudio(opts = {}) {
     restoreAmbientTimer = null;
   }
 
-  const duckTo = Math.max(0, Math.min(1, opts.duckTo ?? 0.14));
-  const holdMs = Math.max(0, opts.holdMs ?? 1100);
-  const restoreMs = Math.max(120, opts.restoreMs ?? 900);
+  const duckTo = Math.max(0, Math.min(1, opts.duckTo ?? SFX_VOL.duckMissionTo));
+  const holdMs = Math.max(0, opts.holdMs ?? SFX_VOL.duckMissionHoldMs);
+  const restoreMs = Math.max(120, opts.restoreMs ?? SFX_VOL.duckMissionRestoreMs);
   const startVol = Number.isFinite(audio.volume) ? audio.volume : DEFAULT_VOLUME;
   const targetVol = Math.max(0.02, Math.min(startVol, duckTo));
   audio.volume = targetVol;

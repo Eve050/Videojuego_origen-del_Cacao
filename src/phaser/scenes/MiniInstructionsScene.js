@@ -70,7 +70,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, 22, "EL ENIGMA DE SANTA ANA · LA FLORIDA", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Press Start 2P, monospace",
         fontSize: "11px",
         color: "#9a7d5c",
         letterSpacing: 1,
@@ -79,7 +79,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, 48, "INSTRUCCIONES DEL VIAJE", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#d4a574",
         fontStyle: "bold",
@@ -88,7 +88,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, 88, cfg.title, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "26px",
         color: "#f0d78c",
         fontStyle: "bold",
@@ -97,7 +97,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, 122, cfg.subtitle, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "14px",
         color: "#c4b5a5",
         align: "center",
@@ -107,7 +107,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, 156, cfg.missionTitle, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "12px",
         color: "#a89888",
         align: "center",
@@ -127,7 +127,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, cardTop + 26, "CONTROLES", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "17px",
         color: "#f0d78c",
         fontStyle: "bold",
@@ -147,7 +147,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
       if (sub) lines += `\n${sub}`;
       this.add
         .text(textLeft, ry, lines, {
-          fontFamily: "Arial, sans-serif",
+          fontFamily: "Nunito, sans-serif",
           fontSize: "14px",
           color: "#ede6dc",
           align: "left",
@@ -174,7 +174,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
     );
     this.add
       .text(textLeft, ry, "Móvil / tableta: toca la zona del juego para saltar.", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "14px",
         color: "#c8b8a8",
         align: "left",
@@ -185,7 +185,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
     const playTop = cardTop + cardH + 32;
     this.add
       .text(cx, playTop, "CÓMO ES EL JUEGO", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "16px",
         color: "#d4a574",
         fontStyle: "bold",
@@ -200,7 +200,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(cx, playTop + 28, `${playBody}\n\n${playFoot}`, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "14px",
         color: "#ddd8cc",
         align: "center",
@@ -234,7 +234,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
     else if (label.length > 3) fs = "11px";
     this.add
       .text(x, y, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: fs,
         color: "#fff8e8",
         fontStyle: "bold",
@@ -280,7 +280,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 168, body, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "15px",
         color: "#ddd8cc",
         align: "left",
@@ -314,7 +314,7 @@ export default class MiniInstructionsScene extends Phaser.Scene {
     this.add.rectangle(x, y, w, h, fill).setStrokeStyle(2, stroke);
     const txt = this.add
       .text(x, y, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#f9f2dd",
         fontStyle: "bold",

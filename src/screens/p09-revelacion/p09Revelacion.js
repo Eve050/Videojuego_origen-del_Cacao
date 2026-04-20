@@ -17,12 +17,12 @@ export function renderP09(container) {
   const playerName = (state.playerName || "Explorador").trim();
 
   container.innerHTML = `
-    <section class="screen screen--p09" aria-label="Revelacion de la reliquia">
+    <section class="screen screen--p09" aria-label="Revelación de la reliquia">
       <article class="p09-card">
         <p class="menu-stage">DESENLACE</p>
         <h1 class="p09-headline">Reliquia encontrada</h1>
         <p class="p09-lead">
-          ${playerName}, la expedicion en la Ruta Origenes del Cacao llega a su punto algido.
+          ${playerName}, la expedición en la Ruta Orígenes del Cacao llega a su punto álgido.
         </p>
 
         <div class="p09-relic-stage" aria-hidden="true">
@@ -34,9 +34,9 @@ export function renderP09(container) {
         </div>
 
         <p class="p09-story">
-          En Santa Ana-La Florida, esta pieza ceramica confirma el vinculo ancestral entre el cacao
+          En Santa Ana-La Florida, esta pieza cerámica confirma el vínculo ancestral entre el cacao
           ritual y las comunidades que habitaron Palanda. Es parte del patrimonio que protege
-          la memoria del Ecuador amazonico.
+          la memoria del Ecuador amazónico.
         </p>
 
         <div class="p09-actions">

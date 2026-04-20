@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400..1000;1,400..1000&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap");
 
 :root {
   --verde-selva: #1d6b3a;
@@ -25,6 +27,14 @@
 
   --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Global typography tokens (used across screens including p03) */
+  --font-pixel: "Press Start 2P", ui-monospace, monospace;
+  --font-heading: "Exo 2", "Nunito", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  /* Guía tipográfica: serif y alternativa sans (poco uso; disponibles para PDF / detalles) */
+  --font-serif: "Bitter", Georgia, "Times New Roman", serif;
+  --font-support: "Quicksand", "Nunito", system-ui, sans-serif;
 }
 
 * {
@@ -1388,10 +1398,11 @@ body:has(.mission-arcade) {
 
 .screen--p01 .p01-audio-panel .btn--p01-primary {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.42rem, 1.15vw, 0.55rem);
-  line-height: 1.55;
-  letter-spacing: 0.08em;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(0.68rem, 1.9vw, 0.95rem);
+  line-height: 1.4;
+  letter-spacing: 0.05em;
   border: 3px solid #1a0d05;
   box-shadow: 0 4px 0 #5a3d12;
 }
@@ -1476,28 +1487,37 @@ body:has(.mission-arcade) {
 .screen--p01 .btn--p01-primary,
 .screen--p01 .btn--p01-secondary {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.48rem, 1.4vw, 0.62rem);
-  line-height: 1.55;
-  letter-spacing: 0.06em;
-  border: 3px solid #1a0d05;
+  line-height: 1.42;
 }
 
 .screen--p01 .btn--p01-primary {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(0.72rem, 2vw, 1rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 3px solid #1a0d05;
   box-shadow: 0 5px 0 #5a4010, 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
 .screen--p01 .btn--p01-secondary {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(0.66rem, 1.85vw, 0.94rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   border: 3px solid rgba(120, 200, 140, 0.35);
   box-shadow: 0 4px 0 #0d2818;
 }
 
 .screen--p01 .btn--p01-phaser {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.36rem, 1vw, 0.48rem);
-  line-height: 1.55;
-  letter-spacing: 0.08em;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(0.52rem, 1.35vw, 0.72rem);
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   border: 2px solid rgba(214, 162, 35, 0.65);
   background: #0d120f;
   box-shadow: 0 3px 0 #1a0d05;
@@ -1634,34 +1654,35 @@ body:has(.mission-arcade) {
 
 .screen--p03 .p03-avatar-badge {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.32rem, 0.9vw, 0.42rem);
-  line-height: 1.5;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.46rem, 1.1vw, 0.58rem);
+  line-height: 1.55;
   letter-spacing: 0.08em;
   border: 2px solid #1a0d05;
   box-shadow: 0 2px 0 #5a4010;
 }
 
 .screen--p03 .p03-left-progress-label {
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.32rem, 0.9vw, 0.42rem);
-  line-height: 1.5;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.48rem, 1.2vw, 0.6rem);
+  line-height: 1.55;
   color: #88ffaa;
 }
 
 .screen--p03 .p03-chapter {
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.38rem, 1.05vw, 0.5rem);
-  line-height: 1.5;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.52rem, 1.25vw, 0.66rem);
+  line-height: 1.55;
   color: #ffcc33;
   letter-spacing: 0.1em;
 }
 
 .screen--p03 .p03-title {
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.55rem, 2.2vw, 0.82rem);
-  line-height: 1.45;
-  text-shadow: 2px 2px 0 #1a0d05;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(1.55rem, 3.6vw, 2.2rem);
+  line-height: 1.08;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.42);
 }
 
 .screen--p03 .p03-title-accent {
@@ -1669,20 +1690,21 @@ body:has(.mission-arcade) {
 }
 
 .screen--p03 .p03-text {
-  font-size: 1.02rem;
-  line-height: 1.48;
+  font-family: var(--font-body);
+  font-size: 1.04rem;
+  line-height: 1.58;
   color: rgba(236, 230, 215, 0.92);
 }
 
 .screen--p03 .p03-progress-label {
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.32rem, 0.9vw, 0.42rem);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.48rem, 1.2vw, 0.58rem);
   color: rgba(180, 220, 170, 0.85);
 }
 
 .screen--p03 .p03-progress-count {
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.34rem, 0.95vw, 0.44rem);
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 1.2vw, 0.62rem);
   color: #ffcc66;
 }
 
@@ -1708,9 +1730,10 @@ body:has(.mission-arcade) {
 
 .screen--p03 .p03-next-button {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.42rem, 1.2vw, 0.55rem);
-  line-height: 1.55;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(0.9rem, 2vw, 1.02rem);
+  line-height: 1.25;
   letter-spacing: 0.06em;
   border: 3px solid #1a0d05;
   box-shadow: 0 5px 0 #5a4010;
@@ -1719,9 +1742,10 @@ body:has(.mission-arcade) {
 .screen--p03 .p03-skip-button,
 .screen--p03 .p03-back-button {
   border-radius: 2px;
-  font-family: var(--arcade-pixel);
-  font-size: clamp(0.34rem, 0.95vw, 0.45rem);
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(0.76rem, 1.5vw, 0.84rem);
+  line-height: 1.35;
   letter-spacing: 0.06em;
   border-width: 2px;
 }
@@ -1755,31 +1779,41 @@ body:has(.mission-arcade) {
 }
 
 .p06-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
   margin: 0.4rem 0 0;
   color: rgba(247, 244, 234, 0.95);
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+  line-height: 1.14;
 }
 
 .p06-subtitle {
+  font-family: var(--font-pixel);
   margin: 0.3rem 0 0.9rem;
   color: rgba(223, 179, 81, 0.92);
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+  line-height: 1.6;
 }
 
 .p06-progress {
+  font-family: var(--font-pixel);
   margin: 0;
   color: rgba(233, 225, 201, 0.84);
-  font-size: 0.84rem;
-  letter-spacing: 0.07em;
+  font-size: clamp(0.52rem, 1.2vw, 0.62rem);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  line-height: 1.6;
 }
 
 .p06-question {
+  font-family: var(--font-heading);
+  font-weight: 700;
   margin: 0.56rem 0 0;
   color: #f7f5ed;
-  font-size: 1.16rem;
-  line-height: 1.35;
+  font-size: clamp(1.08rem, 2.6vw, 1.24rem);
+  line-height: 1.4;
 }
 
 .p06-options {
@@ -1800,7 +1834,9 @@ body:has(.mission-arcade) {
   align-items: center;
   gap: 0.65rem;
   cursor: pointer;
-  font-family: inherit;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
   transition:
     border-color 0.2s var(--ease-smooth),
     background 0.2s var(--ease-smooth),
@@ -1821,6 +1857,7 @@ body:has(.mission-arcade) {
 }
 
 .p06-option-label {
+  font-family: var(--font-pixel);
   width: 26px;
   height: 26px;
   border-radius: 999px;
@@ -1842,9 +1879,11 @@ body:has(.mission-arcade) {
 }
 
 .p06-feedback {
+  font-family: var(--font-body);
   min-height: 1.2rem;
   margin-top: 0.72rem;
   font-weight: 800;
+  font-size: 0.98rem;
 }
 
 .p06-feedback.is-correct {
@@ -1856,10 +1895,12 @@ body:has(.mission-arcade) {
 }
 
 .p06-fact {
+  font-family: var(--font-body);
   min-height: 2.5rem;
   margin: 0.22rem 0 0;
   color: rgba(237, 232, 217, 0.86);
-  line-height: 1.42;
+  line-height: 1.5;
+  font-size: 0.93rem;
 }
 
 .p06-actions {
@@ -1867,14 +1908,20 @@ body:has(.mission-arcade) {
 }
 
 .p06-next-btn {
+  font-family: var(--font-heading);
+  font-weight: 800;
   width: 100%;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  font-size: 0.9rem;
 }
 
 .p06-back-btn {
+  font-family: var(--font-body);
+  font-weight: 700;
   width: 100%;
   margin-top: 0.55rem;
+  font-size: 0.82rem;
 }
 
 .screen--p07 {
@@ -1924,10 +1971,11 @@ body:has(.mission-arcade) {
 }
 
 .p07-badge {
+  font-family: var(--font-pixel);
   display: inline-block;
   padding: 0.28rem 0.72rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: clamp(0.5rem, 1vw, 0.58rem);
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1937,19 +1985,22 @@ body:has(.mission-arcade) {
 }
 
 .p07-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
   margin: 0.65rem 0 0;
-  font-size: clamp(1.35rem, 3.8vw, 1.85rem);
+  font-size: clamp(1.5rem, 3.8vw, 2.1rem);
   line-height: 1.15;
   color: rgba(252, 248, 238, 0.98);
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
 
 .p07-lead {
+  font-family: var(--font-body);
   margin: 0.55rem 0 0;
   max-width: 52ch;
   color: rgba(232, 200, 120, 0.92);
   line-height: 1.5;
-  font-size: 0.95rem;
+  font-size: 0.99rem;
 }
 
 .p07-grid {
@@ -1985,18 +2036,20 @@ body:has(.mission-arcade) {
 }
 
 .p07-tip-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
   margin: 0;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 0.96rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(232, 200, 120, 0.95);
 }
 
 .p07-tip-text {
+  font-family: var(--font-body);
   margin: 0.45rem 0 0;
-  font-size: 0.84rem;
-  line-height: 1.48;
+  font-size: 0.9rem;
+  line-height: 1.55;
   color: rgba(236, 230, 214, 0.82);
 }
 
@@ -2008,8 +2061,9 @@ body:has(.mission-arcade) {
 }
 
 .p07-progress-label {
+  font-family: var(--font-pixel);
   margin: 0;
-  font-size: 0.72rem;
+  font-size: clamp(0.5rem, 1vw, 0.56rem);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2036,8 +2090,9 @@ body:has(.mission-arcade) {
 }
 
 .p07-progress-meta {
+  font-family: var(--font-body);
   margin: 0.45rem 0 0;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: rgba(220, 214, 198, 0.72);
 }
 
@@ -2058,7 +2113,8 @@ body:has(.mission-arcade) {
 }
 
 .p07-list-title {
-  font-size: 0.78rem;
+  font-family: var(--font-pixel);
+  font-size: clamp(0.5rem, 1vw, 0.58rem);
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -2066,7 +2122,8 @@ body:has(.mission-arcade) {
 }
 
 .p07-list-hint {
-  font-size: 0.78rem;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
   color: rgba(200, 146, 26, 0.75);
 }
 
@@ -2171,6 +2228,7 @@ body:has(.mission-arcade) {
 }
 
 .p07-step-title {
+  font-family: var(--font-heading);
   margin: 0;
   color: rgba(252, 248, 238, 0.98);
   font-weight: 800;
@@ -2178,8 +2236,9 @@ body:has(.mission-arcade) {
 }
 
 .p07-step-tagline {
+  font-family: var(--font-pixel);
   margin: 0.12rem 0 0;
-  font-size: 0.72rem;
+  font-size: clamp(0.48rem, 1vw, 0.56rem);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: rgba(200, 146, 26, 0.88);
@@ -2187,10 +2246,11 @@ body:has(.mission-arcade) {
 }
 
 .p07-step-desc {
+  font-family: var(--font-body);
   margin: 0.28rem 0 0;
   color: rgba(228, 224, 211, 0.78);
-  font-size: 0.82rem;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .p07-feedback-wrap {
@@ -2203,10 +2263,11 @@ body:has(.mission-arcade) {
 }
 
 .p07-feedback {
+  font-family: var(--font-body);
   min-height: 1.2rem;
   margin: 0;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
 }
 
 .p07-feedback.is-correct {
@@ -2219,11 +2280,12 @@ body:has(.mission-arcade) {
 }
 
 .p07-fact {
+  font-family: var(--font-body);
   min-height: 1.4rem;
   margin: 0.45rem 0 0;
   color: rgba(220, 214, 196, 0.88);
-  font-size: 0.86rem;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
 .p07-actions {
@@ -2236,11 +2298,11 @@ body:has(.mission-arcade) {
 .p07-confirm-button {
   width: 100%;
   padding: 0.78rem 1rem;
-  font-family: inherit;
+  font-family: var(--font-heading);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   border: none;
   border-radius: 12px;
   color: #1a0d05;
@@ -2270,11 +2332,11 @@ body:has(.mission-arcade) {
 .p07-back-button {
   width: 100%;
   padding: 0.72rem 1rem;
-  font-family: inherit;
+  font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   border-radius: 12px;
   border: 1px solid rgba(200, 146, 26, 0.45);
   background: rgba(12, 18, 14, 0.65);
@@ -2315,22 +2377,26 @@ body:has(.mission-arcade) {
 }
 
 .p08-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
   margin: 0.45rem 0 0;
   color: rgba(252, 248, 238, 0.98);
-  font-size: clamp(1.15rem, 4vw, 1.5rem);
-  line-height: 1.2;
+  font-size: clamp(1.35rem, 3.8vw, 1.82rem);
+  line-height: 1.15;
 }
 
 .p08-subtitle {
+  font-family: var(--font-body);
   margin: 0.45rem 0 0;
   color: rgba(223, 186, 95, 0.92);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 0.96rem;
+  line-height: 1.55;
 }
 
 .p08-stats {
+  font-family: var(--font-pixel);
   margin: 0.75rem 0 0.55rem;
-  font-size: 0.78rem;
+  font-size: clamp(0.5rem, 1vw, 0.58rem);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -2362,7 +2428,7 @@ body:has(.mission-arcade) {
   border: 1px solid rgba(200, 146, 26, 0.4);
   background: linear-gradient(145deg, rgba(45, 32, 18, 0.92) 0%, rgba(20, 30, 22, 0.88) 100%);
   color: rgba(247, 240, 220, 0.95);
-  font-family: inherit;
+  font-family: var(--font-body);
   font-weight: 800;
   cursor: pointer;
   transition:
@@ -2388,6 +2454,7 @@ body:has(.mission-arcade) {
 }
 
 .p08-cell-inner {
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2462,10 +2529,11 @@ body:has(.mission-arcade) {
 }
 
 .p08-feedback {
+  font-family: var(--font-body);
   min-height: 1.15rem;
   margin: 0.75rem 0 0;
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 0.96rem;
 }
 
 .p08-feedback.is-success {
@@ -2477,9 +2545,10 @@ body:has(.mission-arcade) {
 }
 
 .p08-fact {
+  font-family: var(--font-body);
   margin: 0.35rem 0 0;
-  font-size: 0.85rem;
-  line-height: 1.45;
+  font-size: 0.89rem;
+  line-height: 1.52;
   color: rgba(236, 230, 215, 0.88);
   min-height: 2.4rem;
 }
@@ -2494,11 +2563,11 @@ body:has(.mission-arcade) {
 .p08-continue-btn {
   width: 100%;
   padding: 0.78rem 1rem;
-  font-family: inherit;
+  font-family: var(--font-heading);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   border: none;
   border-radius: 12px;
   color: #1a0d05;
@@ -2514,11 +2583,11 @@ body:has(.mission-arcade) {
 .p08-back-btn {
   width: 100%;
   padding: 0.72rem 1rem;
-  font-family: inherit;
+  font-family: var(--font-body);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 700;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   border-radius: 12px;
   border: 1px solid rgba(200, 146, 26, 0.45);
   background: rgba(12, 18, 14, 0.65);
@@ -3148,7 +3217,7 @@ body:has(.mission-arcade) {
 .p01-title-light,
 .p01-title-gold {
   display: block;
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: 0.03em;
 }
@@ -3234,6 +3303,15 @@ body:has(.mission-arcade) {
   box-shadow: inset 0 1px 0 rgba(225, 255, 234, 0.3);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
+}
+
+.btn--p01-primary:hover {
+  filter: brightness(1.04);
+}
+
+.btn--p01-secondary:hover {
+  border-color: rgba(232, 200, 120, 0.55);
+  background: rgba(18, 38, 28, 0.55);
 }
 
 .btn--p01-phaser {
@@ -3394,48 +3472,222 @@ body:has(.mission-arcade) {
   transform: none;
 }
 
-@media (max-width: 640px) {
-  .screen {
-    padding: 0.9rem;
+@media (max-width: 900px) {
+  .screen--p01 {
+    padding: clamp(0.8rem, 2vw, 1rem);
   }
 
   .p01-shell {
-    min-height: 95vh;
-    width: calc(100vw - 0.4rem);
-    padding: 0.45rem 0.2rem 0.35rem;
-  }
-
-  .p01-audio-toggle {
-    right: 0.2rem;
-    bottom: 0.7rem;
-    font-size: 0.68rem;
-    padding: 0.44rem 0.58rem;
+    width: min(94vw, 42rem);
+    min-height: auto;
+    height: auto;
+    padding: 1.05rem 0.8rem calc(0.8rem + env(safe-area-inset-bottom));
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.72rem;
   }
 
   .p01-topbar {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    width: min(100%, 38rem);
+    gap: 0.48rem;
   }
 
   .p01-chip {
+    width: 100%;
     max-width: 100%;
+    padding: 0.74rem 0.86rem;
+    border: 3px solid rgba(196, 141, 42, 0.78);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(16, 10, 6, 0.92) 0%, rgba(8, 5, 4, 0.9) 100%);
+    box-shadow: 0 4px 0 #2a1810, inset 0 1px 0 rgba(255, 200, 100, 0.14);
   }
 
   .p01-chip--right {
-    text-align: left;
+    text-align: center;
+  }
+
+  .p01-hero,
+  .p01-actions-box {
+    width: min(100%, 34rem);
+  }
+
+  .p01-title-light {
+    font-size: clamp(1.72rem, 6.2vw, 2.8rem);
+    line-height: 1.08;
+    text-shadow: 2px 2px 0 #1a0d05, 0 0 16px rgba(255, 255, 255, 0.11);
+  }
+
+  .p01-title-gold {
+    font-size: clamp(2.02rem, 7.2vw, 3.5rem);
+    line-height: 1.04;
+    text-shadow: 2px 2px 0 #1a0d05, 0 0 20px rgba(255, 204, 51, 0.2);
+  }
+
+  .p01-title-sub {
+    font-size: clamp(1.26rem, 4.8vw, 2.1rem);
+    letter-spacing: 0.12em;
+    line-height: 1.12;
+  }
+
+  .p01-actions-box {
+    margin-top: 0.62rem;
+    transform: none;
+    gap: 0.64rem;
+  }
+
+  .screen--p01 .p01-actions-box {
+    transform: none;
   }
 
   .btn--p01-primary,
   .btn--p01-secondary {
-    font-size: 1rem;
+    border-radius: 4px;
+    border-width: 3px;
+    font-size: clamp(1.04rem, 3.4vw, 1.55rem);
+    padding: 0.86rem 0.92rem;
+    line-height: 1.25;
+  }
+
+  .p01-audio-toggle {
+    position: relative;
+    order: 6;
+    align-self: center;
+    right: auto;
+    bottom: auto;
+    margin-top: 0.1rem;
+    min-width: clamp(150px, 32vw, 210px);
+    border-radius: 4px;
+    border-width: 3px;
+  }
+
+  .audio-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .screen {
+    padding: 0.72rem;
+  }
+
+  .screen--p01 {
+    background:
+      linear-gradient(rgba(4, 10, 8, 0.52), rgba(5, 12, 8, 0.78)),
+      url("/assets/images/fondo-selva-noche.webp");
+    background-size: cover;
+    background-position: center;
+  }
+
+  .p01-shell {
+    min-height: auto;
+    height: auto;
+    width: 100%;
+    max-width: 31rem;
+    padding: clamp(0.72rem, 3vw, 0.94rem) clamp(0.24rem, 2.2vw, 0.46rem)
+      calc(clamp(0.58rem, 2.6vw, 0.86rem) + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: clamp(0.5rem, 2.2vw, 0.74rem);
+  }
+
+  .p01-audio-toggle {
+    position: relative;
+    order: 6;
+    align-self: center;
+    right: auto;
+    bottom: auto;
+    margin-top: 0.34rem;
+    font-size: clamp(0.48rem, 1.8vw, 0.62rem);
+    min-width: clamp(108px, 34vw, 136px);
+    padding: clamp(0.38rem, 1.6vw, 0.52rem) clamp(0.46rem, 2vw, 0.7rem);
+  }
+
+  .p01-topbar {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: clamp(0.34rem, 1.8vw, 0.54rem);
+  }
+
+  .p01-chip {
+    width: 100%;
+    max-width: 100%;
+    padding: clamp(0.58rem, 2.2vw, 0.8rem) clamp(0.52rem, 2.2vw, 0.82rem);
+    border-width: 2px;
+  }
+
+  .p01-chip--right {
+    text-align: center;
+  }
+
+  .p01-chip-title {
+    font-size: clamp(0.48rem, 1.9vw, 0.62rem);
+    letter-spacing: 0.08em;
+  }
+
+  .p01-chip-copy {
+    font-size: clamp(0.84rem, 3.2vw, 1rem);
+    line-height: 1.3;
+  }
+
+  .p01-title-light {
+    font-size: clamp(1.56rem, 8vw, 2.35rem);
+    line-height: 1.06;
+  }
+
+  .p01-title-gold {
+    font-size: clamp(1.84rem, 9.6vw, 2.84rem);
+    line-height: 1.02;
+  }
+
+  .p01-title-sub {
+    font-size: clamp(1.12rem, 6vw, 1.72rem);
+    letter-spacing: 0.11em;
+    line-height: 1.12;
+  }
+
+  .p01-hero {
+    margin-top: 0.34rem;
+    width: 100%;
+  }
+
+  .btn--p01-primary,
+  .btn--p01-secondary {
+    font-size: clamp(0.98rem, 4vw, 1.2rem);
+    padding: clamp(0.78rem, 3vw, 1rem) clamp(0.6rem, 2.4vw, 0.88rem);
+    border-width: 2px;
   }
 
   .p01-actions-box {
-    transform: translateY(-36px);
+    width: 100%;
+    margin-top: clamp(0.44rem, 2.2vw, 0.68rem);
+    margin-bottom: 0;
+    transform: none;
+    gap: clamp(0.5rem, 2vw, 0.74rem);
   }
 
   .screen--p01 .p01-actions-box {
-    transform: translateY(-52px);
+    transform: none;
+  }
+
+  .btn--p01-primary {
+    box-shadow:
+      0 12px 28px rgba(201, 150, 22, 0.28),
+      inset 0 1px 0 rgba(255, 235, 182, 0.62);
+  }
+
+  .btn--p01-secondary {
+    box-shadow:
+      0 9px 20px rgba(27, 108, 67, 0.3),
+      inset 0 1px 0 rgba(225, 255, 234, 0.34);
+  }
+
+  .audio-hint {
+    display: none;
   }
 
   .screen-footer {
@@ -3561,6 +3813,302 @@ body:has(.mission-arcade) {
     grid-template-columns: 1fr;
     gap: 0.5rem;
   }
+
+  .screen--p03 .p03-left-progress-label,
+  .screen--p03 .p03-progress-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.06em;
+    line-height: 1.55;
+  }
+
+  .screen--p03 .p03-progress-count,
+  .screen--p03 .p03-chapter {
+    font-size: 0.6rem;
+    letter-spacing: 0.07em;
+  }
+
+  .screen--p03 .p03-title {
+    font-size: clamp(1.45rem, 7vw, 1.85rem);
+    line-height: 1.12;
+  }
+
+  .screen--p03 .p03-text {
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+
+  .screen--p03 .p03-next-button {
+    font-size: 0.96rem;
+    padding: 0.8rem 0.78rem;
+  }
+
+  .screen--p03 .p03-skip-button,
+  .screen--p03 .p03-back-button {
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    padding: 0.68rem 0.62rem;
+  }
+
+  .p06-card {
+    width: min(96vw, 620px);
+    padding: 1.05rem 0.92rem;
+  }
+
+  .p06-title {
+    font-size: clamp(1.24rem, 5.2vw, 1.52rem);
+    line-height: 1.16;
+  }
+
+  .p06-subtitle,
+  .p06-progress {
+    font-size: 0.56rem;
+    letter-spacing: 0.06em;
+  }
+
+  .p06-question {
+    font-size: 1.04rem;
+    line-height: 1.45;
+  }
+
+  .p06-option-btn {
+    font-size: 0.93rem;
+    line-height: 1.45;
+    padding: 0.72rem 0.76rem;
+  }
+
+  .p06-feedback {
+    font-size: 0.95rem;
+  }
+
+  .p06-fact {
+    font-size: 0.9rem;
+    line-height: 1.54;
+  }
+
+  .p06-next-btn {
+    font-size: 0.84rem;
+  }
+
+  .p06-back-btn {
+    font-size: 0.8rem;
+  }
+
+  .p07-badge,
+  .p07-list-title,
+  .p07-progress-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
+  }
+
+  .p07-title {
+    font-size: clamp(1.36rem, 6vw, 1.72rem);
+    line-height: 1.16;
+  }
+
+  .p07-lead {
+    font-size: 0.95rem;
+    line-height: 1.56;
+  }
+
+  .p07-tip-title {
+    font-size: 0.9rem;
+  }
+
+  .p07-tip-text,
+  .p07-progress-meta {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .p07-step-title {
+    font-size: 0.96rem;
+  }
+
+  .p07-step-tagline {
+    font-size: 0.54rem;
+    letter-spacing: 0.06em;
+  }
+
+  .p07-step-desc {
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .p07-feedback {
+    font-size: 0.94rem;
+  }
+
+  .p07-fact {
+    font-size: 0.86rem;
+  }
+
+  .p07-confirm-button {
+    font-size: 0.84rem;
+  }
+
+  .p07-back-button {
+    font-size: 0.8rem;
+  }
+
+  .p08-card {
+    width: min(96vw, 500px);
+    padding: 1rem 0.92rem 1.08rem;
+  }
+
+  .p08-title {
+    font-size: clamp(1.28rem, 5.8vw, 1.62rem);
+    line-height: 1.16;
+  }
+
+  .p08-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.56;
+  }
+
+  .p08-stats {
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+  }
+
+  .p08-grid {
+    max-width: 340px;
+    gap: 0.38rem;
+    padding: 0.44rem;
+  }
+
+  .p08-cell {
+    min-height: 3rem;
+  }
+
+  .p08-cell-inner {
+    font-size: 0.64rem;
+    line-height: 1.24;
+  }
+
+  .p08-relic-caption {
+    font-size: 0.58rem;
+  }
+
+  .p08-feedback {
+    font-size: 0.92rem;
+  }
+
+  .p08-fact {
+    font-size: 0.86rem;
+    line-height: 1.52;
+  }
+
+  .p08-continue-btn {
+    font-size: 0.84rem;
+  }
+
+  .p08-back-btn {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .p01-shell {
+    width: 100%;
+    max-width: 24rem;
+    min-height: auto;
+    height: auto;
+    padding: 0.56rem 0.2rem calc(0.48rem + env(safe-area-inset-bottom));
+    justify-content: flex-start;
+    gap: 0.44rem;
+  }
+
+  .p01-chip {
+    width: 100%;
+    padding: 0.54rem 0.52rem;
+  }
+
+  .p01-chip-title {
+    font-size: 0.46rem;
+  }
+
+  .p01-chip-copy {
+    font-size: 0.82rem;
+  }
+
+  .p01-title-light {
+    font-size: clamp(1.3rem, 7.8vw, 1.7rem);
+  }
+
+  .p01-title-gold {
+    font-size: clamp(1.46rem, 8.7vw, 1.94rem);
+  }
+
+  .p01-title-sub {
+    font-size: clamp(0.92rem, 5.5vw, 1.26rem);
+    letter-spacing: 0.08em;
+  }
+
+  .p01-actions-box {
+    width: 100%;
+    margin-top: 0.18rem;
+    margin-bottom: 0;
+    transform: none;
+    gap: 0.5rem;
+  }
+
+  .screen--p01 .p01-actions-box {
+    transform: none;
+  }
+
+  .btn--p01-primary,
+  .btn--p01-secondary {
+    font-size: 0.92rem;
+    padding: 0.72rem 0.56rem;
+  }
+
+  .p01-audio-toggle {
+    right: auto;
+    bottom: auto;
+    margin-top: 0.28rem;
+    font-size: 0.5rem;
+    min-width: 100px;
+    padding: 0.34rem 0.42rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .p01-shell {
+    padding: 0.48rem 0.16rem calc(0.42rem + env(safe-area-inset-bottom));
+    gap: 0.38rem;
+  }
+
+  .p01-chip {
+    padding: 0.48rem 0.46rem;
+  }
+
+  .p01-chip-copy {
+    font-size: 0.78rem;
+  }
+
+  .p01-title-light {
+    font-size: 1rem;
+  }
+
+  .p01-title-gold {
+    font-size: 1.1rem;
+  }
+
+  .p01-title-sub {
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+  }
+
+  .btn--p01-primary,
+  .btn--p01-secondary {
+    font-size: 0.74rem;
+    padding: 0.62rem 0.48rem;
+  }
+
+  .p01-audio-toggle {
+    min-width: 92px;
+    font-size: 0.42rem;
+  }
 }
 
 .menu-actions {
@@ -3582,6 +4130,7 @@ body:has(.mission-arcade) {
 
 .btn--primary {
   padding: 0.62rem 1.05rem;
+  font-family: var(--font-heading);
   color: #161008;
   background: linear-gradient(145deg, #f0c85c 0%, var(--dorado-cacao) 45%, #a87612 100%);
   box-shadow: 0 4px 0 rgba(90, 62, 12, 0.75), 0 10px 26px rgba(200, 146, 26, 0.28);
@@ -3593,6 +4142,8 @@ body:has(.mission-arcade) {
 
 .btn--secondary {
   padding: 0.58rem 1rem;
+  font-family: var(--font-body);
+  font-weight: 600;
   color: var(--crema);
   background: rgba(12, 28, 20, 0.45);
   border: 1px solid rgba(200, 146, 26, 0.45);
@@ -4204,6 +4755,187 @@ body:has(.mission-arcade) {
 }
 
 @media (max-width: 480px) {
+  .screen--p03 .p03-left-progress-label,
+  .screen--p03 .p03-progress-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.05em;
+  }
+
+  .screen--p03 .p03-chapter,
+  .screen--p03 .p03-progress-count {
+    font-size: 0.56rem;
+  }
+
+  .screen--p03 .p03-title {
+    font-size: clamp(1.24rem, 7.2vw, 1.58rem);
+  }
+
+  .screen--p03 .p03-text {
+    font-size: 0.93rem;
+    line-height: 1.58;
+  }
+
+  .screen--p03 .p03-next-button {
+    font-size: 0.86rem;
+    padding: 0.74rem 0.7rem;
+  }
+
+  .screen--p03 .p03-skip-button,
+  .screen--p03 .p03-back-button {
+    font-size: 0.78rem;
+    padding: 0.64rem 0.56rem;
+  }
+
+  .p06-card {
+    padding: 0.92rem 0.8rem;
+  }
+
+  .p06-title {
+    font-size: clamp(1.1rem, 6vw, 1.34rem);
+  }
+
+  .p06-subtitle,
+  .p06-progress {
+    font-size: 0.52rem;
+    letter-spacing: 0.05em;
+  }
+
+  .p06-question {
+    font-size: 0.97rem;
+    line-height: 1.46;
+  }
+
+  .p06-option-btn {
+    font-size: 0.9rem;
+    padding: 0.68rem 0.7rem;
+  }
+
+  .p06-feedback {
+    font-size: 0.91rem;
+  }
+
+  .p06-fact {
+    font-size: 0.86rem;
+  }
+
+  .p06-next-btn,
+  .p06-back-btn {
+    font-size: 0.78rem;
+  }
+
+  .p07-shell {
+    border-radius: 16px;
+  }
+
+  .p07-badge,
+  .p07-list-title,
+  .p07-progress-label,
+  .p07-step-tagline {
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  .p07-title {
+    font-size: clamp(1.2rem, 6.2vw, 1.5rem);
+  }
+
+  .p07-lead {
+    font-size: 0.9rem;
+  }
+
+  .p07-tip-title {
+    font-size: 0.84rem;
+  }
+
+  .p07-tip-text,
+  .p07-progress-meta,
+  .p07-step-desc,
+  .p07-fact {
+    font-size: 0.82rem;
+  }
+
+  .p07-step {
+    padding: 0.56rem 0.62rem 0.56rem 0.5rem;
+    gap: 0.52rem;
+  }
+
+  .p07-step-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    font-size: 1.2rem;
+  }
+
+  .p07-step-title {
+    font-size: 0.9rem;
+  }
+
+  .p07-feedback {
+    font-size: 0.9rem;
+  }
+
+  .p07-confirm-button,
+  .p07-back-button {
+    font-size: 0.78rem;
+  }
+
+  .p08-card {
+    padding: 0.9rem 0.78rem 0.96rem;
+  }
+
+  .p08-title {
+    font-size: clamp(1.14rem, 6.2vw, 1.42rem);
+  }
+
+  .p08-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .p08-stats {
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+  }
+
+  .p08-grid {
+    max-width: 308px;
+    gap: 0.34rem;
+    padding: 0.38rem;
+  }
+
+  .p08-cell {
+    min-height: 2.72rem;
+  }
+
+  .p08-cell-face {
+    font-size: 0.96rem;
+  }
+
+  .p08-cell-inner {
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
+  }
+
+  .p08-relic-icon {
+    font-size: clamp(1.42rem, 8.5vw, 1.8rem);
+  }
+
+  .p08-relic-caption {
+    font-size: 0.53rem;
+  }
+
+  .p08-feedback {
+    font-size: 0.88rem;
+  }
+
+  .p08-fact {
+    font-size: 0.82rem;
+  }
+
+  .p08-continue-btn,
+  .p08-back-btn {
+    font-size: 0.78rem;
+  }
+
   .p10-actions-row {
     grid-template-columns: 1fr;
   }
@@ -5108,4 +5840,211 @@ body:has(.screen--phaser-lab) {
   .p10-btn:hover {
     transform: none;
   }
+}
+
+/* Final lock: P01 responsive like provided reference */
+@media (max-width: 900px) {
+  .screen--p01 {
+    padding: 0.9rem;
+    background:
+      linear-gradient(rgba(4, 10, 8, 0.56), rgba(4, 10, 8, 0.8)),
+      url("/assets/images/fondo-selva-noche.webp");
+    background-size: cover;
+    background-position: center;
+  }
+
+  .screen--p01 .p01-shell {
+    width: min(94vw, 680px);
+    min-height: auto;
+    padding: 1rem 0.9rem calc(0.9rem + env(safe-area-inset-bottom));
+    border-radius: 8px;
+    border: 1px solid rgba(255, 226, 140, 0.2);
+    background: rgba(6, 10, 9, 0.34);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.72rem;
+  }
+
+  .screen--p01 .p01-topbar,
+  .screen--p01 .p01-hero,
+  .screen--p01 .p01-actions-box {
+    width: min(100%, 590px);
+  }
+
+  .screen--p01 .p01-topbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.52rem;
+  }
+
+  .screen--p01 .p01-chip {
+    width: 100%;
+    padding: 0.78rem 0.92rem;
+    border: 3px solid rgba(198, 146, 49, 0.84);
+    border-radius: 4px;
+    background: linear-gradient(180deg, rgba(16, 10, 6, 0.94) 0%, rgba(8, 5, 4, 0.92) 100%);
+    box-shadow: 0 4px 0 #2a1810, inset 0 1px 0 rgba(255, 210, 120, 0.12);
+    text-align: left;
+  }
+
+  .screen--p01 .p01-chip--right {
+    text-align: center;
+  }
+
+  .screen--p01 .p01-chip-title {
+    font-size: clamp(0.56rem, 1.6vw, 0.72rem);
+    letter-spacing: 0.08em;
+    color: #7cfc9a;
+  }
+
+  .screen--p01 .p01-chip-copy {
+    font-size: clamp(0.98rem, 2.8vw, 1.38rem);
+    line-height: 1.22;
+    color: rgba(246, 243, 235, 0.96);
+  }
+
+  .screen--p01 .p01-hero {
+    margin-top: 0.34rem;
+    text-align: center;
+  }
+
+  .screen--p01 .p01-title-light {
+    font-size: clamp(1.9rem, 5.4vw, 3.1rem);
+    line-height: 1.06;
+    text-shadow: 2px 2px 0 #1a0d05, 0 0 14px rgba(255, 255, 255, 0.12);
+  }
+
+  .screen--p01 .p01-title-gold {
+    font-size: clamp(2.26rem, 6.3vw, 3.8rem);
+    line-height: 1.02;
+    text-shadow: 2px 2px 0 #1a0d05, 0 0 18px rgba(255, 204, 51, 0.2);
+  }
+
+  .screen--p01 .p01-title-sub {
+    font-size: clamp(1.5rem, 4.2vw, 2.4rem);
+    letter-spacing: 0.12em;
+    line-height: 1.1;
+  }
+
+  .screen--p01 .p01-actions-box {
+    margin-top: 0.62rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.68rem;
+    transform: none;
+  }
+
+  .screen--p01 .btn--p01-primary,
+  .screen--p01 .btn--p01-secondary {
+    border-radius: 4px;
+    border-width: 3px;
+    font-size: clamp(1.06rem, 3.2vw, 1.56rem);
+    padding: 0.9rem 0.96rem;
+    line-height: 1.2;
+  }
+
+  .screen--p01 .btn--p01-primary {
+    box-shadow: 0 6px 0 #5a4010, 0 10px 24px rgba(0, 0, 0, 0.36);
+  }
+
+  .screen--p01 .btn--p01-secondary {
+    box-shadow: 0 5px 0 #0d2818, 0 8px 18px rgba(0, 0, 0, 0.3);
+  }
+
+  .screen--p01 .audio-hint {
+    display: none;
+  }
+
+  .screen--p01 .p01-audio-toggle {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    order: 6;
+    align-self: center;
+    margin-top: 0.08rem;
+    min-width: clamp(170px, 35vw, 240px);
+    border-radius: 4px;
+    border-width: 3px;
+    font-size: clamp(0.62rem, 1.9vw, 0.9rem);
+    padding: 0.5rem 0.78rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .screen--p01 .p01-shell {
+    width: 100%;
+    max-width: 390px;
+    padding: 0.72rem 0.3rem calc(0.64rem + env(safe-area-inset-bottom));
+    gap: 0.58rem;
+  }
+
+  .screen--p01 .p01-topbar,
+  .screen--p01 .p01-hero,
+  .screen--p01 .p01-actions-box {
+    width: min(100%, 360px);
+  }
+
+  .screen--p01 .p01-chip {
+    padding: 0.62rem 0.64rem;
+  }
+
+  .screen--p01 .p01-chip-title {
+    font-size: 0.5rem;
+  }
+
+  .screen--p01 .p01-chip-copy {
+    font-size: 0.92rem;
+  }
+
+  .screen--p01 .p01-title-light {
+    font-size: clamp(1.36rem, 7.4vw, 1.9rem);
+  }
+
+  .screen--p01 .p01-title-gold {
+    font-size: clamp(1.62rem, 8.5vw, 2.26rem);
+  }
+
+  .screen--p01 .p01-title-sub {
+    font-size: clamp(1.02rem, 5.6vw, 1.42rem);
+    letter-spacing: 0.09em;
+  }
+
+  .screen--p01 .btn--p01-primary,
+  .screen--p01 .btn--p01-secondary {
+    font-size: clamp(0.92rem, 4.1vw, 1.12rem);
+    padding: 0.76rem 0.62rem;
+  }
+
+  .screen--p01 .p01-audio-toggle {
+    min-width: 132px;
+    font-size: 0.56rem;
+    padding: 0.4rem 0.56rem;
+  }
+}
+
+/* Final lock: P03 typography aligned to project guide */
+.screen--p03 .p03-avatar-badge,
+.screen--p03 .p03-left-progress-label,
+.screen--p03 .p03-chapter,
+.screen--p03 .p03-progress-label,
+.screen--p03 .p03-progress-count {
+  font-family: var(--font-pixel);
+}
+
+.screen--p03 .p03-title,
+.screen--p03 .p03-title-main,
+.screen--p03 .p03-title-accent,
+.screen--p03 .p03-next-button {
+  font-family: var(--font-heading);
+}
+
+.screen--p03 .p03-text,
+.screen--p03 .p03-avatar-name,
+.screen--p03 .p03-skip-button,
+.screen--p03 .p03-back-button {
+  font-family: var(--font-body);
 }

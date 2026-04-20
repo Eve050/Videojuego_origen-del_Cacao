@@ -12,8 +12,8 @@ export function renderP02(container) {
     <section class="screen screen--p02">
       <article class="p02-card">
         <p class="menu-stage">REGISTRO</p>
-        <h2 class="p02-title">Como te<br />llaman,<br />explorador?</h2>
-        <p class="p02-subtitle">Registro para certificado de expedicion</p>
+        <h2 class="p02-title">¿Cómo te<br />llamas,<br />explorador?</h2>
+        <p class="p02-subtitle">Registro para certificado de expedición</p>
 
         <label class="name-label" for="playerNameInput">Nombre del explorador</label>
         <input
@@ -29,8 +29,8 @@ export function renderP02(container) {
         <p class="name-feedback" id="nameFeedback"></p>
 
         <p class="p02-info">
-          Tu nombre se guardara solo en esta sesion y se usara exclusivamente para
-          generar tu certificado PDF. No se envia a ningun servidor.
+          Tu nombre se guardará solo en esta sesión y se usará exclusivamente para
+          generar tu certificado PDF. No se envía a ningún servidor.
         </p>
 
         <div class="p02-actions">
@@ -62,7 +62,7 @@ export function renderP02(container) {
     if (DANGEROUS_CHARACTERS_REGEX.test(cleanName)) {
       if (nameFeedback) {
         nameFeedback.textContent =
-          "Tu nombre contiene caracteres no permitidos. Usa solo letras, numeros y espacios.";
+          "Tu nombre contiene caracteres no permitidos. Usa solo letras, números y espacios.";
       }
       if (goP03Button) {
         goP03Button.disabled = true;

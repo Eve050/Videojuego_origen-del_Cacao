@@ -4,6 +4,7 @@ import Player from "../entities/Player.js";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
+import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
 
 /** Doc §2.7 — prompt exacto */
 const TXT_PROMPT = "¡Objeto arqueológico encontrado! Presiona [E] o toca para examinar";
@@ -131,7 +132,7 @@ export default class Game1Scene extends Phaser.Scene {
     }
   }
 
-  playClippedSfx(key, volume = 0.5, maxMs = 2000) {
+  playClippedSfx(key, volume = SFX_VOL.relic, maxMs = 2000) {
     this.ensureSfxUnlocked();
     if (!this.cache.audio.exists(key)) return;
     const s = this.sound.add(key);
@@ -144,7 +145,7 @@ export default class Game1Scene extends Phaser.Scene {
 
   preload() {
     this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
-    this.load.audio("sfx_relic", "/assets/audio/reliquia-encontrada.mp3");
+    this.load.audio("sfx_relic", PHASE_SFX_FILES.sfx_relic);
   }
 
   create() {
@@ -180,7 +181,7 @@ export default class Game1Scene extends Phaser.Scene {
       this.pendingCollectible = null;
       if (item && item.active) {
         if (data.correct || data.exhausted) {
-          this.playClippedSfx("sfx_relic", 0.46, 2000);
+          this.playClippedSfx("sfx_relic", SFX_VOL.relic, 2000);
           item.destroy();
         } else {
           item.setData("quizBusy", false);
@@ -278,7 +279,7 @@ export default class Game1Scene extends Phaser.Scene {
         fontSize: "11px",
         color: "#c8921a",
         fontStyle: "bold",
-        fontFamily: "Segoe UI, Tahoma, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
       })
       .setOrigin(0, 0)
       .setScrollFactor(0)
@@ -292,7 +293,7 @@ export default class Game1Scene extends Phaser.Scene {
         color: "#dddddd",
         align: "center",
         wordWrap: { width: 1050 },
-        fontFamily: "Segoe UI, Tahoma, sans-serif",
+        fontFamily: "Nunito, sans-serif",
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -305,7 +306,7 @@ export default class Game1Scene extends Phaser.Scene {
         align: "center",
         fontStyle: "bold",
         wordWrap: { width: 900 },
-        fontFamily: "Segoe UI, Tahoma, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -337,7 +338,7 @@ export default class Game1Scene extends Phaser.Scene {
       .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 96, "Presiona [E] o toca ACCIÓN para examinar los objetos · CONTROLES TÁCTILES (solo en móvil)", {
         fontSize: "10px",
         color: "#5a6068",
-        fontFamily: "Segoe UI, Tahoma, sans-serif",
+        fontFamily: "Nunito, sans-serif",
       })
       .setOrigin(0.5)
       .setScrollFactor(0)
@@ -431,7 +432,7 @@ export default class Game1Scene extends Phaser.Scene {
       .text(cx, cy + 6, "Plaza circular ceremonial  ·  ~40 m", {
         fontSize: "13px",
         color: "#c4b898",
-        fontFamily: "Georgia, 'Palatino Linotype', serif",
+        fontFamily: "Bitter, serif",
         fontStyle: "italic",
       })
       .setOrigin(0.5)
@@ -807,7 +808,7 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   setupHudAndMinimap() {
-    const hudFont = "Segoe UI, Tahoma, sans-serif";
+    const hudFont = "Press Start 2P, monospace";
     this.hudPts = this.add
       .text(18, 16, "", { fontSize: "14px", color: "#ffdd66", fontStyle: "bold", fontFamily: hudFont })
       .setScrollFactor(0)
@@ -923,8 +924,13 @@ export default class Game1Scene extends Phaser.Scene {
     this.levelTransitionActive = true;
     this.pendingCollectible = null;
     if (this.cache.audio.exists("sfx_mission_complete")) {
-      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.66 });
+      this.ensureSfxUnlocked();
+      duckAmbientAudio({
+        duckTo: SFX_VOL.duckMissionTo,
+        holdMs: SFX_VOL.duckMissionHoldMs,
+        restoreMs: SFX_VOL.duckMissionRestoreMs,
+      });
+      this.sound.play("sfx_mission_complete", { volume: SFX_VOL.mission });
     }
     if (this.player?.body) {
       this.player.setVelocity(0, 0);
@@ -949,7 +955,7 @@ export default class Game1Scene extends Phaser.Scene {
     const title = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 98, "¡FELICIDADES!", {
         fontSize: "54px",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         color: "#6cfc8a",
         fontStyle: "bold",
         align: "center",
@@ -962,7 +968,7 @@ export default class Game1Scene extends Phaser.Scene {
     const subtitle = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 6, "MISIÓN 1 SUPERADA\nYa puedes continuar con la Misión 2.", {
         fontSize: "36px",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         color: "#f9f2dd",
         align: "center",
         lineSpacing: 10,
@@ -982,7 +988,7 @@ export default class Game1Scene extends Phaser.Scene {
     const mapTxt = this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 118, "VOLVER AL MAPA", {
         fontSize: "21px",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         color: "#f9f2dd",
         fontStyle: "bold",
       })

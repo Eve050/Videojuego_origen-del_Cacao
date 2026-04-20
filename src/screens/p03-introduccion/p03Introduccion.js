@@ -7,16 +7,16 @@ export function renderP03(container) {
   const playerName = state.playerName || "Explorador/a";
   const slides = [
     {
-      chapter: "CAPITULO I",
+      chapter: "CAPÍTULO I",
       titleMain: "La Reliquia",
       titleAccent: "Perdida",
-      text: "En la selva de Palanda, una reliquia Mayo-Chinchipe desaparecio durante la noche.",
+      text: "En la selva de Palanda, una reliquia Mayo-Chinchipe desapareció durante la noche.",
     },
     {
       chapter: "PISTA 1",
-      titleMain: "Ruta Origenes",
+      titleMain: "Ruta Orígenes",
       titleAccent: "del Cacao",
-      text: `${playerName}, tu mision inicia en la Ruta Origenes del Cacao. Debes seguir las pistas.`,
+      text: `${playerName}, tu misión inicia en la Ruta Orígenes del Cacao. Debes seguir las pistas.`,
     },
     {
       chapter: "PISTA 2",
@@ -28,7 +28,7 @@ export function renderP03(container) {
       chapter: "OBJETIVO",
       titleMain: "Recuperar",
       titleAccent: "la reliquia",
-      text: "Acepta la mision y avanza al mapa para encontrar la reliquia perdida.",
+      text: "Acepta la misión y avanza al mapa para encontrar la reliquia perdida.",
     },
   ];
 
@@ -43,7 +43,7 @@ export function renderP03(container) {
               <img
                 class="p03-avatar-icon"
                 src="https://img.icons8.com/fluency/96/compass.png"
-                alt="Icono de brujula"
+                alt="Icono de brújula"
                 loading="lazy"
               />
             </div>
@@ -76,7 +76,7 @@ export function renderP03(container) {
             </button>
             <div class="p03-actions-row">
               <button class="btn btn--secondary p03-skip-button" id="p03SkipButton" type="button">
-                Saltar introduccion
+                Saltar introducción
               </button>
               <button class="btn btn--secondary p03-back-button" id="p03BackButton" type="button">
                 Volver a registro

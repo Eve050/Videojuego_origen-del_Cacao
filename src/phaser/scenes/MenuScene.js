@@ -14,7 +14,7 @@ export default class MenuScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 36, "PROPUESTA DE MINIJUEGOS EDUCATIVOS | El Enigma de Santa Ana – La Florida", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#e4b84a",
         fontStyle: "bold",
@@ -23,7 +23,7 @@ export default class MenuScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 72, "Videojuego Educativo Interactivo · Documento v1.0 · marzo 2026", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "14px",
         color: "#d8d4c8",
       })
@@ -31,7 +31,7 @@ export default class MenuScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 104, "Elegir minijuego (Phaser.js · resolución base 1280×720)", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "13px",
         color: "#8a8578",
       })
@@ -63,7 +63,7 @@ export default class MenuScene extends Phaser.Scene {
       this.add.rectangle(LAYOUT.WIDTH / 2, y + 8, 560, 64, 0xc8921a).setDepth(0);
       this.add
         .text(LAYOUT.WIDTH / 2, y - 4, s.title, {
-          fontFamily: "Arial, sans-serif",
+          fontFamily: "Exo 2, sans-serif",
           fontSize: "15px",
           color: "#1a0d05",
           fontStyle: "bold",
@@ -72,7 +72,7 @@ export default class MenuScene extends Phaser.Scene {
         .setDepth(1);
       this.add
         .text(LAYOUT.WIDTH / 2, y + 18, s.sub, {
-          fontFamily: "Arial, sans-serif",
+          fontFamily: "Nunito, sans-serif",
           fontSize: "12px",
           color: "#2a2418",
         })
@@ -87,7 +87,7 @@ export default class MenuScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT - 36, "Compatibilidad: Chrome, Firefox, Safari, Edge · Plan Binacional Ecuador–Perú • Proyecto Palanda", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "11px",
         color: "#666666",
         align: "center",

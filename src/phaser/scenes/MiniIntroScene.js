@@ -30,7 +30,7 @@ export default class MiniIntroScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 74, cfg.title || "INTRO", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "32px",
         color: "#f0f0f0",
         fontStyle: "bold",
@@ -39,7 +39,7 @@ export default class MiniIntroScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, 122, cfg.subtitle || "", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "16px",
         color: "#b8b8b8",
         align: "center",
@@ -49,7 +49,7 @@ export default class MiniIntroScene extends Phaser.Scene {
 
     this.add
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 20, "ESPACIO TEMPORAL\n(AQUÍ IRÁ EL VIDEO DE INTRO)", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "20px",
         color: "#cfcfcf",
         align: "center",
@@ -79,7 +79,7 @@ export default class MiniIntroScene extends Phaser.Scene {
     this.add.rectangle(x, y, w, h, 0x2a2418).setStrokeStyle(2, 0xc8921a);
     const txt = this.add
       .text(x, y, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#f9f2dd",
         fontStyle: "bold",

@@ -16,8 +16,8 @@ const ROUTE_STOPS = [
     country: "Ecuador",
     x: 14,
     y: 12,
-    description: "Inicio de la expedicion en la sierra sur del Ecuador.",
-    tagline: "Sierra sur y origenes del cacao",
+    description: "Inicio de la expedición en la sierra sur del Ecuador.",
+    tagline: "Sierra sur y orígenes del cacao",
     difficulty: "Explorador",
     mystery: "Reliquia I",
     image: "",
@@ -53,7 +53,7 @@ const ROUTE_STOPS = [
     country: "Ecuador",
     x: 47,
     y: 52,
-    description: "Epicentro arqueologico vinculado al origen del cacao.",
+    description: "Epicentro arqueológico vinculado al origen del cacao.",
     tagline: "Epicentro del cacao",
     difficulty: "Explorador",
     mystery: "Reliquia IV",
@@ -77,7 +77,7 @@ const ROUTE_STOPS = [
     country: "Ecuador",
     x: 70,
     y: 75,
-    description: "Conexion fronteriza antes del tramo binacional final.",
+    description: "Conexión fronteriza antes del tramo binacional final.",
     tagline: "Antes de la frontera",
     difficulty: "Explorador",
     mystery: "Reliquia VI",
@@ -86,7 +86,7 @@ const ROUTE_STOPS = [
   {
     id: "san-ignacio",
     label: "San Ignacio",
-    country: "Peru",
+    country: "Perú",
     x: 81,
     y: 84,
     description: "Parada binacional con pistas de intercambio cultural.",
@@ -98,11 +98,11 @@ const ROUTE_STOPS = [
   {
     id: "jaen",
     label: "Jaen",
-    country: "Peru",
+    country: "Perú",
     x: 91,
     y: 90,
-    description: "Destino final de la ruta. Aqui culmina la expedicion.",
-    tagline: "Cierre de la expedicion",
+    description: "Destino final de la ruta. Aquí culmina la expedición.",
+    tagline: "Cierre de la expedición",
     difficulty: "Explorador",
     mystery: "Reliquia VIII",
     image: "",
@@ -141,7 +141,7 @@ export function renderP04(container) {
     <section class="screen screen--p04" aria-label="Mapa principal de la ruta">
       <header class="p04-header">
         <article class="p04-progress-card">
-          <p class="p04-progress-title">PROGRESO DE EXPEDICION</p>
+          <p class="p04-progress-title">PROGRESO DE EXPEDICIÓN</p>
           <p class="p04-progress-value">${missionsCompleted} de ${TOTAL_MISSIONS} misiones</p>
           <div class="p04-progress-track">
             <span class="p04-progress-fill" style="width: ${progressPercent}%"></span>
@@ -155,14 +155,14 @@ export function renderP04(container) {
       ${
         missionsCompleted >= TOTAL_MISSIONS
           ? `
-      <article class="p04-finale-banner" aria-label="Expedicion completada">
+      <article class="p04-finale-banner" aria-label="Expedición completada">
         <div class="p04-finale-copy">
-          <p class="p04-finale-kicker">Mision cumplida</p>
+          <p class="p04-finale-kicker">Misión cumplida</p>
           <p class="p04-finale-title">Tres misiones completadas</p>
-          <p class="p04-finale-sub">Descubre la revelacion final y descarga tu certificado.</p>
+          <p class="p04-finale-sub">Obtén tu certificado digital y, si quieres, revisa la revelación final de la reliquia.</p>
         </div>
         <button class="btn btn--primary p04-finale-btn" id="p04FinaleBtn" type="button">
-          Ver revelacion
+          Ver certificado
         </button>
       </article>
       `
@@ -218,12 +218,12 @@ export function renderP04(container) {
         </article>
 
         <aside class="p04-focus-card">
-          <p class="p04-focus-chip" id="p04FocusChip">MISION ACTIVA</p>
+          <p class="p04-focus-chip" id="p04FocusChip">MISIÓN ACTIVA</p>
           <h2 class="p04-focus-title" id="p04FocusTitle">${activeStop.label}</h2>
           <p class="p04-focus-country" id="p04FocusCountry">${activeStop.country}</p>
           <p class="p04-focus-description" id="p04FocusDescription">${activeStop.description}</p>
           <button class="btn btn--primary p04-start-button" id="p04StartButton" type="button">
-            Iniciar mision
+            Iniciar misión
           </button>
         </aside>
       </div>
@@ -333,7 +333,7 @@ export function renderP04(container) {
     if (focusChip) {
       focusChip.textContent =
         stopState === "active"
-          ? "MISION ACTIVA"
+          ? "MISIÓN ACTIVA"
           : stopState === "completed"
             ? "PARADA COMPLETADA"
             : "PARADA BLOQUEADA";
@@ -341,13 +341,13 @@ export function renderP04(container) {
     if (startButton) {
       if (stopState === "locked") {
         startButton.disabled = true;
-        startButton.textContent = "Mision bloqueada";
+        startButton.textContent = "Misión bloqueada";
       } else if (stopState === "completed") {
         startButton.disabled = false;
-        startButton.textContent = "Repetir expedicion";
+        startButton.textContent = "Repetir expedición";
       } else {
         startButton.disabled = false;
-        startButton.textContent = "Iniciar mision";
+        startButton.textContent = "Iniciar misión";
       }
     }
     if (modalTitle) {
@@ -451,7 +451,7 @@ export function renderP04(container) {
     if (stopState === "completed") {
       if (
         !window.confirm(
-          "¿Repetir la expedicion desde el principio?\n\nSe borrara el progreso de las misiones. Conservamos tu nombre; luego acepta la mision otra vez en la introduccion.",
+          "¿Repetir la expedición desde el principio?\n\nSe borrará el progreso de las misiones. Conservamos tu nombre; luego acepta la misión otra vez en la introducción.",
         )
       ) {
         return;
@@ -494,7 +494,7 @@ export function renderP04(container) {
   });
 
   container.querySelector("#p04FinaleBtn")?.addEventListener("click", () => {
-    window.location.hash = "#/p09";
+    window.location.hash = "#/p10";
   });
 
   renderSelection();

@@ -4,6 +4,7 @@ import zonesConfig from "../data/zonesConfig.json";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { applyAmbientZoneProfile, duckAmbientAudio } from "../../modules/audioManager.js";
+import { SFX_VOL } from "../../modules/sfxVolumes.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -18,7 +19,6 @@ const ITEM_GAP_MIN = 160;
 const ITEM_GAP_MAX = 420;
 /** Salto en aire adicional (patrón Feronato / endless runner). */
 const MAX_AIR_JUMPS = 2;
-const MIX = { ok: 0.36, error: 0.38, relic: 0.46, mission: 0.66, jump: 0.32 };
 
 /** Capas de color por zona (cielo / suelo) — alineado a diseño de 5 zonas. */
 const ZONE_SCENERY = [
@@ -67,13 +67,37 @@ export default class Game2Scene extends Phaser.Scene {
     const slot = slotByCode[ev.code] ?? slotByKey[ev.key];
     if (!slot || !this._domRunner) return;
     ev.preventDefault();
+    if (isDown && slot === "jump") this.ensureSfxUnlocked();
     this._domRunner[slot] = isDown;
+  }
+
+  ensureSfxUnlocked() {
+    const ctx = this.sound?.context;
+    if (!ctx) return;
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => {});
+    }
   }
 
   isPlayerGrounded() {
     const b = this.player?.body;
     if (!b) return false;
     return !!(b.blocked?.down || b.touching?.down || b.onFloor?.());
+  }
+
+  /** Salto: SFX dedicado o fallback suave si falta el archivo en build. */
+  playJumpSfx(fromGround) {
+    this.ensureSfxUnlocked();
+    const now = this.time.now;
+    if (now - (this.lastJumpSfxAt ?? 0) < 90) return;
+    const vol = fromGround ? SFX_VOL.jump : SFX_VOL.jumpAir;
+    if (this.cache.audio.exists("sfx_jump")) {
+      // WAV ya lleva “whoosh” descendente; rate suave para suelo vs doble salto.
+      this.sound.play("sfx_jump", { volume: vol, rate: fromGround ? 1.04 : 1.14 });
+    } else if (this.cache.audio.exists("sfx_ok")) {
+      this.sound.play("sfx_ok", { volume: vol * 0.35 });
+    }
+    this.lastJumpSfxAt = now;
   }
 
   tryApplyJump() {
@@ -88,11 +112,7 @@ export default class Game2Scene extends Phaser.Scene {
     this.player.setVelocityY(this.jumpVelocity ?? -620);
     this.playerJumps += 1;
     this.coyoteMs = 0;
-    const now = this.time.now;
-    if (this.cache.audio.exists("sfx_jump") && now - (this.lastJumpSfxAt ?? 0) >= 90) {
-      this.sound.play("sfx_jump", { volume: MIX.jump });
-      this.lastJumpSfxAt = now;
-    }
+    this.playJumpSfx(grounded);
     return true;
   }
 
@@ -173,7 +193,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.add
       .text(cx, cy - 118, "GAME OVER", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "48px",
         color: "#ff6b6b",
         fontStyle: "bold",
@@ -185,7 +205,7 @@ export default class Game2Scene extends Phaser.Scene {
     const stats = `Sin vidas\n\nPuntos: ${this.points}\nVasijas: ${this.vainasCount}\nDatos: ${this.countDatosUnlocked()} / 5`;
     this.add
       .text(cx, cy - 8, stats, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: "18px",
         color: "#f9f2dd",
         align: "center",
@@ -220,7 +240,7 @@ export default class Game2Scene extends Phaser.Scene {
     rect.setInteractive({ useHandCursor: true });
     const txt = this.add
       .text(x, y, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#f9f2dd",
         fontStyle: "bold",
@@ -257,7 +277,7 @@ export default class Game2Scene extends Phaser.Scene {
     rect.setInteractive({ useHandCursor: true });
     const txt = this.add
       .text(x, y, label, {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: "14px",
         color: "#eaffef",
         fontStyle: "bold",
@@ -282,7 +302,8 @@ export default class Game2Scene extends Phaser.Scene {
     rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
   }
 
-  playClippedSfx(key, volume = 0.4, maxMs = 2000) {
+  playClippedSfx(key, volume = SFX_VOL.relic, maxMs = 2000) {
+    this.ensureSfxUnlocked();
     if (!this.cache.audio.exists(key)) return;
     const s = this.sound.add(key);
     s.play({ volume });
@@ -307,8 +328,13 @@ export default class Game2Scene extends Phaser.Scene {
     this._winOverlayActive = true;
     this._winBtnUsed = false;
     if (this.cache.audio.exists("sfx_mission_complete")) {
-      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: MIX.mission });
+      this.ensureSfxUnlocked();
+      duckAmbientAudio({
+        duckTo: SFX_VOL.duckMissionTo,
+        holdMs: SFX_VOL.duckMissionHoldMs,
+        restoreMs: SFX_VOL.duckMissionRestoreMs,
+      });
+      this.sound.play("sfx_mission_complete", { volume: SFX_VOL.mission });
     }
 
     const depth = 90;
@@ -333,7 +359,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     const title = this.add
       .text(cx, titleY, "¡FELICIDADES!", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: titleSize,
         color: "#6cfc8a",
         fontStyle: "bold",
@@ -352,7 +378,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.add
       .text(cx, subtitleY, "MISIÓN SUPERADA", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Exo 2, sans-serif",
         fontSize: subtitleSize,
         color: "#c2ffd0",
         fontStyle: "bold",
@@ -363,7 +389,7 @@ export default class Game2Scene extends Phaser.Scene {
 
     this.add
       .text(cx, bodyY, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.", {
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nunito, sans-serif",
         fontSize: bodySize,
         color: "#f5fff7",
         align: "center",
@@ -379,7 +405,7 @@ export default class Game2Scene extends Phaser.Scene {
         statsY,
         `Puntos: ${this.points}   |   Vasijas: ${this.vainasCount}   |   Datos: ${this.countDatosUnlocked()} / 5`,
         {
-          fontFamily: "Arial, sans-serif",
+          fontFamily: "Nunito, sans-serif",
           fontSize: statsSize,
           color: "#d3ffe0",
           align: "center",
@@ -609,14 +635,15 @@ export default class Game2Scene extends Phaser.Scene {
       pod.setData("picking", true);
       const now = this.time.now;
       if (this.cache.audio.exists("sfx_ok") && now - this.lastOkSfxAt >= 90) {
-        this.sound.play("sfx_ok", { volume: MIX.ok });
+        this.ensureSfxUnlocked();
+        this.sound.play("sfx_ok", { volume: SFX_VOL.ok });
         this.lastOkSfxAt = now;
       }
       const golden = pod.getData("isGolden");
       const cultural = pod.getData("isCultural");
 
       if (cultural) {
-        this.playClippedSfx("sfx_relic", MIX.relic, 2000);
+        this.playClippedSfx("sfx_relic", SFX_VOL.relic, 2000);
         this.points += 50;
         const z = this.zones[this.zoneIndex];
         if (z?.zoneFact && !this.unlockedFacts.has(`piece_${z.id}`)) {
@@ -656,7 +683,8 @@ export default class Game2Scene extends Phaser.Scene {
       if (this._gameOverActive || this.runPaused || !this.runActive || this.invulnerableMs > 0) return;
       const now = this.time.now;
       if (this.cache.audio.exists("sfx_error") && now - this.lastErrorSfxAt >= 120) {
-        this.sound.play("sfx_error", { volume: MIX.error });
+        this.ensureSfxUnlocked();
+        this.sound.play("sfx_error", { volume: SFX_VOL.error });
         this.lastErrorSfxAt = now;
       }
       this.releaseObstacle(obs);
@@ -1173,6 +1201,11 @@ export default class Game2Scene extends Phaser.Scene {
       advancedZone = true;
     }
     if (advancedZone) {
+      duckAmbientAudio({
+        duckTo: SFX_VOL.duckZoneTo,
+        holdMs: SFX_VOL.duckZoneHoldMs,
+        restoreMs: SFX_VOL.duckZoneRestoreMs,
+      });
       this.refreshSpawnTimers();
     }
     const classicEnd = this.runDistance >= 5 * DIST_PER_ZONE;

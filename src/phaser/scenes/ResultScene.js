@@ -3,6 +3,14 @@ import { LAYOUT } from "../layout.js";
 import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
+import { SFX_VOL } from "../../modules/sfxVolumes.js";
+
+/** Alineado a la guía tipográfica del proyecto (Phaser usa nombres web, no variables CSS). */
+const FONT = {
+  pixel: '"Press Start 2P", monospace',
+  heading: '"Exo 2", sans-serif',
+  body: '"Nunito", sans-serif',
+};
 
 const MAZE_CULTURAL_FACTS = [
   "Santa Ana – La Florida: la evidencia más antigua del uso de cacao en el mundo. 5.500 AP.",
@@ -29,6 +37,14 @@ export default class ResultScene extends Phaser.Scene {
     super({ key: "ResultScene" });
   }
 
+  ensureSfxUnlocked() {
+    const ctx = this.sound?.context;
+    if (!ctx) return;
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => {});
+    }
+  }
+
   init(data) {
     this.payload = data || {};
   }
@@ -45,6 +61,7 @@ export default class ResultScene extends Phaser.Scene {
           fontSize: "11px",
           color: "#6cfc8a",
           fontStyle: "bold",
+          fontFamily: FONT.pixel,
         })
         .setOrigin(0.5);
     } else {
@@ -52,6 +69,7 @@ export default class ResultScene extends Phaser.Scene {
         .text(LAYOUT.WIDTH / 2, 36, "PROPUESTA DE MINIJUEGOS EDUCATIVOS | El Enigma de Santa Ana – La Florida", {
           fontSize: "12px",
           color: "#c8921a",
+          fontFamily: FONT.body,
         })
         .setOrigin(0.5);
     }
@@ -105,6 +123,7 @@ export default class ResultScene extends Phaser.Scene {
         fontStyle: "bold",
         align: "center",
         wordWrap: { width: 1000 },
+        fontFamily: FONT.heading,
       })
       .setOrigin(0.5);
 
@@ -122,6 +141,7 @@ export default class ResultScene extends Phaser.Scene {
           color: "#f9f2dd",
           align: "center",
           wordWrap: { width: 920 },
+          fontFamily: FONT.body,
         })
         .setOrigin(0.5);
     } else {
@@ -129,6 +149,7 @@ export default class ResultScene extends Phaser.Scene {
         .text(LAYOUT.WIDTH / 2, 250, `Puntos: ${score}`, {
           fontSize: "20px",
           color: "#f9f2dd",
+          fontFamily: FONT.heading,
         })
         .setOrigin(0.5);
       this.add
@@ -137,6 +158,7 @@ export default class ResultScene extends Phaser.Scene {
           color: "#cccccc",
           align: "center",
           wordWrap: { width: 820 },
+          fontFamily: FONT.body,
         })
         .setOrigin(0.5);
     }
@@ -145,6 +167,7 @@ export default class ResultScene extends Phaser.Scene {
       .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT - 22, "Plan Binacional Ecuador–Perú • Proyecto Palanda", {
         fontSize: "11px",
         color: "#5a564c",
+        fontFamily: FONT.body,
       })
       .setOrigin(0.5);
 
@@ -155,8 +178,13 @@ export default class ResultScene extends Phaser.Scene {
       game === "mazeWin";
     const expeditionFail = game === "runner_fail" || game === "mazeLose";
     if (game === "explore" && this.cache.audio.exists("sfx_mission_complete")) {
-      duckAmbientAudio({ duckTo: 0.12, holdMs: 1200, restoreMs: 950 });
-      this.sound.play("sfx_mission_complete", { volume: 0.66 });
+      this.ensureSfxUnlocked();
+      duckAmbientAudio({
+        duckTo: SFX_VOL.duckMissionTo,
+        holdMs: SFX_VOL.duckMissionHoldMs,
+        restoreMs: SFX_VOL.duckMissionRestoreMs,
+      });
+      this.sound.play("sfx_mission_complete", { volume: SFX_VOL.mission });
     }
 
     if (isExp) {
@@ -226,6 +254,7 @@ export default class ResultScene extends Phaser.Scene {
         fontSize: "13px",
         color: "#f9f2dd",
         fontStyle: "bold",
+        fontFamily: FONT.heading,
       })
       .setOrigin(0.5);
     const z = this.add.zone(x, y, w, h).setInteractive({ useHandCursor: true });
@@ -269,6 +298,7 @@ export default class ResultScene extends Phaser.Scene {
         fontSize: "20px",
         color: "#e4b84a",
         fontStyle: "bold",
+        fontFamily: FONT.heading,
       })
       .setOrigin(0.5)
       .setDepth(depth + 1);
@@ -280,6 +310,7 @@ export default class ResultScene extends Phaser.Scene {
         color: "#e8e4dc",
         align: "left",
         wordWrap: { width: 960 },
+        fontFamily: FONT.body,
       })
       .setOrigin(0.5, 0)
       .setDepth(depth + 1);
@@ -297,6 +328,7 @@ export default class ResultScene extends Phaser.Scene {
         fontSize: "14px",
         color: "#f9f2dd",
         fontStyle: "bold",
+        fontFamily: FONT.heading,
       })
       .setOrigin(0.5)
       .setDepth(depth + 2);
