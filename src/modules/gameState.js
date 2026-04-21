@@ -2,8 +2,8 @@ const STORAGE_KEY = "enigma_santa_ana_state";
 
 /** Misiones de la expedicion (mapa avanza de 2 en 2 paradas por mision completada). */
 export const EXPEDITION_MISSION_TOTAL = 3;
-/** Cantidad de paradas en la ruta (Loja … Jaen). */
-export const ROUTE_STOP_TOTAL = 8;
+/** Cantidad de paradas en la ruta (Loja … Santa Ana-La Florida). */
+export const ROUTE_STOP_TOTAL = 5;
 
 /**
  * Indice de parada activa segun misiones completadas.
@@ -45,10 +45,13 @@ function sanitizeState(rawState) {
       Number.isInteger(safeState.missionsCompleted) && safeState.missionsCompleted >= 0
         ? safeState.missionsCompleted
         : 0,
-    selectedStopIndex:
-      Number.isInteger(safeState.selectedStopIndex) && safeState.selectedStopIndex >= 0
-        ? safeState.selectedStopIndex
-        : 0,
+    selectedStopIndex: (() => {
+      const maxIdx = ROUTE_STOP_TOTAL - 1;
+      if (!Number.isInteger(safeState.selectedStopIndex) || safeState.selectedStopIndex < 0) {
+        return 0;
+      }
+      return Math.min(maxIdx, safeState.selectedStopIndex);
+    })(),
     progress: {
       p01Visited: Boolean(safeProgress.p01Visited),
       p02Completed: Boolean(safeProgress.p02Completed),
@@ -132,9 +135,11 @@ export function markCertificateDownloaded() {
 
 export function setSelectedStopIndex(selectedStopIndex) {
   const state = getGameState();
-  const safeIndex = Number.isInteger(selectedStopIndex) && selectedStopIndex >= 0
-    ? selectedStopIndex
-    : 0;
+  const maxIdx = ROUTE_STOP_TOTAL - 1;
+  const safeIndex =
+    Number.isInteger(selectedStopIndex) && selectedStopIndex >= 0
+      ? Math.min(maxIdx, selectedStopIndex)
+      : 0;
   const nextState = {
     ...state,
     selectedStopIndex: safeIndex,

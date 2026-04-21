@@ -9,13 +9,19 @@ import {
   setSelectedStopIndex,
 } from "../../modules/gameState.js";
 
+/** Ilustración del mapa (pergamino / ruta del cacao). % del tablero = hito del arte (pin invisible, solo rótulo). */
+const MAP_ART_SRC = "/assets/images/mapa-expedicion.png";
+
 const ROUTE_STOPS = [
   {
     id: "loja",
     label: "Loja",
     country: "Ecuador",
-    x: 14,
-    y: 12,
+    /** Choza / casa — rótulo arriba del hito */
+    x: 13,
+    y: 20,
+    nameX: 15,
+    nameY: 5,
     description: "Inicio de la expedición en la sierra sur del Ecuador.",
     tagline: "Sierra sur y orígenes del cacao",
     difficulty: "Explorador",
@@ -26,8 +32,11 @@ const ROUTE_STOPS = [
     id: "vilcabamba",
     label: "Vilcabamba",
     country: "Ecuador",
+    /** Cacao — rótulo arriba, más a la derecha y pegado al hito */
     x: 26,
-    y: 23,
+    y: 26,
+    nameX: 35,
+    nameY: 21,
     description:
       "Conocido como el valle de la longevidad: clima suave y pistas ancestrales del cacao en la cordillera.",
     tagline: "Valle de la longevidad",
@@ -39,8 +48,11 @@ const ROUTE_STOPS = [
     id: "valladolid",
     label: "Valladolid",
     country: "Ecuador",
-    x: 36,
-    y: 38,
+    /** Punto central del camino — rótulo pegado encima del nodo dorado, un poco a la derecha */
+    x: 44,
+    y: 40,
+    nameX: 47,
+    nameY: 36,
     description: "Zona intermedia con glifos antiguos y coordenadas ocultas.",
     tagline: "Glifos y coordenadas",
     difficulty: "Explorador",
@@ -51,8 +63,11 @@ const ROUTE_STOPS = [
     id: "palanda",
     label: "Palanda",
     country: "Ecuador",
-    x: 47,
-    y: 52,
+    /** Vasija pequeña — rótulo debajo */
+    x: 54,
+    y: 50,
+    nameX: 54,
+    nameY: 60,
     description: "Epicentro arqueológico vinculado al origen del cacao.",
     tagline: "Epicentro del cacao",
     difficulty: "Explorador",
@@ -63,48 +78,15 @@ const ROUTE_STOPS = [
     id: "santa-ana",
     label: "Santa Ana-La Florida",
     country: "Ecuador",
-    x: 59,
+    /** Huaco Mayo-Chinchipe — rótulo debajo de la vasija (no sobre el arte) */
+    x: 71,
     y: 64,
-    description: "Lugar clave para encontrar el rastro de la reliquia.",
+    nameX: 80,
+    nameY: 93,
+    description: "Lugar clave para encontrar el rastro de la reliquia y culminar la expedición.",
     tagline: "Sitio Mayo-Chinchipe",
     difficulty: "Explorador",
     mystery: "Reliquia V",
-    image: "",
-  },
-  {
-    id: "zumba",
-    label: "Zumba",
-    country: "Ecuador",
-    x: 70,
-    y: 75,
-    description: "Conexión fronteriza antes del tramo binacional final.",
-    tagline: "Antes de la frontera",
-    difficulty: "Explorador",
-    mystery: "Reliquia VI",
-    image: "",
-  },
-  {
-    id: "san-ignacio",
-    label: "San Ignacio",
-    country: "Perú",
-    x: 81,
-    y: 84,
-    description: "Parada binacional con pistas de intercambio cultural.",
-    tagline: "Intercambio binacional",
-    difficulty: "Explorador",
-    mystery: "Reliquia VII",
-    image: "",
-  },
-  {
-    id: "jaen",
-    label: "Jaen",
-    country: "Perú",
-    x: 91,
-    y: 90,
-    description: "Destino final de la ruta. Aquí culmina la expedición.",
-    tagline: "Cierre de la expedición",
-    difficulty: "Explorador",
-    mystery: "Reliquia VIII",
     image: "",
   },
 ];
@@ -170,16 +152,19 @@ export function renderP04(container) {
       }
 
       <div class="p04-layout">
-        <article class="p04-map-board">
+        <article class="p04-map-board p04-map-board--illustrated">
+          <img class="p04-map-art" src="${MAP_ART_SRC}" alt="" width="1200" height="800" decoding="async" />
           <svg class="p04-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <path
-              d="M 14 12 C 20 18, 25 20, 26 23 C 30 30, 33 34, 36 38 C 40 45, 44 49, 47 52 C 52 58, 56 61, 59 64 C 63 69, 67 72, 70 75 C 74 79, 78 82, 81 84 C 85 87, 88 89, 91 90"
+              d="M 13 20 L 26 26 L 44 40 L 54 50 L 71 64"
               class="p04-route-line"
             ></path>
           </svg>
 
           ${ROUTE_STOPS.map((stop, index) => {
             const stopState = getStopState(index, activeStopIndex);
+            const nx = stop.nameX ?? stop.x;
+            const ny = stop.nameY ?? stop.y;
             return `
               <button
                 class="p04-stop p04-stop--${stopState}"
@@ -190,8 +175,13 @@ export function renderP04(container) {
                 ${stopState === "locked" ? "disabled" : ""}
               >
                 <span class="p04-stop-pin"></span>
-                <span class="p04-stop-label">${stop.label}</span>
               </button>
+              <span
+                class="p04-stop-map-caption p04-stop-map-caption--${stopState}"
+                data-stop-index="${index}"
+                style="left: ${nx}%; top: ${ny}%;"
+                aria-hidden="true"
+              >${stop.label}</span>
             `;
           }).join("")}
 
@@ -427,7 +417,7 @@ export function renderP04(container) {
     infoModal?.classList.add("is-hidden");
   };
 
-  container.querySelectorAll(".p04-step-card, .p04-stop").forEach((button) => {
+  container.querySelectorAll(".p04-step-card, .p04-stop, .p04-stop-map-caption").forEach((button) => {
     button.addEventListener("click", () => {
       const nextIndex = Number(button.getAttribute("data-stop-index"));
       if (Number.isNaN(nextIndex)) {
@@ -442,6 +432,12 @@ export function renderP04(container) {
 
   container.querySelectorAll(".p04-stop--active").forEach((button) => {
     button.addEventListener("click", () => {
+      openStopModal();
+    });
+  });
+
+  container.querySelectorAll(".p04-stop-map-caption--active").forEach((el) => {
+    el.addEventListener("click", () => {
       openStopModal();
     });
   });

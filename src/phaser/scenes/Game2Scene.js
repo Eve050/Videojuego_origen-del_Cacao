@@ -5,6 +5,7 @@ import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { applyAmbientZoneProfile, duckAmbientAudio } from "../../modules/audioManager.js";
 import { SFX_VOL } from "../../modules/sfxVolumes.js";
+import { showMissionWinModal } from "../ui/missionWinModal.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -265,43 +266,6 @@ export default class Game2Scene extends Phaser.Scene {
     rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
   }
 
-  addWinOverlayBtn(x, y, w, h, label, fn) {
-    const depth = 93;
-    const fill = 0x204228;
-    const stroke = 0x6cfc8a;
-    const rect = this.add
-      .rectangle(x, y, w, h, fill, 0.98)
-      .setStrokeStyle(2, stroke)
-      .setDepth(depth)
-      .setScrollFactor(0);
-    rect.setInteractive({ useHandCursor: true });
-    const txt = this.add
-      .text(x, y, label, {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: "14px",
-        color: "#eaffef",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-    const run = () => {
-      if (this._winBtnUsed) return;
-      this._winBtnUsed = true;
-      fn();
-    };
-    rect.on("pointerover", () => {
-      rect.setFillStyle(0x2a5a36);
-      txt.setColor("#ffffff");
-    });
-    rect.on("pointerout", () => {
-      rect.setFillStyle(fill);
-      txt.setColor("#eaffef");
-    });
-    rect.on("pointerup", run);
-    rect.on("pointerdown", (_p, _x, _y, evt) => evt?.stopPropagation?.());
-  }
-
   playClippedSfx(key, volume = SFX_VOL.relic, maxMs = 2000) {
     this.ensureSfxUnlocked();
     if (!this.cache.audio.exists(key)) return;
@@ -326,7 +290,6 @@ export default class Game2Scene extends Phaser.Scene {
   showRunnerWinOverlay() {
     if (this._winOverlayActive) return;
     this._winOverlayActive = true;
-    this._winBtnUsed = false;
     if (this.cache.audio.exists("sfx_mission_complete")) {
       this.ensureSfxUnlocked();
       duckAmbientAudio({
@@ -337,102 +300,48 @@ export default class Game2Scene extends Phaser.Scene {
       this.sound.play("sfx_mission_complete", { volume: SFX_VOL.mission });
     }
 
-    const depth = 90;
-    const cx = LAYOUT.WIDTH / 2;
-    const cy = LAYOUT.HEIGHT / 2;
-    const mobile = this.isMobileRunnerUi === true;
-    const titleSize = mobile ? "48px" : "74px";
-    const subtitleSize = mobile ? "22px" : "30px";
-    const bodySize = mobile ? "16px" : "22px";
-    const statsSize = mobile ? "14px" : "18px";
-    const titleY = mobile ? cy - 168 : cy - 132;
-    const subtitleY = mobile ? cy - 96 : cy - 48;
-    const bodyY = mobile ? cy - 42 : cy + 6;
-    const statsY = mobile ? cy + 16 : cy + 84;
-    const btnW = mobile ? 540 : 460;
-    const btnY1 = mobile ? cy + 88 : cy + 160;
-    const btnY2 = mobile ? cy + 146 : cy + 224;
-    this.add
-      .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x07110b, 0.9)
-      .setDepth(depth)
-      .setScrollFactor(0);
-
-    const title = this.add
-      .text(cx, titleY, "¡FELICIDADES!", {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: titleSize,
-        color: "#6cfc8a",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-    this.tweens.add({
-      targets: title,
-      scale: { from: 0.94, to: 1.04 },
-      alpha: { from: 0.86, to: 1 },
-      duration: 650,
-      yoyo: true,
-      repeat: -1,
-    });
-
-    this.add
-      .text(cx, subtitleY, "MISIÓN SUPERADA", {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: subtitleSize,
-        color: "#c2ffd0",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
-    this.add
-      .text(cx, bodyY, "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.", {
-        fontFamily: "Nunito, sans-serif",
-        fontSize: bodySize,
-        color: "#f5fff7",
-        align: "center",
-        lineSpacing: mobile ? 4 : 6,
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
-    this.add
-      .text(
-        cx,
-        statsY,
-        `Puntos: ${this.points}   |   Vasijas: ${this.vainasCount}   |   Datos: ${this.countDatosUnlocked()} / 5`,
-        {
-          fontFamily: "Nunito, sans-serif",
-          fontSize: statsSize,
-          color: "#d3ffe0",
-          align: "center",
-          wordWrap: { width: mobile ? 560 : 900 },
-        },
-      )
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
+    const statsLine = `Puntos: ${this.points}   |   Vasijas: ${this.vainasCount}   |   Datos: ${this.countDatosUnlocked()} / 5`;
     const expMission = this.registry.get("expeditionMission");
-    if (expMission === 2) {
-      this.addWinOverlayBtn(cx, btnY1, btnW, 52, "[ IR A LA SIGUIENTE MISIÓN ]", () => {
-        completeMissionByNumber(2);
-        window.location.hash = "#/p04";
-      });
-      this.addWinOverlayBtn(cx, btnY2, btnW, 48, "[ VER RESULTADOS ]", () => {
-        this.scene.start("ResultScene", this.runnerResultPayload());
-      });
-    } else {
-      this.addWinOverlayBtn(cx, cy + 160, 420, 52, "[ VER RESULTADOS ]", () => {
-        this.scene.start("ResultScene", this.runnerResultPayload());
-      });
-      this.addWinOverlayBtn(cx, cy + 224, 420, 48, "[ VOLVER AL MAPA ]", () => {
-        exitToMainMap();
-      });
-    }
+    const buttons =
+      expMission === 2
+        ? [
+            {
+              label: "IR A LA SIGUIENTE MISIÓN",
+              onClick: () => {
+                completeMissionByNumber(2);
+                window.location.hash = "#/p04";
+              },
+            },
+            {
+              label: "VER RESULTADOS",
+              onClick: () => {
+                this.scene.start("ResultScene", this.runnerResultPayload());
+              },
+            },
+          ]
+        : [
+            {
+              label: "VER RESULTADOS",
+              onClick: () => {
+                this.scene.start("ResultScene", this.runnerResultPayload());
+              },
+            },
+            {
+              label: "VOLVER AL MAPA",
+              onClick: () => {
+                exitToMainMap();
+              },
+            },
+          ];
+
+    showMissionWinModal(this, {
+      depth: 220,
+      missionLine: "MISIÓN SUPERADA",
+      hintLine: "Ya ganaste el viaje del cacao.\nPuedes pasar a la siguiente misión.",
+      statsLine,
+      buttons,
+      compact: this.isMobileRunnerUi === true,
+    });
   }
 
   releaseObstacle(o) {

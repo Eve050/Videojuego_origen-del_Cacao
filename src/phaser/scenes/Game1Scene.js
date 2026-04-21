@@ -5,6 +5,7 @@ import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
+import { showMissionWinModal } from "../ui/missionWinModal.js";
 
 /** Doc §2.7 — prompt exacto */
 const TXT_PROMPT = "¡Objeto arqueológico encontrado! Presiona [E] o toca para examinar";
@@ -274,7 +275,7 @@ export default class Game1Scene extends Phaser.Scene {
       }
     });
 
-    this.add
+    this.mapExitLink = this.add
       .text(18, 40, "VOLVER AL MAPA", {
         fontSize: "11px",
         color: "#c8921a",
@@ -936,74 +937,27 @@ export default class Game1Scene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
     }
 
-    const ui = [];
     const depth = 220;
-    const dim = this.add
-      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x05070c, 0.88)
-      .setScrollFactor(0)
-      .setDepth(depth)
-      .setInteractive({ useHandCursor: true });
-    ui.push(dim);
+    this.hint?.setVisible(false);
+    this.resultPrompt?.setVisible(false);
+    this.mapExitLink?.setVisible(false);
 
-    const panel = this.add
-      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2, 780, 330, 0x1a241a, 0.98)
-      .setScrollFactor(0)
-      .setDepth(depth + 1)
-      .setStrokeStyle(3, 0xc8921a);
-    ui.push(panel);
-
-    const title = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 98, "¡FELICIDADES!", {
-        fontSize: "54px",
-        fontFamily: "Exo 2, sans-serif",
-        color: "#6cfc8a",
-        fontStyle: "bold",
-        align: "center",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(depth + 2);
-    ui.push(title);
-
-    const subtitle = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 - 6, "MISIÓN 1 SUPERADA\nYa puedes continuar con la Misión 2.", {
-        fontSize: "36px",
-        fontFamily: "Exo 2, sans-serif",
-        color: "#f9f2dd",
-        align: "center",
-        lineSpacing: 10,
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(depth + 2);
-    ui.push(subtitle);
-
-    const mapBg = this.add
-      .rectangle(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 118, 360, 54, 0x2a2418, 1)
-      .setStrokeStyle(2, 0xc8921a)
-      .setScrollFactor(0)
-      .setDepth(depth + 2)
-      .setInteractive({ useHandCursor: true });
-    ui.push(mapBg);
-    const mapTxt = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT / 2 + 118, "VOLVER AL MAPA", {
-        fontSize: "21px",
-        fontFamily: "Exo 2, sans-serif",
-        color: "#f9f2dd",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(depth + 3);
-    ui.push(mapTxt);
-
-    mapBg.on("pointerdown", () => {
-      completeMissionByNumber(1);
-      exitToMainMap();
+    const ui = showMissionWinModal(this, {
+      depth,
+      missionLine: "MISIÓN 1 SUPERADA",
+      hintLine: "Ya puedes continuar con la Misión 2.",
+      statsLine: null,
+      buttons: [
+        {
+          label: "VOLVER AL MAPA",
+          onClick: () => {
+            completeMissionByNumber(1);
+            exitToMainMap();
+          },
+        },
+      ],
+      compact: false,
     });
-    mapBg.on("pointerover", () => mapTxt.setColor("#fff8cc"));
-    mapBg.on("pointerout", () => mapTxt.setColor("#f9f2dd"));
-    dim.on("pointerdown", () => {});
 
     this.levelTransitionUi = ui;
   }
@@ -1141,9 +1095,9 @@ export default class Game1Scene extends Phaser.Scene {
     const foundCount = total - this.collectibles.countActive(true);
 
     if (foundCount >= total) {
-      this.hint.setText("¡Misión 1 completada! Pulsa VOLVER AL MAPA para continuar.");
-      this.resultPrompt.setText("Misión completada");
       if (!this.levelTransitionActive) {
+        this.hint.setText("¡Misión 1 completada! Pulsa VOLVER AL MAPA para continuar.");
+        this.resultPrompt.setText("Misión completada");
         this.showLevelTransition();
       }
     } else {

@@ -5,6 +5,7 @@ import Guardian from "../entities/Guardian.js";
 import { exitToMainMap } from "../data/introCopy.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
+import { showMissionWinModal } from "../ui/missionWinModal.js";
 
 /**
  * Laberinto ampliado (~5–8 min a ritmo calmado). Leyenda: # muro · o grano · . vacío · p pieza · * poder · V vasija.
@@ -420,96 +421,44 @@ export default class Game3Scene extends Phaser.Scene {
       g?.setVelocity?.(0, 0);
     }
 
-    const depth = 90;
-    const cx = LAYOUT.WIDTH / 2;
-    const cy = LAYOUT.HEIGHT / 2;
-    this.add
-      .rectangle(cx, cy, LAYOUT.WIDTH + 8, LAYOUT.HEIGHT + 8, 0x07110b, 0.9)
-      .setDepth(depth)
-      .setScrollFactor(0);
+    this.hint?.setVisible(false);
+    this.hudTitle?.setVisible(false);
+    this.hudLeft?.setVisible(false);
+    this.hudMid?.setVisible(false);
+    this.hudRight?.setVisible(false);
+    this.hudTime?.setVisible(false);
+    this.mazeMapExitText?.setVisible(false);
+    this.mazeStickBase?.setVisible(false);
+    this.mazeStickThumb?.setVisible(false);
 
-    const title = this.add
-      .text(cx, cy - 132, "¡FELICIDADES!", {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: "74px",
-        color: "#6cfc8a",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-    this.tweens.add({
-      targets: title,
-      scale: { from: 0.94, to: 1.04 },
-      alpha: { from: 0.86, to: 1 },
-      duration: 650,
-      yoyo: true,
-      repeat: -1,
-    });
+    const exp = this.registry.get("expeditionMission");
+    const badgeText =
+      exp === 1 || exp === 2 || exp === 3
+        ? `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`
+        : null;
 
-    this.add
-      .text(cx, cy - 48, "MISIÓN SUPERADA", {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: "30px",
-        color: "#c2ffd0",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
-    this.add
-      .text(cx, cy + 6, `Ya superaste este nivel del Cacao Maze.\nPresiona para iniciar el Nivel ${nextLevel}.`, {
-        fontFamily: "Nunito, sans-serif",
-        fontSize: "22px",
-        color: "#f5fff7",
-        align: "center",
-        lineSpacing: 6,
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
-    this.add
-      .text(cx, cy + 84, `Puntos: ${this.score}   |   Vidas: ${this.lives}   |   Nivel: ${this.level}/${MAX_MAZE_LEVEL}`, {
-        fontFamily: "Nunito, sans-serif",
-        fontSize: "18px",
-        color: "#d3ffe0",
-        align: "center",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 1)
-      .setScrollFactor(0);
-
-    const fill = 0x204228;
-    const rect = this.add
-      .rectangle(cx, cy + 160, 460, 52, fill, 0.98)
-      .setStrokeStyle(2, 0x6cfc8a)
-      .setDepth(depth + 3)
-      .setScrollFactor(0)
-      .setInteractive({ useHandCursor: true });
-    const txt = this.add
-      .text(cx, cy + 160, `[ INICIAR NIVEL ${nextLevel} ]`, {
-        fontFamily: "Exo 2, sans-serif",
-        fontSize: "14px",
-        color: "#eaffef",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 4)
-      .setScrollFactor(0);
-    rect.on("pointerover", () => {
-      rect.setFillStyle(0x2a5a36);
-      txt.setColor("#ffffff");
-    });
-    rect.on("pointerout", () => {
-      rect.setFillStyle(fill);
-      txt.setColor("#eaffef");
-    });
-    rect.on("pointerdown", () => {
-      if (this._levelWinOverlayUsed) return;
-      this._levelWinOverlayUsed = true;
-      this.startNextMazeLevel();
+    showMissionWinModal(this, {
+      depth: 220,
+      badgeText,
+      missionLine: "MISIÓN SUPERADA",
+      hintLine: `Ya superaste este nivel del Cacao Maze.\nPresiona para iniciar el Nivel ${nextLevel}.`,
+      statsRows: [
+        { label: "Puntos", value: String(this.score) },
+        { label: "Vidas", value: String(this.lives) },
+        { label: "Nivel", value: `${this.level} / ${MAX_MAZE_LEVEL}` },
+      ],
+      buttons: [
+        {
+          label: `INICIAR NIVEL ${nextLevel}`,
+          onClick: () => {
+            if (this._levelWinOverlayUsed) return;
+            this._levelWinOverlayUsed = true;
+            this.startNextMazeLevel();
+          },
+        },
+      ],
+      compact: this.isMobileMazeUi === true,
+      buttonsExclusive: true,
     });
   }
 
@@ -1013,7 +962,7 @@ export default class Game3Scene extends Phaser.Scene {
       this.buildSidePanel();
     }
 
-    this.add
+    this.mazeMapExitText = this.add
       .text(LAYOUT.WIDTH - 12, LAYOUT.GAME_TOP + 12, "[ VOLVER AL MAPA ]", {
         fontSize: "10px",
         color: "#c8921a",

@@ -4,12 +4,27 @@
 @import url("https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&family=Quicksand:wght@400;500;600;700&display=swap");
 
 :root {
+  /* === Guía tipográfica / cromática (referencia interna del proyecto) === */
+  --bg-dark: #0a0f0a;
+  --bg-panel: #111a11;
+  --bg-card: #162016;
+  --border-gold: #c8a84e;
+  --border-dim: #3a4a2a;
+  --text-gold: #e8c84e;
+  --text-green: #4ade80;
+  --text-light: #d4d4c8;
+  --text-dim: #8a9a7a;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-teal: #2dd4bf;
+
+  /* Compatibilidad con nombres ya usados en el código */
   --verde-selva: #1d6b3a;
-  --verde-selva-bright: #2d8f52;
-  --dorado-cacao: #c8921a;
-  --dorado-claro: #e4b84a;
+  --verde-selva-bright: var(--text-green);
+  --dorado-cacao: var(--text-gold);
+  --dorado-claro: #f0dc96;
   --marron-oscuro: #1a0d05;
-  --crema: #f9f2dd;
+  --crema: var(--text-light);
   --blanco: #ffffff;
   --negro-sombra: rgba(0, 0, 0, 0.45);
 
@@ -28,8 +43,9 @@
   --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Global typography tokens (used across screens including p03) */
+  /* Global typography tokens (guía: pixel = HUD; Exo = títulos/botones; Nunito = cuerpo) */
   --font-pixel: "Press Start 2P", ui-monospace, monospace;
+  --pixel-font: var(--font-pixel);
   --font-heading: "Exo 2", "Nunito", system-ui, sans-serif;
   --font-body: "Nunito", system-ui, sans-serif;
   /* Guía tipográfica: serif y alternativa sans (poco uso; disponibles para PDF / detalles) */
@@ -218,9 +234,75 @@ body:has(.mission-arcade) {
 
 .p04-map-board {
   position: relative;
+  overflow: hidden;
   width: min(94vw, 980px);
   height: clamp(360px, 54vh, 560px);
   margin: 0.4rem auto 0;
+}
+
+.p04-map-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 44%;
+  pointer-events: none;
+  border-radius: inherit;
+  user-select: none;
+}
+
+.p04-map-board--illustrated .p04-route-svg {
+  display: none;
+}
+
+.p04-map-board--illustrated .p04-stop {
+  z-index: 1;
+}
+
+.p04-stop-map-caption {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  max-width: min(32vw, 168px);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: clamp(0.55rem, 1.35vw, 0.72rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: #f5ecd8;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    1px 1px 0 #1a0f06;
+  background: rgba(12, 8, 4, 0.28);
+  border: 1px solid rgba(230, 200, 110, 0.28);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.p04-stop-map-caption--locked {
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.35;
+}
+
+.p04-stop-map-caption--completed {
+  color: #c8f5d4;
+  border-color: rgba(111, 214, 148, 0.45);
+}
+
+.p04-stop-map-caption--active {
+  color: #1a0d05;
+  background: rgba(255, 204, 51, 0.92);
+  border: 2px solid #1a0d05;
+  text-shadow: none;
+  box-shadow: 0 0 14px rgba(255, 210, 80, 0.55);
 }
 
 .p04-route-svg {
@@ -443,6 +525,7 @@ body:has(.mission-arcade) {
 
 .p04-map-board {
   width: 100%;
+  overflow: hidden;
   height: clamp(360px, 54vh, 520px);
   margin: 0;
   border-radius: var(--radius-lg);
@@ -1052,6 +1135,58 @@ body:has(.mission-arcade) {
     inset 0 0 40px rgba(0, 0, 0, 0.45);
 }
 
+.screen--p04 .p04-map-board--illustrated {
+  background: #0f0a06;
+  box-shadow:
+    0 6px 0 #2a1810,
+    inset 0 0 0 2px #0a0604,
+    inset 0 0 28px rgba(0, 0, 0, 0.4);
+}
+
+.screen--p04 .p04-map-board--illustrated .p04-map-art {
+  object-position: 52% 42%;
+}
+
+/* Solo hitos del PNG: pins del UI invisibles (zona táctil ~44px). */
+.screen--p04 .p04-map-board--illustrated .p04-stop {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+}
+
+.screen--p04 .p04-map-board--illustrated .p04-stop-pin,
+.screen--p04 .p04-map-board--illustrated .p04-stop-pin::before {
+  opacity: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+.screen--p04 .p04-map-board--illustrated .p04-stop-pin {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.screen--p04 .p04-map-board--illustrated .p04-stop--active .p04-stop-pin,
+.screen--p04 .p04-map-board--illustrated .p04-stop--completed .p04-stop-pin {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.screen--p04 .p04-stop-map-caption {
+  font-family: var(--p04-pixel);
+  font-size: clamp(0.42rem, 1.1vw, 0.58rem);
+  max-width: min(36vw, 180px);
+}
+
+.screen--p04 .p04-stop-map-caption--active {
+  font-family: var(--p04-pixel);
+}
+
 .screen--p04 .p04-route-line {
   stroke: #3dff9a;
   stroke-width: 1.6;
@@ -1077,7 +1212,7 @@ body:has(.mission-arcade) {
   text-shadow: 1px 1px 0 #000;
 }
 
-.screen--p04 .p04-stop--active .p04-stop-pin {
+.screen--p04 .p04-map-board:not(.p04-map-board--illustrated) .p04-stop--active .p04-stop-pin {
   border-color: #ffcc33;
   box-shadow:
     0 0 0 3px #1a1008,
@@ -5212,7 +5347,8 @@ body:has(.screen--phaser-lab) {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 2;
+  /* Debajo del canvas Phaser: no afectar modales de victoria / quiz en el juego */
+  z-index: 0;
   opacity: 0.12;
   background: repeating-linear-gradient(
     0deg,
@@ -6047,4 +6183,129 @@ body:has(.screen--phaser-lab) {
 .screen--p03 .p03-skip-button,
 .screen--p03 .p03-back-button {
   font-family: var(--font-body);
+}
+
+/*
+ * Modal victoria misiones (Phaser pinta el mismo diseño en canvas).
+ * Clases de referencia para HTML/dialogs que deban verse idénticos.
+ */
+.modal-felicidades {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: rgba(10, 15, 10, 0.92);
+}
+
+.modal-felicidades__panel {
+  width: min(940px, calc(100vw - 48px));
+  max-height: min(74vh, 640px);
+  overflow: auto;
+  border-radius: 22px;
+  padding: clamp(1.25rem, 3vw, 2.25rem) clamp(1.1rem, 3vw, 2rem);
+  text-align: center;
+  color: #ffffff;
+  background: linear-gradient(145deg, #0a0f0a 0%, #111a11 45%, #162016 100%);
+  border: 4px solid #ffd700;
+  box-shadow:
+    0 0 0 2px rgba(0, 255, 156, 0.28),
+    0 0 32px rgba(255, 215, 0, 0.25),
+    0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.titulo-felicidades {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-heading, "Exo 2", sans-serif);
+  font-weight: 800;
+  font-size: clamp(1.75rem, 5vw, 3.25rem);
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: #00ff9c;
+  text-shadow:
+    0 0 18px rgba(0, 255, 156, 0.85),
+    0 0 42px rgba(0, 255, 156, 0.35),
+    0 2px 0 #061210;
+  animation: titulo-felicidades-pulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes titulo-felicidades-pulse {
+  from {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  to {
+    transform: scale(1.03);
+    filter: brightness(1.06);
+  }
+}
+
+.modal-felicidades__mission {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-heading, "Exo 2", sans-serif);
+  font-weight: 800;
+  font-size: clamp(1.1rem, 3.2vw, 1.75rem);
+  color: #ffffff;
+  text-shadow:
+    0 0 12px rgba(255, 215, 0, 0.45),
+    0 1px 0 #0a0f0a;
+}
+
+.modal-felicidades__hint {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-body, "Nunito", sans-serif);
+  font-size: clamp(0.95rem, 2.4vw, 1.2rem);
+  line-height: 1.45;
+  color: #e8f4ee;
+}
+
+.modal-felicidades__stats {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-body, "Nunito", sans-serif);
+  font-size: clamp(0.88rem, 2.1vw, 1.05rem);
+  color: #ffffff;
+  opacity: 0.95;
+}
+
+.modal-felicidades__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.boton-felicidades {
+  appearance: none;
+  cursor: pointer;
+  min-width: min(480px, 86vw);
+  padding: 0.72rem 1.25rem;
+  font-family: var(--font-heading, "Exo 2", sans-serif);
+  font-weight: 800;
+  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+  letter-spacing: 0.06em;
+  color: #1a1a0a;
+  border: 3px solid #ffd700;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffe566 0%, #d4a800 100%);
+  box-shadow: 0 4px 0 rgba(90, 70, 10, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+}
+
+.boton-felicidades:hover {
+  transform: scale(1.05);
+  filter: brightness(1.08);
+  box-shadow:
+    0 4px 0 rgba(90, 70, 10, 0.35),
+    0 0 22px rgba(255, 215, 0, 0.45),
+    0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+.boton-felicidades:active {
+  transform: scale(0.98);
 }

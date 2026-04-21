@@ -4,6 +4,7 @@ import { exitToMainMap } from "../data/introCopy.js";
 import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { SFX_VOL } from "../../modules/sfxVolumes.js";
+import { showMissionWinModal } from "../ui/missionWinModal.js";
 
 /** Alineado a la guía tipográfica del proyecto (Phaser usa nombres web, no variables CSS). */
 const FONT = {
@@ -52,28 +53,6 @@ export default class ResultScene extends Phaser.Scene {
   create() {
     const exp = this.registry.get("expeditionMission");
     const isExp = exp === 1 || exp === 2 || exp === 3;
-
-    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0);
-
-    if (isExp) {
-      this.add
-        .text(LAYOUT.WIDTH / 2, 32, `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`, {
-          fontSize: "11px",
-          color: "#6cfc8a",
-          fontStyle: "bold",
-          fontFamily: FONT.pixel,
-        })
-        .setOrigin(0.5);
-    } else {
-      this.add
-        .text(LAYOUT.WIDTH / 2, 36, "PROPUESTA DE MINIJUEGOS EDUCATIVOS | El Enigma de Santa Ana – La Florida", {
-          fontSize: "12px",
-          color: "#c8921a",
-          fontFamily: FONT.body,
-        })
-        .setOrigin(0.5);
-    }
-
     const game = this.payload.game;
     let title = this.payload.title || "Resultado";
     let body = this.payload.detail || "";
@@ -110,6 +89,126 @@ export default class ResultScene extends Phaser.Scene {
       if (this.payload.detail) {
         body += `\n\n${this.payload.detail}`;
       }
+    }
+
+    const expeditionSuccess =
+      game === "explore" ||
+      (game === "runner" && this.payload.allZones === true) ||
+      game === "mazeWin";
+
+    if (isExp && game === "runner" && expeditionSuccess) {
+      this._runnerResultNavLocked = false;
+      this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0).setDepth(0);
+      const vainas = this.payload.vainas ?? 0;
+      const datos = this.payload.datos ?? 0;
+      const statsRows = [
+        { label: "Vasijas recolectadas", value: String(vainas) },
+        { label: "Datos históricos", value: `${datos} / 5 zonas` },
+        { label: "Puntuación total", value: `${score} puntos` },
+      ];
+      showMissionWinModal(this, {
+        depth: 220,
+        titleText: "RESULTADOS",
+        badgeText: `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`,
+        missionLine: "MISIÓN SUPERADA",
+        hintLine: "Misión 2 superada con éxito.\nYa puedes pasar a la siguiente misión.",
+        statsRows,
+        footerLine:
+          "¡Suerte en la siguiente misión, explorador del cacao ancestral!",
+        buttonsExclusive: false,
+        buttons: [
+          { label: "VER DATOS HISTÓRICOS", onClick: () => this.showRunnerFacts() },
+          {
+            label: "IR A LA SIGUIENTE MISIÓN",
+            onClick: () => {
+              if (this._runnerResultNavLocked) return;
+              this._runnerResultNavLocked = true;
+              completeMissionByNumber(exp);
+              window.location.hash = "#/p04";
+            },
+          },
+        ],
+        compact: LAYOUT.WIDTH < 720,
+      });
+      this.add
+        .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT - 22, "Plan Binacional Ecuador–Perú • Proyecto Palanda", {
+          fontSize: "11px",
+          color: "#8a96a0",
+          fontFamily: FONT.body,
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(250);
+      return;
+    }
+
+    if (isExp && game === "mazeWin" && expeditionSuccess) {
+      this._mazeResultNavLocked = false;
+      this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0).setDepth(0);
+      const pt = this.payload.piecesTotal ?? 4;
+      const pieces = this.payload.pieces ?? 0;
+      const finalLevel = this.payload.finalLevel === true;
+      showMissionWinModal(this, {
+        depth: 220,
+        titleText: "¡FELICIDADES!",
+        badgeText: `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`,
+        missionLine: "MISIÓN SUPERADA",
+        hintLine: finalLevel
+          ? "Superaste el nivel final del Cacao Maze."
+          : "Has honrado a los guardianes de la cultura Mayo Chinchipe – Marañón.",
+        statsRows: [
+          { label: "Piezas arqueológicas", value: `${pieces} / ${pt}` },
+          { label: "Puntos", value: String(score) },
+        ],
+        footerLine: finalLevel
+          ? "Ya completaste la misión 3. Puedes continuar para obtener tu certificado."
+          : null,
+        buttonsExclusive: false,
+        buttons: [
+          { label: "VER DATOS CULTURALES", onClick: () => this.showMazeFacts() },
+          {
+            label: finalLevel ? "VER MI CERTIFICADO" : "IR A LA SIGUIENTE MISIÓN",
+            onClick: () => {
+              if (this._mazeResultNavLocked) return;
+              this._mazeResultNavLocked = true;
+              completeMissionByNumber(exp);
+              window.location.hash = finalLevel ? "#/p10" : "#/p04";
+            },
+          },
+        ],
+        compact: LAYOUT.WIDTH < 720,
+      });
+      this.add
+        .text(LAYOUT.WIDTH / 2, LAYOUT.HEIGHT - 22, "Plan Binacional Ecuador–Perú • Proyecto Palanda", {
+          fontSize: "11px",
+          color: "#8a96a0",
+          fontFamily: FONT.body,
+        })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(250);
+      return;
+    }
+
+    this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HEIGHT, 0x1a1a2e).setOrigin(0);
+
+    if (isExp) {
+      this.add
+        .text(LAYOUT.WIDTH / 2, 32, `◆ ARCADE · MISIÓN ${exp} DE 3 · EXPEDICIÓN ◆`, {
+          fontSize: "11px",
+          color: "#6cfc8a",
+          fontStyle: "bold",
+          fontFamily: FONT.pixel,
+        })
+        .setOrigin(0.5);
+    } else {
+      this.add
+        .text(LAYOUT.WIDTH / 2, 36, "PROPUESTA DE MINIJUEGOS EDUCATIVOS | El Enigma de Santa Ana – La Florida", {
+          fontSize: "12px",
+          color: "#c8921a",
+          fontFamily: FONT.body,
+        })
+        .setOrigin(0.5);
     }
 
     const titleSize =
@@ -172,10 +271,6 @@ export default class ResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const y0 = 448;
-    const expeditionSuccess =
-      game === "explore" ||
-      (game === "runner" && this.payload.allZones === true) ||
-      game === "mazeWin";
     const expeditionFail = game === "runner_fail" || game === "mazeLose";
     if (game === "explore" && this.cache.audio.exists("sfx_mission_complete")) {
       this.ensureSfxUnlocked();
@@ -191,22 +286,14 @@ export default class ResultScene extends Phaser.Scene {
       if (expeditionSuccess) {
         if (game === "explore") {
           this.resultBtn(y0, "[ VER DATOS HISTÓRICOS ]", () => this.showExploreFacts());
-        } else if (game === "runner") {
-          this.resultBtn(y0, "[ VER DATOS HISTÓRICOS ]", () => this.showRunnerFacts());
-        } else if (game === "mazeWin") {
-          this.resultBtn(y0, "[ VER DATOS CULTURALES ]", () => this.showMazeFacts());
         }
-        const y1 = game === "explore" || game === "runner" || game === "mazeWin" ? y0 + 44 : y0;
-        const continueLabel =
-          game === "mazeWin"
-            ? "[ VER MI CERTIFICADO ]"
-            : game === "runner" || game === "explore"
-              ? "[ IR A LA SIGUIENTE MISIÓN ]"
-              : "[ CONTINUAR EXPEDICIÓN ]";
-        this.resultBtn(y1, continueLabel, () => {
-          completeMissionByNumber(exp);
-          window.location.hash = game === "mazeWin" ? "#/p10" : "#/p04";
-        });
+        if (game === "explore") {
+          const y1 = y0 + 44;
+          this.resultBtn(y1, "[ IR A LA SIGUIENTE MISIÓN ]", () => {
+            completeMissionByNumber(exp);
+            window.location.hash = "#/p04";
+          });
+        }
       } else if (expeditionFail) {
         const replayLabel = game === "runner_fail" ? "[ VOLVER A JUGAR ]" : "[ REINTENTAR ]";
         this.resultBtn(y0, replayLabel, () => {
@@ -281,7 +368,7 @@ export default class ResultScene extends Phaser.Scene {
   }
 
   showModal(heading, body) {
-    const depth = 200;
+    const depth = 280;
     const els = [];
     const dismiss = () => {
       els.forEach((e) => e.destroy());
