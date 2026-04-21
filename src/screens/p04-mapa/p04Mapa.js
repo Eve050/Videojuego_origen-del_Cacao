@@ -10,7 +10,11 @@ import {
 } from "../../modules/gameState.js";
 
 /** Ilustración del mapa (pergamino / ruta del cacao). % del tablero = hito del arte (pin invisible, solo rótulo). */
-const MAP_ART_SRC = "/assets/images/mapa-expedicion.png";
+const MAP_ART_WEBP = "/assets/images/mapa-expedicion.webp";
+const MAP_ART_PNG = "/assets/images/mapa-expedicion.png";
+/** Intrínseco del asset WebP (reducido para carga y decode más rápidos; el tablero sigue con object-fit: cover). */
+const MAP_ART_WIDTH = 800;
+const MAP_ART_HEIGHT = 533;
 
 const ROUTE_STOPS = [
   {
@@ -153,7 +157,18 @@ export function renderP04(container) {
 
       <div class="p04-layout">
         <article class="p04-map-board p04-map-board--illustrated">
-          <img class="p04-map-art" src="${MAP_ART_SRC}" alt="" width="1200" height="800" decoding="async" />
+          <picture>
+            <source srcset="${MAP_ART_WEBP}" type="image/webp" />
+            <img
+              class="p04-map-art"
+              src="${MAP_ART_PNG}"
+              alt=""
+              width="${MAP_ART_WIDTH}"
+              height="${MAP_ART_HEIGHT}"
+              decoding="async"
+              fetchpriority="high"
+            />
+          </picture>
           <svg class="p04-route-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             <path
               d="M 13 20 L 26 26 L 44 40 L 54 50 L 71 64"
