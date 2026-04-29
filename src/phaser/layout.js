@@ -8,6 +8,8 @@ export const LAYOUT = {
   HUD_TOP_H: 60,
   GAME_TOP: 60,
   GAME_H: 480,
+  /** Misión 1: todo el lienzo bajo el HUD (sin franja negra de pista/controles). */
+  GAME1_PLAY_H: 660,
   HINT_TOP: 540,
   HINT_BAR_H: 40,
   CONTROLS_TOP: 580,

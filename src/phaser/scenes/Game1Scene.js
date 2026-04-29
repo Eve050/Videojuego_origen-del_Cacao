@@ -6,21 +6,27 @@ import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
 import { showMissionWinModal } from "../ui/missionWinModal.js";
+import {
+  GAME1_WORLD_SIZE,
+  GAME1_SPAWN_X,
+  GAME1_SPAWN_Y,
+  GAME1_LAYERS,
+  GAME1_COLLECTIBLES_L1,
+} from "../data/game1WorldSpec.js";
 
-/** Doc §2.7 — prompt exacto */
-const TXT_PROMPT = "¡Objeto arqueológico encontrado! Presiona [E] o toca para examinar";
-
-const WORLD_W = 1920;
+/** Referencia mundo antiguo (1920×720) para escalar plaza procedural al nuevo tamaño 3072. */
+const GAME1_LEGACY_WORLD_W = 1920;
 /** Radio exterior de la plaza hundida (más grande que el boceto inicial). */
 const PLAZA_OUTER_R = 338;
 /** Radio mínimo del anillo de empedrado / tierra clara. */
 const PLAZA_INNER_R = 48;
 /** Distancia al centro de las casas con colisión (anillo habitacional). */
 const HOUSE_RING_R = PLAZA_OUTER_R - 76;
-/** Área de juego documentada */
-const AREA_LABEL = "PLAZA CIRCULAR HUNDIDA";
+/** HUD — nombre breve del mapa (diseño doc «Ruta del Cacao»). */
+const AREA_LABEL = "RUTA DEL CACAO";
 const GAME1_LEVELS = 1;
-const LEVEL_ITEMS_TOTAL = 3;
+/** Objetos Misión 1: 4 cacao + 1 vasija (marcadores diseño en mapa 3072×3072). */
+const LEVEL_ITEMS_TOTAL = 5;
 
 /**
  * Minijuego 1 — El Origen del Cacao (doc §2.x).
@@ -146,6 +152,10 @@ export default class Game1Scene extends Phaser.Scene {
 
   preload() {
     this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
+    /** Ilustración Misión 1; ideal 3072×3072 según doc (contiene dentro del mundo cuadrado). */
+    this.load.image("game1_plaza_map", "/assets/images/game1/game1-plaza-map.webp");
+    /** Vasija Mayo Chinchipe (botella asa de estribo) — pieza final oculta en zona rocosa. */
+    this.load.image("game1_vasija_mayo", "/assets/images/game1/vasija-mayo-chinchipe.png");
     this.load.audio("sfx_relic", PHASE_SFX_FILES.sfx_relic);
   }
 
@@ -193,21 +203,26 @@ export default class Game1Scene extends Phaser.Scene {
 
     this.drawChrome();
 
-    this.physics.world.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
+    this.computePlayBounds();
+
+    this.worldSize = GAME1_WORLD_SIZE;
+
+    this.physics.world.setBounds(this.playRect.x, this.playRect.y, this.playRect.width, this.playRect.height);
 
     this.collisionTileLayer = null;
     this.buildTilemapFromTiled();
     this.buildScenery();
     this.buildObstacles();
 
-    const startX = 960;
-    const startY = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 + 20;
+    const spawn = this.docCoordToWorld(GAME1_SPAWN_X, GAME1_SPAWN_Y);
+    const startX = spawn.x;
+    const startY = spawn.y;
     this.player = new Player(this, startX, startY);
     this.player.setTexture("ph_player");
     this.player.setDepth(8);
-    this.player.setScale(1.48);
+    this.player.setScale(1.06);
     if (this.player.body) {
-      this.player.body.setSize(33, 35, true);
+      this.player.body.setSize(24, 26, true);
     }
 
     this.physics.add.collider(this.player, this.obstacles);
@@ -218,7 +233,7 @@ export default class Game1Scene extends Phaser.Scene {
     this.collectibles = this.add.group();
     this.buildCollectibles();
 
-    this.cameras.main.setBounds(0, LAYOUT.GAME_TOP, WORLD_W, LAYOUT.GAME_H);
+    this.cameras.main.setBounds(this.playRect.x, this.playRect.y, this.playRect.width, this.playRect.height);
     this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
     const mobileGameplayView = this.registry.get("externalTouchpad") === true;
     this.cameras.main.setFollowOffset(mobileGameplayView ? -42 : 0, 0);
@@ -288,33 +303,6 @@ export default class Game1Scene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
 
-    this.hint = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.HINT_TOP + 20, "", {
-        fontSize: "13px",
-        color: "#dddddd",
-        align: "center",
-        wordWrap: { width: 1050 },
-        fontFamily: "Nunito, sans-serif",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(115);
-
-    this.resultPrompt = this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 22, "", {
-        fontSize: "14px",
-        color: "#c8921a",
-        align: "center",
-        fontStyle: "bold",
-        wordWrap: { width: 900 },
-        fontFamily: "Exo 2, sans-serif",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(115)
-      .setInteractive({ useHandCursor: true });
-
-    this.resultPrompt.on("pointerdown", () => this.tryShowResults());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       if (typeof window !== "undefined" && this._domKeyDown) {
         window.removeEventListener("keydown", this._domKeyDown, { capture: true });
@@ -325,58 +313,121 @@ export default class Game1Scene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Rectángulo donde está dibujado el PNG/WebP (contain en cuadrado doc 3072 centrado en spawn).
+   * Física y coleccionables usan solo esta zona para coincidir con el arte.
+   */
+  computePlayBounds() {
+    const WS = GAME1_WORLD_SIZE;
+    const cx = GAME1_SPAWN_X;
+    const cy = GAME1_SPAWN_Y;
+    if (this.textures.exists("game1_plaza_map")) {
+      const fr = this.textures.getFrame("game1_plaza_map");
+      const iw = fr.width;
+      const ih = fr.height;
+      if (iw > 0 && ih > 0) {
+        const scale = Math.min(WS / iw, WS / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        this.playRect = {
+          x: cx - dw / 2,
+          y: cy - dh / 2,
+          width: dw,
+          height: dh,
+        };
+        return;
+      }
+    }
+    this.playRect = { x: 0, y: 0, width: WS, height: WS };
+  }
+
+  /** Convierte coords del diseño (0…3072) al rectángulo real del mapa en mundo Phaser. */
+  docCoordToWorld(docX, docY) {
+    const WS = GAME1_WORLD_SIZE;
+    const pb = this.playRect;
+    return {
+      x: pb.x + (docX / WS) * pb.width,
+      y: pb.y + (docY / WS) * pb.height,
+    };
+  }
+
   drawChrome() {
-    /**
-     * Solo bandas HUD / pista / controles (scrollFactor 0). Nunca tapar la zona de juego (60–540):
-     * un rectángulo a pantalla completa por encima del mundo dejaba el mapa en negro.
-     */
+    /** Solo cabecera HUD (scrollFactor 0). Misión 1: sin bandas inferiores — el mapa usa todo el CRT debajo. */
     const z = 40;
     this.add.rectangle(0, 0, LAYOUT.WIDTH, LAYOUT.HUD_TOP_H, 0x101820, 0.96).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
-    this.add.rectangle(0, LAYOUT.HINT_TOP, LAYOUT.WIDTH, LAYOUT.HINT_BAR_H, 0x151820, 0.94).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
-    this.add.rectangle(0, LAYOUT.CONTROLS_TOP, LAYOUT.WIDTH, LAYOUT.CONTROLS_H_ACTUAL, 0x0a0e12, 0.94).setOrigin(0).setScrollFactor(0).setDepth(z + 1);
-
-    this.add
-      .text(LAYOUT.WIDTH / 2, LAYOUT.CONTROLS_TOP + 96, "Presiona [E] o toca ACCIÓN para examinar los objetos · CONTROLES TÁCTILES (solo en móvil)", {
-        fontSize: "10px",
-        color: "#5a6068",
-        fontFamily: "Nunito, sans-serif",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(z + 2);
   }
 
   /**
-   * Suelo y bordes desde Tiled (export game1-plaza.json, tileset name game1_tiles).
-   * Textura ph_g1_tileset se genera en BootScene; al editar en Tiled añade game1-tiles.png de 160×32 (opcional).
+   * Capas Tiled (Ground, Details, Structures, Collision, Top) según doc diseño.
+   * Collision: invisible; gid 5 = bloqueo (ajusta ids en Tiled al tileset final).
    */
   buildTilemapFromTiled() {
     if (!this.textures.exists("ph_g1_tileset")) return;
     const map = this.make.tilemap({ key: "game1_plaza" });
     const tileset = map.addTilesetImage("game1_tiles", "ph_g1_tileset");
     if (!tileset) return;
-    const ground = map.createLayer("Ground", tileset, 0, LAYOUT.GAME_TOP);
-    if (ground) {
-      ground.setDepth(-4.8);
-      ground.setAlpha(0.94);
+
+    const hasMapArt = this.textures.exists("game1_plaza_map");
+    const layerOx = hasMapArt ? this.playRect.x : 0;
+    const layerOy = hasMapArt ? this.playRect.y : 0;
+    const hasLayer = (n) => map.layers.some((l) => l.name === n && l.type === "tilelayer");
+
+    const basics = [
+      [GAME1_LAYERS.ground, -4.8, hasMapArt ? 0 : 0.94],
+      [GAME1_LAYERS.details, 1, hasMapArt ? 0 : 1],
+      [GAME1_LAYERS.structures, 3, hasMapArt ? 0 : 1],
+    ];
+    for (const [name, depth, alpha] of basics) {
+      if (!hasLayer(name)) continue;
+      const layer = map.createLayer(name, tileset, layerOx, layerOy);
+      if (!layer) continue;
+      layer.setDepth(depth);
+      layer.setAlpha(alpha);
     }
-    const coll = map.createLayer("Collision", tileset, 0, LAYOUT.GAME_TOP);
-    if (coll) {
-      coll.setDepth(-4.7);
-      coll.setAlpha(0);
-      coll.setCollision([5]);
-      this.collisionTileLayer = coll;
+
+    if (hasLayer(GAME1_LAYERS.collision)) {
+      const layer = map.createLayer(GAME1_LAYERS.collision, tileset, layerOx, layerOy);
+      if (layer) {
+        layer.setDepth(-4.7);
+        layer.setAlpha(0);
+        layer.setCollision([5]);
+        this.collisionTileLayer = layer;
+      }
+    }
+
+    if (hasLayer(GAME1_LAYERS.top)) {
+      const layer = map.createLayer(GAME1_LAYERS.top, tileset, layerOx, layerOy);
+      if (layer) {
+        layer.setDepth(15);
+      }
     }
   }
 
   buildScenery() {
-    const midY = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
-    const cx = 960;
-    const cy = midY;
+    const pb = this.playRect;
+    const ws = pb.width;
+    const scl = GAME1_WORLD_SIZE / GAME1_LEGACY_WORLD_W;
+    const cx = pb.x + pb.width / 2;
+    const cy = pb.y + pb.height / 2;
+    const midY = cy;
+    const outerR = Math.round(PLAZA_OUTER_R * scl);
+    const innerR = Math.round(PLAZA_INNER_R * scl);
+
+    if (this.textures.exists("game1_plaza_map")) {
+      const icx = pb.x + pb.width / 2;
+      const icy = pb.y + pb.height / 2;
+      const img = this.add.image(icx, icy, "game1_plaza_map").setDepth(-5);
+      const frame = this.textures.getFrame("game1_plaza_map");
+      const iw = frame.width;
+      const ih = frame.height;
+      const scale = Math.min(GAME1_WORLD_SIZE / iw, GAME1_WORLD_SIZE / ih);
+      img.setScale(scale);
+      return;
+    }
 
     if (this.textures.exists("bg_selva_run")) {
       this.atmosphereTile = this.add
-        .tileSprite(WORLD_W / 2, midY, WORLD_W + 240, LAYOUT.GAME_H + 100, "bg_selva_run")
+        .tileSprite(ws / 2, midY, ws + 240, ws + 100, "bg_selva_run")
         .setDepth(-6)
         .setTint(0x5a7a68)
         .setAlpha(0.38)
@@ -384,7 +435,7 @@ export default class Game1Scene extends Phaser.Scene {
     }
 
     this.add
-      .rectangle(WORLD_W / 2, midY, WORLD_W + 180, LAYOUT.GAME_H + 100, 0x152820, 1)
+      .rectangle(ws / 2, midY, ws + 180, ws + 100, 0x152820, 1)
       .setDepth(-5);
 
     const grad = [
@@ -394,9 +445,7 @@ export default class Game1Scene extends Phaser.Scene {
     const steps = 14;
     const radii = [];
     for (let i = 0; i <= steps; i += 1) {
-      radii.push(
-        Math.round(PLAZA_OUTER_R - ((PLAZA_OUTER_R - PLAZA_INNER_R) * i) / steps),
-      );
+      radii.push(Math.round(outerR - ((outerR - innerR) * i) / steps));
     }
     const plaza = this.add.graphics().setDepth(1);
     for (let i = 0; i < radii.length; i += 1) {
@@ -405,14 +454,14 @@ export default class Game1Scene extends Phaser.Scene {
     }
 
     plaza.lineStyle(2, 0xe8c878, 0.5);
-    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 18);
+    plaza.strokeCircle(cx, cy, outerR - 18);
     plaza.lineStyle(3, 0x8a6020, 0.35);
-    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 42);
+    plaza.strokeCircle(cx, cy, outerR - 42);
     plaza.lineStyle(1, 0x4a3020, 0.45);
-    plaza.strokeCircle(cx, cy, PLAZA_OUTER_R - 92);
+    plaza.strokeCircle(cx, cy, outerR - 92);
 
-    const cobInner = PLAZA_INNER_R + 20;
-    const cobOuter = PLAZA_OUTER_R - 10;
+    const cobInner = innerR + 20;
+    const cobOuter = outerR - 10;
     const cob = this.add.graphics().setDepth(1);
     for (let i = 0; i < 145; i += 1) {
       const ang = Math.random() * Math.PI * 2;
@@ -562,10 +611,10 @@ export default class Game1Scene extends Phaser.Scene {
 
     const scatterFloraWild = (avoidFn) => {
       for (let n = 0; n < 95; n += 1) {
-        const x = Phaser.Math.Between(55, WORLD_W - 55);
-        const y = Phaser.Math.Between(LAYOUT.GAME_TOP + 18, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 18);
+        const x = Phaser.Math.Between(55, ws - 55);
+        const y = Phaser.Math.Between(18, ws - 18);
         const d = Math.hypot(x - cx, y - cy);
-        if (d < PLAZA_OUTER_R + 5) continue;
+        if (d < outerR + 5) continue;
         if (avoidFn && avoidFn(x, y)) continue;
         const sc = Phaser.Math.FloatBetween(0.65, 1.22);
         const pick = Phaser.Math.Between(0, 99);
@@ -595,8 +644,8 @@ export default class Game1Scene extends Phaser.Scene {
     const settleCols = 3;
     const settleRows = 3;
     const leftX0 = 54;
-    const gridY0 = LAYOUT.GAME_TOP + 128;
-    const rightBase = WORLD_W - leftX0 - (settleCols - 1) * cellW;
+    const gridY0 = 128;
+    const rightBase = ws - leftX0 - (settleCols - 1) * cellW;
     const settlePad = 26;
     const settleL = {
       l: leftX0 - settlePad,
@@ -623,16 +672,16 @@ export default class Game1Scene extends Phaser.Scene {
         const edge = Phaser.Math.Between(0, 3);
         if (edge === 0) {
           x = Phaser.Math.Between(24, 130);
-          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 36, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36);
+          y = Phaser.Math.Between(36, ws - 36);
         } else if (edge === 1) {
-          x = Phaser.Math.Between(WORLD_W - 130, WORLD_W - 24);
-          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 36, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 36);
+          x = Phaser.Math.Between(ws - 130, ws - 24);
+          y = Phaser.Math.Between(36, ws - 36);
         } else if (edge === 2) {
-          x = Phaser.Math.Between(80, WORLD_W - 80);
-          y = Phaser.Math.Between(LAYOUT.GAME_TOP + 14, LAYOUT.GAME_TOP + 52);
+          x = Phaser.Math.Between(80, ws - 80);
+          y = Phaser.Math.Between(14, 52);
         } else {
-          x = Phaser.Math.Between(80, WORLD_W - 80);
-          y = Phaser.Math.Between(LAYOUT.GAME_TOP + LAYOUT.GAME_H - 52, LAYOUT.GAME_TOP + LAYOUT.GAME_H - 14);
+          x = Phaser.Math.Between(80, ws - 80);
+          y = Phaser.Math.Between(ws - 52, ws - 14);
         }
         if (!inSettle(x, y)) break;
       }
@@ -650,16 +699,16 @@ export default class Game1Scene extends Phaser.Scene {
       else vineTangleAt(x, y, sc);
     }
 
-    const decoRingR = PLAZA_OUTER_R + 38;
+    const decoRingR = outerR + Math.round(38 * scl);
     const nRing = 28;
     const ringPhase = 0;
     for (let i = 0; i < nRing; i += 1) {
       const t = ((i + ringPhase) / nRing) * Math.PI * 2;
       const x = cx + Math.cos(t) * decoRingR;
       const y = cy + Math.sin(t) * decoRingR;
-      if (x < 46 || x > WORLD_W - 46) continue;
-      if (y < LAYOUT.GAME_TOP + 34 || y > LAYOUT.GAME_TOP + LAYOUT.GAME_H - 34) continue;
-      if (x > cx - 140 && x < cx + 140 && y < LAYOUT.GAME_TOP + 215) continue;
+      if (x < 46 || x > ws - 46) continue;
+      if (y < 34 || y > ws - 34) continue;
+      if (x > cx - 140 && x < cx + 140 && y < 215) continue;
       decoHouseAt(x, y, 0.51, 0);
     }
 
@@ -675,7 +724,7 @@ export default class Game1Scene extends Phaser.Scene {
     }
     for (let n = 0; n < 60; n += 1) {
       const ang = Math.random() * Math.PI * 2;
-      const rad = PLAZA_OUTER_R + Phaser.Math.Between(16, 98);
+      const rad = outerR + Phaser.Math.Between(16, 98);
       const px = cx + Math.cos(ang) * rad;
       const py = cy + Math.sin(ang) * rad;
       if (inSettle(px, py)) continue;
@@ -695,64 +744,87 @@ export default class Game1Scene extends Phaser.Scene {
 
   buildObstacles() {
     this.obstacles = this.physics.add.staticGroup();
-    const cx = 960;
-    const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
-    const anglesOuter = Array.from({ length: 7 }, (_, i) => (i / 7) * 2);
-    const anglesInner = Array.from({ length: 6 }, (_, i) => ((i + 0.5) / 6) * 2);
-    const rOuter = HOUSE_RING_R;
-    const rInner = HOUSE_RING_R - 34;
+    const scl = this.worldSize / GAME1_LEGACY_WORLD_W;
+    const cx = this.playRect.x + this.playRect.width / 2;
+    const cy = this.playRect.y + this.playRect.height / 2;
+    const houseRingR = Math.round(HOUSE_RING_R * scl);
 
-    const placeHouse = (a, ringR) => {
-      const hx = cx + Math.cos(a * Math.PI) * ringR;
-      const hy = cy + Math.sin(a * Math.PI) * ringR;
-      const h = this.physics.add.staticSprite(hx, hy, "ph_g1_house");
-      h.setScale(0.82);
-      h.setAngle(0);
-      h.setDepth(3);
-      h.refreshBody();
-      if (h.body) {
-        const bw = 50;
-        const bh = 44;
-        h.body.setSize(bw, bh);
-        h.body.setOffset((h.width - bw) / 2, (h.height - bh) * 0.52);
-      }
-      this.obstacles.add(h);
-    };
+    /* Casitas en anillo (solo si no hay arte mapa; con PNG nuevo solo aplicamos tiled). */
+    if (!this.textures.exists("game1_plaza_map")) {
+      const anglesOuter = Array.from({ length: 7 }, (_, i) => (i / 7) * 2);
+      const anglesInner = Array.from({ length: 6 }, (_, i) => ((i + 0.5) / 6) * 2);
+      const rOuter = houseRingR;
+      const rInner = houseRingR - Math.round(34 * scl);
 
-    anglesOuter.forEach((a) => placeHouse(a, rOuter));
-    anglesInner.forEach((a) => placeHouse(a, rInner));
+      const placeHouse = (a, ringR) => {
+        const hx = cx + Math.cos(a * Math.PI) * ringR;
+        const hy = cy + Math.sin(a * Math.PI) * ringR;
+        const h = this.physics.add.staticSprite(hx, hy, "ph_g1_house");
+        h.setScale(0.82);
+        h.setAngle(0);
+        h.setDepth(3);
+        h.refreshBody();
+        if (h.body) {
+          const bw = 50;
+          const bh = 44;
+          h.body.setSize(bw, bh);
+          h.body.setOffset((h.width - bw) / 2, (h.height - bh) * 0.52);
+        }
+        this.obstacles.add(h);
+      };
+
+      anglesOuter.forEach((a) => placeHouse(a, rOuter));
+      anglesInner.forEach((a) => placeHouse(a, rInner));
+    }
 
     /* Bordes: capa Collision del Tiled (tile gid 5) */
   }
 
   buildCollectibles() {
-    const cy = LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2;
-    const levelDefs =
-      this.currentLevel === 1
-        ? [
-            { kind: "bottle", x: 835, y: cy + 2, shadowY: cy + 30, qid: "objeto-1-botella" },
-            { kind: "vasija", x: 960, y: LAYOUT.GAME_TOP + 148, shadowY: LAYOUT.GAME_TOP + 180, qid: "objeto-2-vasija" },
-            { kind: "turquesa", x: 1098, y: cy + 4, shadowY: cy + 34, qid: "objeto-3-turquesa" },
-          ]
-        : [
-            { kind: "bottle", x: 736, y: LAYOUT.GAME_TOP + 224, shadowY: LAYOUT.GAME_TOP + 252, qid: "objeto-1-botella" },
-            { kind: "vasija", x: 1168, y: LAYOUT.GAME_TOP + 214, shadowY: LAYOUT.GAME_TOP + 244, qid: "objeto-2-vasija" },
-            { kind: "turquesa", x: 957, y: LAYOUT.GAME_TOP + 360, shadowY: LAYOUT.GAME_TOP + 392, qid: "objeto-3-turquesa" },
-          ];
+    const totalNeeded = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
+    if (totalNeeded <= 0) return;
 
-    for (const def of levelDefs) {
+    const cy = GAME1_SPAWN_Y;
+    const levelDefs =
+      this.currentLevel === 1 ? GAME1_COLLECTIBLES_L1 : [
+          { kind: "bottle", x: GAME1_SPAWN_X - 224, y: cy - 64, shadowY: cy - 36, qid: "objeto-1-botella" },
+          { kind: "vasija", x: GAME1_SPAWN_X + 208, y: cy - 74, shadowY: cy - 44, qid: "objeto-2-vasija" },
+          { kind: "turquesa", x: GAME1_SPAWN_X - 3, y: cy + 72, shadowY: cy + 104, qid: "objeto-3-turquesa" },
+        ];
+
+    for (const raw of levelDefs) {
+      const def =
+        this.currentLevel === 1
+          ? (() => {
+              const p = this.docCoordToWorld(raw.x, raw.y);
+              const sh = this.docCoordToWorld(raw.x, raw.shadowY);
+              return { ...raw, x: p.x, y: p.y, shadowY: sh.y };
+            })()
+          : raw;
+
       const shadow = this.add.ellipse(def.x, def.shadowY, 58, 16, 0x081210, 0.4).setDepth(4);
       this.levelCollectibleDecor.push(shadow);
-      if (def.kind === "bottle") {
+      if (def.kind === "cacao") {
+        const cacao = this.add.sprite(def.x, def.y, "ph_g1_cacao");
+        cacao.setScale(1.05);
+        cacao.setDepth(5);
+        this.decorateCollectible(cacao, def.qid, 68, 88, "cacao");
+      } else if (def.kind === "bottle") {
         const bottle = this.add.sprite(def.x, def.y, "ph_g1_bottle");
         bottle.setScale(1.02);
         bottle.setDepth(5);
         this.decorateCollectible(bottle, def.qid, 72, 92, "bottle");
       } else if (def.kind === "vasija") {
-        const vasija = this.add.sprite(def.x, def.y, "ph_vessel");
-        vasija.setScale(1.52);
-        vasija.setDepth(6);
-        this.decorateCollectible(vasija, def.qid, 72, 92, "vasija");
+        const key = this.textures.exists("game1_vasija_mayo") ? "game1_vasija_mayo" : "ph_vessel";
+        const vasija = this.add.sprite(def.x, def.y, key);
+        const targetW = 56;
+        if (vasija.width > 0) {
+          vasija.setScale(targetW / vasija.width);
+        } else {
+          vasija.setScale(key === "game1_vasija_mayo" ? 0.22 : 1.52);
+        }
+        vasija.setDepth(5);
+        this.decorateCollectible(vasija, def.qid, 52, 78, "vasija");
       } else {
         const turq = this.add.container(def.x, def.y);
         const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
@@ -797,12 +869,24 @@ export default class Game1Scene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
+    } else if (kind === "cacao") {
+      const y0 = sprite.y;
+      this.tweens.add({
+        targets: sprite,
+        y: y0 - 4,
+        duration: 1100,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
     } else if (kind === "vasija") {
       this.tweens.add({
         targets: sprite,
-        angle: 360,
-        duration: 12000,
+        alpha: { from: 0.9, to: 1 },
+        duration: 2600,
+        yoyo: true,
         repeat: -1,
+        ease: "Sine.easeInOut",
       });
     }
     this.collectibles.add(sprite);
@@ -837,6 +921,18 @@ export default class Game1Scene extends Phaser.Scene {
       .setDepth(110);
 
     this.hudArea.setText(AREA_LABEL);
+    this.hudQuizHint = this.add
+      .text(LAYOUT.WIDTH / 2, 41, "Preguntas: acércate al objeto y pulsa E o haz clic en él.", {
+        fontSize: "10px",
+        color: "#92a898",
+        fontFamily: "Nunito, sans-serif",
+        align: "center",
+        wordWrap: { width: LAYOUT.WIDTH - 36 },
+      })
+      .setOrigin(0.5, 0)
+      .setScrollFactor(0)
+      .setDepth(111);
+
     const my = LAYOUT.GAME_TOP + 8;
     this.mmX = mx;
     this.mmY = my;
@@ -856,7 +952,7 @@ export default class Game1Scene extends Phaser.Scene {
     if (this.registry.get("externalTouchpad") === true) return;
 
     const padX = 132;
-    const padY = LAYOUT.CONTROLS_TOP + 72;
+    const padY = LAYOUT.HEIGHT - 72;
     const size = 64;
     const gap = 72;
 
@@ -866,7 +962,7 @@ export default class Game1Scene extends Phaser.Scene {
     this.createTouchArrowButton(padX, padY + gap, size, "↓", "down");
 
     const ax = LAYOUT.WIDTH - 104;
-    const ay = LAYOUT.CONTROLS_TOP + 72;
+    const ay = LAYOUT.HEIGHT - 72;
     const actBtn = this.add
       .rectangle(ax, ay, 148, 58, 0x7a4a24, 1)
       .setStrokeStyle(2, 0xd4a574)
@@ -917,7 +1013,11 @@ export default class Game1Scene extends Phaser.Scene {
     const found = total - this.collectibles.countActive(true);
     const score = this.registry.get("game1Score") ?? 0;
     this.hudPts.setText(`PUNTOS: ${String(score).padStart(3, "0")}`);
-    this.hudObj.setText(`OBJETOS: ${found} / ${total}`);
+    if (total <= 0) {
+      this.hudObj.setText("OBJETOS: —");
+    } else {
+      this.hudObj.setText(`OBJETOS: ${found} / ${total}`);
+    }
   }
 
   showLevelTransition() {
@@ -938,9 +1038,8 @@ export default class Game1Scene extends Phaser.Scene {
     }
 
     const depth = 220;
-    this.hint?.setVisible(false);
-    this.resultPrompt?.setVisible(false);
     this.mapExitLink?.setVisible(false);
+    this.hudQuizHint?.setVisible(false);
 
     const ui = showMissionWinModal(this, {
       depth,
@@ -966,26 +1065,31 @@ export default class Game1Scene extends Phaser.Scene {
     if (!this.miniGfx) return;
     const ox = this.mmX;
     const oy = this.mmY;
-    const sx = this.mmW / WORLD_W;
-    const sy = this.mmH / LAYOUT.GAME_H;
+    const pb = this.playRect;
+    const sx = this.mmW / pb.width;
+    const sy = this.mmH / pb.height;
+    const ws = pb.width;
+    const outerWorld = PLAZA_OUTER_R * (ws / GAME1_LEGACY_WORLD_W);
     this.miniGfx.clear();
     this.miniGfx.fillStyle(0x1e3028, 1);
     this.miniGfx.fillRect(ox, oy, this.mmW, this.mmH);
-    const tcx = 960 * sx + ox;
-    const tcy = (LAYOUT.GAME_TOP + LAYOUT.GAME_H / 2 - LAYOUT.GAME_TOP) * sy + oy;
-    this.miniGfx.lineStyle(1, 0x4a6054, 0.65);
-    this.miniGfx.strokeCircle(tcx, tcy, PLAZA_OUTER_R * sx);
+    const tcx = (GAME1_SPAWN_X - pb.x) * sx + ox;
+    const tcy = (GAME1_SPAWN_Y - pb.y) * sy + oy;
+    if (!this.textures.exists("game1_plaza_map")) {
+      this.miniGfx.lineStyle(1, 0x4a6054, 0.65);
+      this.miniGfx.strokeCircle(tcx, tcy, outerWorld * sx);
+    }
 
     for (const c of this.collectibles.getChildren()) {
       if (!c.active) continue;
-      const cx = c.x * sx + ox;
-      const cy = (c.y - LAYOUT.GAME_TOP) * sy + oy;
+      const cx = (c.x - pb.x) * sx + ox;
+      const ccy = (c.y - pb.y) * sy + oy;
       this.miniGfx.fillStyle(0xffb030, 1);
-      this.miniGfx.fillCircle(cx, cy, 4);
+      this.miniGfx.fillCircle(cx, ccy, 4);
     }
 
-    const px = this.player.x * sx + ox;
-    const py = (this.player.y - LAYOUT.GAME_TOP) * sy + oy;
+    const px = (this.player.x - pb.x) * sx + ox;
+    const py = (this.player.y - pb.y) * sy + oy;
     this.miniGfx.fillStyle(0x4a9cff, 1);
     this.miniGfx.fillCircle(px, py, 5);
     this.miniGfx.lineStyle(1, 0xffffff, 0.9);
@@ -1044,7 +1148,7 @@ export default class Game1Scene extends Phaser.Scene {
   tryShowResults() {
     const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
     const found = total - this.collectibles.countActive(true);
-    if (found < total) return;
+    if (total > 0 && found < total) return;
     this.showLevelTransition();
   }
 
@@ -1094,24 +1198,10 @@ export default class Game1Scene extends Phaser.Scene {
     const total = this.levelTotals[this.currentLevel] ?? LEVEL_ITEMS_TOTAL;
     const foundCount = total - this.collectibles.countActive(true);
 
-    if (foundCount >= total) {
+    if (total > 0 && foundCount >= total) {
       if (!this.levelTransitionActive) {
-        this.hint.setText("¡Misión 1 completada! Pulsa VOLVER AL MAPA para continuar.");
-        this.resultPrompt.setText("Misión completada");
         this.showLevelTransition();
       }
-    } else {
-      const near = this.collectibles.getChildren().some((c) => {
-        if (!c.active || c.getData("quizBusy")) return false;
-        const pr = c.getData("promptR") ?? 72;
-        return Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y) <= pr;
-      });
-      this.hint.setText(
-        near
-          ? TXT_PROMPT
-          : "Explora el sitio Santa Ana – La Florida y localiza los tres objetos del descubrimiento de 2002.",
-      );
-      this.resultPrompt.setText("");
     }
     const doResult =
       (this.game1Keys?.enter && Phaser.Input.Keyboard.JustDown(this.game1Keys.enter)) ||

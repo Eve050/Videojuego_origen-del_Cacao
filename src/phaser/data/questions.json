@@ -20,8 +20,8 @@
     "id": "objeto-2-vasija",
     "game": 1,
     "objectKey": "vasija",
-    "objectLabel": "Vasija Ceremonial",
-    "discoveryText": "«Una vasija ritual de la cultura Mayo Chinchipe – Marañón. Formaba parte del ajuar funerario de las tumbas de élite del sitio.»",
+    "objectLabel": "Botella con asa de estribo (Mayo Chinchipe)",
+    "discoveryText": "«Cerámica Formativa amazónica: cuerpo modelado y asa–pitorro típicos de las élites mayo chinchipenses en Santa Ana – La Florida. El hallazgo de almidón de cacao en recipientes como este reescribió el origen mundial del cacao.»",
     "question": "¿Cuántos años de antigüedad tienen las evidencias de cacao encontradas en Santa Ana – La Florida?",
     "options": [
       "3.000 años antes del presente",
@@ -49,5 +49,73 @@
     "correctIndex": 3,
     "fact": "La cultura Mayo Chinchipe – Marañón construyó una plaza ceremonial circular de 40 metros de diámetro y mantuvo contacto a larga distancia con la costa del Pacífico. Es una de las civilizaciones más antiguas del Formativo temprano amazónico.",
     "source": "Proyecto Palanda; Zarrillo et al. (2018)"
+  },
+  {
+    "id": "objeto-cacao-1",
+    "game": 1,
+    "objectKey": "cacao",
+    "objectLabel": "Cacao — zona comunidad",
+    "discoveryText": "«Has tomado una muestra del fruto en la zona de casas y fogón — vínculo entre uso cotidiano y territorio mayo chinchipense.»",
+    "question": "¿Qué sustancia identificaron los laboratorios en los recipientes cerámicos del sitio de Santa Ana – La Florida?",
+    "options": [
+      "Almidón de maíz",
+      "Almidón de Theobroma cacao",
+      "Aceite de palma",
+      "Harina de yuca"
+    ],
+    "correctIndex": 1,
+    "fact": "Los residuos de cacao más antiguos del mundo documentados arqueológicamente corresponden a este hallazgo andino amazónico, anterior en más de milenios a los registros mesoamericanos.",
+    "source": "Zarrillo et al., Nature Ecology & Evolution, 2018"
+  },
+  {
+    "id": "objeto-cacao-2",
+    "game": 1,
+    "objectKey": "cacao",
+    "objectLabel": "Cacao — selva densa",
+    "discoveryText": "«Entre los árboles del corredor sombreado: aquí el cacao silvestre recordaba el bosque domado hasta las fogatas ceremoniales.»",
+    "question": "¿Cómo se llama la cultura que habitó Santa Ana – La Florida hace 5.500 años?",
+    "options": [
+      "Cañari",
+      "Valdivia",
+      "Chorrera",
+      "Mayo Chinchipe – Marañón"
+    ],
+    "correctIndex": 3,
+    "fact": "La cultura Mayo Chinchipe – Marañón articulaba plaza ceremonial y rutas de intercambio con otros pisos ecológicos del austro.",
+    "source": "Proyecto Palanda"
+  },
+  {
+    "id": "objeto-cacao-3",
+    "game": 1,
+    "objectKey": "cacao",
+    "objectLabel": "Cacao — ribera Palanda",
+    "discoveryText": "«Junto al cauce azul del Palanda: el agua arrastra historia — tu muestra refuerza el vínculo río–bosque–hogar.»",
+    "question": "¿Cuántos años de antigüedad tienen las evidencias de cacao encontradas en Santa Ana – La Florida?",
+    "options": [
+      "3.000 años antes del presente",
+      "5.500 años antes del presente",
+      "7.000 años antes del presente",
+      "1.500 años antes del presente"
+    ],
+    "correctIndex": 1,
+    "fact": "Los fechamientos radiocarbónicos múltiples convergen en torno a 5.500 AP para los materiales del contexto cerámico asociado al cacao.",
+    "source": "Zarrillo et al., Nature Ecology & Evolution, 2018"
+  },
+  {
+    "id": "objeto-cacao-4",
+    "game": 1,
+    "objectKey": "cacao",
+    "objectLabel": "Cacao — finca y germplasma",
+    "discoveryText": "«En los pies del cacao cultivado hoy reverdecen memorias del germplasma ancestral que dio nombre al mapa de esta expedición.»",
+    "question": "¿Qué evidencia consolidó internacionalmente el origen amazónico del cacao?",
+    "options": [
+      "Hallazgos exclusivamente mexicanos",
+      "Restos analíticos de cacao en cerámica del sur amazónico con fecha Formativa antigua",
+      "Escritos coloniales únicos",
+      "Únicamente estudios genéticos recientes sin cerámica"
+    ],
+    "correctIndex": 1,
+    "fact": "El trabajo multisistema combinó contextos estratigráficos, dataciones C14 y análisis de microfosiles vegetales adheridos a la cocina del Formativo.",
+    "source": "Zarrillo et al.; proyecto Santa Ana – La Florida"
   }
 ]

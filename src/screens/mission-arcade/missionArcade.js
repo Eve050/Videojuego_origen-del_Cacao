@@ -26,9 +26,9 @@ const MISSION_INTRO_COPY = {
     title: "EL ORIGEN DEL CACAO",
     subtitle: "Santa Ana - La Florida, Palanda",
     bullets: [
-      "Explora la zona arqueológica y encuentra 3 objetos clave.",
-      "Acercate a cada objeto y usa ACCION para examinarlo.",
-      "Responde el quiz para sumar puntos y completar la misión.",
+      "Explora el mapa completo (mundo 3072×3072, rutas del diseño).",
+      "Recolecta 4 muestras de cacao y 1 vasija ceremonial en los puntos señalados.",
+      "Examina cada pieza con [E] / ACCIÓN; al tener todas, RESULTADO (Enter) cierra la cabina.",
     ],
   },
   2: {

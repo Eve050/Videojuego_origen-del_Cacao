@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "audio:jump": "node scripts/generate-jump-sfx.mjs"
+    "audio:jump": "node scripts/generate-jump-sfx.mjs",
+    "vasija:alpha": "node scripts/vasijaMakeTransparent.mjs"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "vite": "^8.0.0"
   },
   "dependencies": {
