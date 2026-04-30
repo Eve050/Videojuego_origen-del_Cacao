@@ -29,7 +29,7 @@ const GAME1_LEVELS = 1;
 const LEVEL_ITEMS_TOTAL = 5;
 /** Distancia en mundo (~1 cm en pantalla típica con zoom 1) para abrir el quiz al acercarse. */
 const AUTO_OPEN_QUIZ_WORLD_DIST = 52;
-/** Vasija: rampa de escala lejos → cerca (solo esta pieza crece al acercarse). */
+/** Vasija y cacao: rampa de escala lejos → cerca al acercarse al jugador. */
 const VASIJA_DIST_FULL_FAR = 380;
 const VASIJA_DIST_GROW_END = AUTO_OPEN_QUIZ_WORLD_DIST + 12;
 const VASIJA_SCALE_FAR_MUL = 1;
@@ -819,6 +819,8 @@ export default class Game1Scene extends Phaser.Scene {
         cacao.setScale(1.05);
         cacao.setDepth(5);
         this.decorateCollectible(cacao, def.qid, 68, 88, "cacao");
+        cacao.setData("collectibleShadow", shadow);
+        cacao.setData("proximityShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
       } else if (def.kind === "bottle") {
         const bottle = this.add.sprite(def.x, def.y, "ph_g1_bottle");
         bottle.setScale(1.02);
@@ -836,7 +838,7 @@ export default class Game1Scene extends Phaser.Scene {
         vasija.setDepth(5);
         this.decorateCollectible(vasija, def.qid, 52, 78, "vasija");
         vasija.setData("collectibleShadow", shadow);
-        vasija.setData("vasijaShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
+        vasija.setData("proximityShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
       } else {
         const turq = this.add.container(def.x, def.y);
         const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
@@ -893,6 +895,7 @@ export default class Game1Scene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
+      sprite.setData("proximityGrowBaseScale", sprite.scaleX);
     } else if (kind === "vasija") {
       this.tweens.add({
         targets: sprite,
@@ -902,7 +905,7 @@ export default class Game1Scene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-      sprite.setData("vasijaBaseScale", sprite.scaleX);
+      sprite.setData("proximityGrowBaseScale", sprite.scaleX);
     }
     this.collectibles.add(sprite);
   }
@@ -1169,9 +1172,9 @@ export default class Game1Scene extends Phaser.Scene {
       }
 
       const kind = c.getData("collectibleKind");
-      if (kind !== "vasija") continue;
+      if (kind !== "vasija" && kind !== "cacao") continue;
 
-      const base = c.getData("vasijaBaseScale");
+      const base = c.getData("proximityGrowBaseScale");
       if (base == null || base <= 0) continue;
 
       let mul = VASIJA_SCALE_FAR_MUL;
@@ -1190,7 +1193,7 @@ export default class Game1Scene extends Phaser.Scene {
       c.setScale(base * mul);
 
       const shadow = c.getData("collectibleShadow");
-      const shBase = c.getData("vasijaShadowBaseScale");
+      const shBase = c.getData("proximityShadowBaseScale");
       if (shadow && shadow.active && shBase) {
         shadow.setScale(shBase.x * mul, shBase.y * mul);
       }
