@@ -27,6 +27,13 @@ const AREA_LABEL = "RUTA DEL CACAO";
 const GAME1_LEVELS = 1;
 /** Objetos Misión 1: 4 cacao + 1 vasija (marcadores diseño en mapa 3072×3072). */
 const LEVEL_ITEMS_TOTAL = 5;
+/** Distancia en mundo (~1 cm en pantalla típica con zoom 1) para abrir el quiz al acercarse. */
+const AUTO_OPEN_QUIZ_WORLD_DIST = 52;
+/** Vasija: rampa de escala lejos → cerca (solo esta pieza crece al acercarse). */
+const VASIJA_DIST_FULL_FAR = 380;
+const VASIJA_DIST_GROW_END = AUTO_OPEN_QUIZ_WORLD_DIST + 12;
+const VASIJA_SCALE_FAR_MUL = 1;
+const VASIJA_SCALE_NEAR_MUL = 2.08;
 
 /**
  * Minijuego 1 — El Origen del Cacao (doc §2.x).
@@ -178,6 +185,7 @@ export default class Game1Scene extends Phaser.Scene {
         ? window.__enigmaTouchpadState || null
         : null;
     this.externalActionPrev = false;
+    this.useExternalMinimapHtml = this.registry.get("externalTouchpad") === true;
 
     this.events.off("quiz-finished");
     this.events.on("quiz-finished", (data) => {
@@ -193,6 +201,8 @@ export default class Game1Scene extends Phaser.Scene {
       if (item && item.active) {
         if (data.correct || data.exhausted) {
           this.playClippedSfx("sfx_relic", SFX_VOL.relic, 2000);
+          const linkedShadow = item.getData("collectibleShadow");
+          if (linkedShadow && linkedShadow.active) linkedShadow.destroy();
           item.destroy();
         } else {
           item.setData("quizBusy", false);
@@ -788,7 +798,7 @@ export default class Game1Scene extends Phaser.Scene {
     const levelDefs =
       this.currentLevel === 1 ? GAME1_COLLECTIBLES_L1 : [
           { kind: "bottle", x: GAME1_SPAWN_X - 224, y: cy - 64, shadowY: cy - 36, qid: "objeto-1-botella" },
-          { kind: "vasija", x: GAME1_SPAWN_X + 208, y: cy - 74, shadowY: cy - 44, qid: "objeto-2-vasija" },
+          { kind: "vasija", x: GAME1_SPAWN_X + 208, y: cy - 114, shadowY: cy - 84, qid: "objeto-2-vasija" },
           { kind: "turquesa", x: GAME1_SPAWN_X - 3, y: cy + 72, shadowY: cy + 104, qid: "objeto-3-turquesa" },
         ];
 
@@ -817,20 +827,23 @@ export default class Game1Scene extends Phaser.Scene {
       } else if (def.kind === "vasija") {
         const key = this.textures.exists("game1_vasija_mayo") ? "game1_vasija_mayo" : "ph_vessel";
         const vasija = this.add.sprite(def.x, def.y, key);
-        const targetW = 56;
+        const targetW = 78;
         if (vasija.width > 0) {
           vasija.setScale(targetW / vasija.width);
         } else {
-          vasija.setScale(key === "game1_vasija_mayo" ? 0.22 : 1.52);
+          vasija.setScale(key === "game1_vasija_mayo" ? 0.31 : 1.52);
         }
         vasija.setDepth(5);
         this.decorateCollectible(vasija, def.qid, 52, 78, "vasija");
+        vasija.setData("collectibleShadow", shadow);
+        vasija.setData("vasijaShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
       } else {
         const turq = this.add.container(def.x, def.y);
         const neckSpr = this.add.sprite(0, 0, "ph_g1_necklace");
         neckSpr.setScale(1.12);
         turq.add(neckSpr);
         turq.setDepth(5);
+        turq.setData("collectibleKind", "turquesa");
         turq.setData("questionId", def.qid);
         turq.setData("quizBusy", false);
         turq.setData("overlapLock", false);
@@ -852,6 +865,7 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   decorateCollectible(sprite, qid, interactR, promptR, kind) {
+    sprite.setData("collectibleKind", kind);
     sprite.setData("questionId", qid);
     sprite.setData("quizBusy", false);
     sprite.setData("overlapLock", false);
@@ -888,6 +902,7 @@ export default class Game1Scene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
+      sprite.setData("vasijaBaseScale", sprite.scaleX);
     }
     this.collectibles.add(sprite);
   }
@@ -938,12 +953,16 @@ export default class Game1Scene extends Phaser.Scene {
     this.mmY = my;
     this.mmW = 150;
     this.mmH = 100;
-    this.add
-      .rectangle(mx + this.mmW / 2, my + this.mmH / 2, this.mmW, this.mmH, 0x0c1014, 0.94)
-      .setStrokeStyle(2, 0x8a7840)
-      .setScrollFactor(0)
-      .setDepth(108);
-    this.miniGfx = this.add.graphics().setScrollFactor(0).setDepth(109);
+    if (!this.useExternalMinimapHtml) {
+      this.add
+        .rectangle(mx + this.mmW / 2, my + this.mmH / 2, this.mmW, this.mmH, 0x0c1014, 0.94)
+        .setStrokeStyle(2, 0x8a7840)
+        .setScrollFactor(0)
+        .setDepth(108);
+      this.miniGfx = this.add.graphics().setScrollFactor(0).setDepth(109);
+    } else {
+      this.miniGfx = null;
+    }
   }
 
   setupTouchControls() {
@@ -1062,10 +1081,46 @@ export default class Game1Scene extends Phaser.Scene {
   }
 
   redrawMinimap() {
+    const pb = this.playRect;
+    if (this.useExternalMinimapHtml) {
+      if (!this.player || typeof window === "undefined") return;
+      const mmW = 72;
+      const mmH = 48;
+      const sx = mmW / pb.width;
+      const sy = mmH / pb.height;
+      const ws = pb.width;
+      const outerWorld = PLAZA_OUTER_R * (ws / GAME1_LEGACY_WORLD_W);
+      let plazaGuide = null;
+      if (!this.textures.exists("game1_plaza_map")) {
+        plazaGuide = {
+          cx: (GAME1_SPAWN_X - pb.x) * sx,
+          cy: (GAME1_SPAWN_Y - pb.y) * sy,
+          r: Math.max(2, outerWorld * sx),
+        };
+      }
+      const dots = [];
+      for (const c of this.collectibles.getChildren()) {
+        if (!c.active) continue;
+        dots.push({ x: c.x, y: c.y });
+      }
+      window.dispatchEvent(
+        new CustomEvent("enigma-game1-minimap", {
+          detail: {
+            playRect: { x: pb.x, y: pb.y, width: pb.width, height: pb.height },
+            player: { x: this.player.x, y: this.player.y },
+            dots,
+            w: mmW,
+            h: mmH,
+            plazaGuide,
+          },
+        }),
+      );
+      return;
+    }
+
     if (!this.miniGfx) return;
     const ox = this.mmX;
     const oy = this.mmY;
-    const pb = this.playRect;
     const sx = this.mmW / pb.width;
     const sy = this.mmH / pb.height;
     const ws = pb.width;
@@ -1094,6 +1149,54 @@ export default class Game1Scene extends Phaser.Scene {
     this.miniGfx.fillCircle(px, py, 5);
     this.miniGfx.lineStyle(1, 0xffffff, 0.9);
     this.miniGfx.strokeCircle(px, py, 5);
+  }
+
+  updateCollectibleProximityDynamics() {
+    if (!this.player || this.levelTransitionActive) return;
+    const px = this.player.x;
+    const py = this.player.y;
+    let nearestAuto = null;
+    let nearestAutoD = Infinity;
+
+    for (const c of this.collectibles.getChildren()) {
+      if (!c.active || c.getData("quizBusy")) continue;
+
+      const d = Phaser.Math.Distance.Between(px, py, c.x, c.y);
+
+      if (d <= AUTO_OPEN_QUIZ_WORLD_DIST && d < nearestAutoD) {
+        nearestAutoD = d;
+        nearestAuto = c;
+      }
+
+      const kind = c.getData("collectibleKind");
+      if (kind !== "vasija") continue;
+
+      const base = c.getData("vasijaBaseScale");
+      if (base == null || base <= 0) continue;
+
+      let mul = VASIJA_SCALE_FAR_MUL;
+      if (d <= VASIJA_DIST_GROW_END) {
+        mul = VASIJA_SCALE_NEAR_MUL;
+      } else if (d < VASIJA_DIST_FULL_FAR) {
+        const span = VASIJA_DIST_FULL_FAR - VASIJA_DIST_GROW_END;
+        const t = span > 0 ? (VASIJA_DIST_FULL_FAR - d) / span : 1;
+        mul = Phaser.Math.Linear(
+          VASIJA_SCALE_FAR_MUL,
+          VASIJA_SCALE_NEAR_MUL,
+          Phaser.Math.Clamp(t, 0, 1),
+        );
+      }
+
+      c.setScale(base * mul);
+
+      const shadow = c.getData("collectibleShadow");
+      const shBase = c.getData("vasijaShadowBaseScale");
+      if (shadow && shadow.active && shBase) {
+        shadow.setScale(shBase.x * mul, shBase.y * mul);
+      }
+    }
+
+    if (nearestAuto) this.openQuiz(nearestAuto);
   }
 
   tryExamineNearest() {
@@ -1177,6 +1280,8 @@ export default class Game1Scene extends Phaser.Scene {
       const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, c.x, c.y);
       if (d > r) c.setData("overlapLock", false);
     }
+
+    this.updateCollectibleProximityDynamics();
 
     const doAction =
       (this.keyE && Phaser.Input.Keyboard.JustDown(this.keyE)) ||

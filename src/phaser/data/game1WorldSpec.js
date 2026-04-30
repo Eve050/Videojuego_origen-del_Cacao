@@ -29,5 +29,5 @@ export const GAME1_COLLECTIBLES_L1 = [
   { kind: "cacao", x: 2650, y: 650, shadowY: 686, qid: "objeto-cacao-3" },
   { kind: "cacao", x: 1250, y: 2400, shadowY: 2436, qid: "objeto-cacao-4" },
   /** Vasija ceremonial — sobre la piedra plana del mismo sendero (zona rocosa SE). */
-  { kind: "vasija", x: 2280, y: 2665, shadowY: 2705, qid: "objeto-2-vasija" },
+  { kind: "vasija", x: 2280, y: 2625, shadowY: 2665, qid: "objeto-2-vasija" },
 ];

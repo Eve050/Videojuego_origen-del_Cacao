@@ -3,6 +3,61 @@ import { getGameState, isMissionUnlocked } from "../../modules/gameState.js";
 import { bindRunnerGameOverUI } from "../../modules/runnerGameOverUI.js";
 import { startPhaserGame } from "../../phaser/phaserHost.js";
 
+/** Lienzo interno del radar cabina (compacto). */
+const G1_MINIMAP_W = 72;
+const G1_MINIMAP_H = 48;
+
+/** Minimapa HTML Misión 1 (cabina móvil); mismo contenido que el radar del lienzo Phaser. */
+function paintGame1Minimap(canvas, d) {
+  if (!canvas || !d?.playRect || !d.player) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const W = d.w ?? G1_MINIMAP_W;
+  const H = d.h ?? G1_MINIMAP_H;
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  const pb = d.playRect;
+  const sx = W / pb.width;
+  const sy = H / pb.height;
+  const scale = W / 150;
+
+  ctx.fillStyle = "#181d1c";
+  ctx.fillRect(0, 0, W, H);
+
+  if (d.plazaGuide) {
+    ctx.strokeStyle = "rgba(74, 96, 84, 0.55)";
+    ctx.lineWidth = Math.max(0.75, 1 * scale);
+    ctx.beginPath();
+    ctx.arc(d.plazaGuide.cx, d.plazaGuide.cy, d.plazaGuide.r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#c9a84e";
+  ctx.lineWidth = Math.max(1, 2 * scale);
+  ctx.strokeRect(1, 1, W - 2, H - 2);
+
+  const rObj = Math.max(2, 4 * scale);
+  const rPlayer = Math.max(2.5, 5 * scale);
+  for (const dot of d.dots || []) {
+    const cx = (dot.x - pb.x) * sx;
+    const cy = (dot.y - pb.y) * sy;
+    ctx.fillStyle = "#ff9a2e";
+    ctx.beginPath();
+    ctx.arc(cx, cy, rObj, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const px = (d.player.x - pb.x) * sx;
+  const py = (d.player.y - pb.y) * sy;
+  ctx.fillStyle = "#62b4ff";
+  ctx.beginPath();
+  ctx.arc(px, py, rPlayer, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,0.95)";
+  ctx.lineWidth = Math.max(0.75, 1 * scale);
+  ctx.stroke();
+}
+
 const CABIN_COPY = {
   1: {
     marquee: "CABINA I",
@@ -104,7 +159,7 @@ export function renderMissionArcade(container, missionNumber) {
   }
 
   container.innerHTML = `
-    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""} ${useMobileMaze ? "mission-arcade--mobile-maze" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
+    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""}${useMobileSplit && missionNumber === 1 ? " mission-arcade--mobile-split-game1" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""} ${useMobileMaze ? "mission-arcade--mobile-maze" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
       <div class="mission-arcade-vignette" aria-hidden="true"></div>
       <header class="mission-arcade-top">
         <p class="mission-arcade-brand">EL ENIGMA DE SANTA ANA · LA FLORIDA</p>
@@ -151,26 +206,22 @@ export function renderMissionArcade(container, missionNumber) {
             </div>
             <div id="missionPhaserRoot" class="mission-arcade-phaser-host"></div>
             ${
+              useMobileSplit && missionNumber === 1
+                ? `
+            <div class="mission-arcade-g1-minimap-overlay is-hidden" id="missionG1MinimapOverlay">
+              <canvas id="missionMinimapCanvas" width="72" height="48" aria-label="Minimapa: explorador y objetivos"></canvas>
+              <span class="mission-arcade-minimap-caption">Explorador ·<br />objetivos</span>
+            </div>
+            `
+                : ""
+            }
+            ${
               useMobileSplit
                 ? `
             <div class="mission-arcade-touchpad is-hidden" id="missionTouchpad">
-              ${
-                missionNumber === 3
-                  ? `
               <div class="mission-arcade-touch-stick" id="missionTouchStick" aria-label="Joystick táctil">
                 <div class="mission-arcade-touch-stick-thumb" id="missionTouchThumb"></div>
               </div>
-              `
-                  : `
-              <div class="mission-arcade-touchpad-grid">
-                <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--up" data-touch-key="ArrowUp">↑</button>
-                <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--left" data-touch-key="ArrowLeft">←</button>
-                <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--right" data-touch-key="ArrowRight">→</button>
-                <button type="button" class="mission-arcade-touch-btn mission-arcade-touch-btn--down" data-touch-key="ArrowDown">↓</button>
-              </div>
-              <button type="button" class="mission-arcade-touch-action" data-touch-key="KeyE">ACCION</button>
-              `
-              }
             </div>
             `
                 : ""
@@ -193,6 +244,10 @@ export function renderMissionArcade(container, missionNumber) {
       window.removeEventListener("enigma-quiz-visibility", window.__enigmaQuizVisibilityHandler);
       window.__enigmaQuizVisibilityHandler = null;
     }
+    if (typeof window !== "undefined" && window.__enigmaGame1MinimapHandler) {
+      window.removeEventListener("enigma-game1-minimap", window.__enigmaGame1MinimapHandler);
+      window.__enigmaGame1MinimapHandler = null;
+    }
     import("../../phaser/phaserHost.js").then(({ destroyPhaserGame }) => {
       destroyPhaserGame();
       window.location.hash = "#/p04";
@@ -207,6 +262,7 @@ export function renderMissionArcade(container, missionNumber) {
   const introInstructionsBtn = container.querySelector("#missionIntroInstructions");
   const introStartBtn = container.querySelector("#missionIntroStart");
   const touchpad = container.querySelector("#missionTouchpad");
+  const g1MinimapOverlay = missionNumber === 1 ? container.querySelector("#missionG1MinimapOverlay") : null;
 
   document.body.classList.add("enigma-lock-scroll");
   document.documentElement.classList.add("enigma-lock-scroll");
@@ -331,6 +387,7 @@ export function renderMissionArcade(container, missionNumber) {
     window.__enigmaQuizVisibilityHandler = (ev) => {
       const visible = ev?.detail?.visible === true;
       touchpad?.classList.toggle("is-hidden", visible);
+      g1MinimapOverlay?.classList.toggle("is-hidden", visible);
       sectionEl?.classList.toggle("is-quiz-open", visible);
     };
     window.addEventListener("enigma-quiz-visibility", window.__enigmaQuizVisibilityHandler);
@@ -349,8 +406,13 @@ export function renderMissionArcade(container, missionNumber) {
                 : "action";
       bindVirtualKey(btn, keyName);
     });
-    if (missionNumber === 3) {
-      bindVirtualStick(container.querySelector("#missionTouchStick"), container.querySelector("#missionTouchThumb"));
+    bindVirtualStick(container.querySelector("#missionTouchStick"), container.querySelector("#missionTouchThumb"));
+    if (missionNumber === 1) {
+      window.__enigmaGame1MinimapHandler = (ev) => {
+        const canvas = container.querySelector("#missionMinimapCanvas");
+        paintGame1Minimap(canvas, ev.detail);
+      };
+      window.addEventListener("enigma-game1-minimap", window.__enigmaGame1MinimapHandler);
     }
   }
 
@@ -364,6 +426,7 @@ export function renderMissionArcade(container, missionNumber) {
     });
     introPanel?.classList.add("is-hidden");
     touchpad?.classList.remove("is-hidden");
+    g1MinimapOverlay?.classList.remove("is-hidden");
   };
 
   introInstructionsBtn?.addEventListener("click", () => {

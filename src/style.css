@@ -5777,6 +5777,48 @@ body:has(.screen--phaser-lab) {
     display: none;
   }
 
+  /* Radar dentro del lienzo del mapa (no pegado al borde superior del CRT). */
+  .mission-arcade--mobile-split-game1 .mission-arcade-g1-minimap-overlay {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + clamp(1.85rem, 6.5dvh, 3.35rem));
+    right: max(8px, env(safe-area-inset-right, 0px));
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    pointer-events: none;
+    isolation: isolate;
+  }
+
+  .mission-arcade--mobile-split-game1 .mission-arcade-g1-minimap-overlay.is-hidden {
+    display: none;
+  }
+
+  .mission-arcade--mobile-split-game1 .mission-arcade-g1-minimap-overlay canvas {
+    display: block;
+    width: min(22vw, 72px);
+    height: auto;
+    max-width: 100%;
+    border-radius: 3px;
+    box-shadow:
+      0 1px 6px rgba(0, 0, 0, 0.42),
+      inset 0 0 0 1px rgba(201, 168, 78, 0.35);
+  }
+
+  .mission-arcade-minimap-caption {
+    font-family: "Exo 2", system-ui, sans-serif;
+    font-size: clamp(0.34rem, 1.55vw, 0.48rem);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(238, 242, 232, 0.94);
+    font-weight: 600;
+    text-align: right;
+    line-height: 1.2;
+    max-width: min(28vw, 78px);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  }
+
   .mission-arcade--mobile-runner .mission-arcade-machine {
     min-height: 76dvh;
   }
@@ -5821,93 +5863,6 @@ body:has(.screen--phaser-lab) {
     max-height: 100% !important;
     margin: 0 auto !important;
     display: block;
-  }
-
-  .mission-arcade-touchpad-grid {
-    position: relative;
-    width: min(68vw, 260px);
-    height: min(38vw, 156px);
-  }
-
-  .mission-arcade-touch-btn {
-    position: absolute;
-    width: min(16vw, 64px);
-    height: min(16vw, 64px);
-    border-radius: 14px;
-    border: 2px solid #8b6425;
-    background:
-      radial-gradient(circle at 30% 24%, rgba(255, 215, 145, 0.26), transparent 44%),
-      linear-gradient(165deg, #342819 0%, #1c150d 100%);
-    color: #fff8ea;
-    font-size: clamp(1rem, 4vw, 1.6rem);
-    font-weight: 800;
-    line-height: 1;
-    touch-action: none;
-    box-shadow:
-      0 9px 18px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 rgba(255, 228, 173, 0.3),
-      inset 0 -3px 0 rgba(0, 0, 0, 0.28);
-  }
-
-  .mission-arcade-touch-btn:active,
-  .mission-arcade-touch-btn.is-pressed {
-    background:
-      radial-gradient(circle at 30% 24%, rgba(255, 224, 163, 0.32), transparent 42%),
-      linear-gradient(165deg, #3f2f1d 0%, #241b11 100%);
-    border-color: #b88d3d;
-    box-shadow:
-      0 5px 12px rgba(0, 0, 0, 0.38),
-      inset 0 1px 0 rgba(255, 232, 184, 0.34),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.22);
-  }
-
-  .mission-arcade-touch-btn--up {
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-  }
-
-  .mission-arcade-touch-btn--left {
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .mission-arcade-touch-btn--right {
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .mission-arcade-touch-btn--down {
-    left: 50%;
-    bottom: 0;
-    transform: translateX(-50%);
-  }
-
-  .mission-arcade-touch-action {
-    min-width: min(38vw, 170px);
-    height: min(14vw, 58px);
-    border-radius: 10px;
-    border: 2px solid #d4a574;
-    background:
-      radial-gradient(circle at 30% 20%, rgba(255, 233, 196, 0.4), transparent 44%),
-      linear-gradient(165deg, #8a5127 0%, #61371b 100%);
-    color: #fff8f0;
-    font-size: clamp(0.86rem, 3.3vw, 1rem);
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    touch-action: none;
-    box-shadow:
-      0 8px 20px rgba(40, 16, 6, 0.55),
-      inset 0 1px 0 rgba(255, 235, 205, 0.4);
-  }
-
-  .mission-arcade-touch-action:active,
-  .mission-arcade-touch-action.is-pressed {
-    background:
-      radial-gradient(circle at 30% 20%, rgba(255, 240, 214, 0.45), transparent 42%),
-      linear-gradient(165deg, #9d6030 0%, #704222 100%);
   }
 
   .mission-arcade-touch-stick {
