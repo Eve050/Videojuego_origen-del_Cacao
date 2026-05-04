@@ -416,7 +416,7 @@ export function renderMissionArcade(container, missionNumber) {
     }
   }
 
-  const startMission = () => {
+  const launchPhaserMission = () => {
     if (!mount) return;
     resetTouchpadState();
     sectionEl?.classList.remove("is-quiz-open");
@@ -424,9 +424,13 @@ export function renderMissionArcade(container, missionNumber) {
       expeditionMission: missionNumber,
       externalTouchpad: useMobileSplit,
     });
-    introPanel?.classList.add("is-hidden");
     touchpad?.classList.remove("is-hidden");
     g1MinimapOverlay?.classList.remove("is-hidden");
+  };
+
+  const startMission = () => {
+    introPanel?.classList.add("is-hidden");
+    launchPhaserMission();
   };
 
   introInstructionsBtn?.addEventListener("click", () => {

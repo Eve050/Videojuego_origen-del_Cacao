@@ -5386,6 +5386,83 @@ body:has(.screen--phaser-lab) {
   display: none;
 }
 
+/* Vídeo intro Misión 1 — pantalla completa desde el mapa (antes de entrar a la cabina). */
+.mission1-pre-video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+    max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+}
+
+.mission1-pre-video-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse at center, #182420 0%, #050708 88%);
+}
+
+.mission1-pre-video-overlay__frame {
+  position: relative;
+  z-index: 1;
+  width: min(100%, min(94vw, 960px));
+  max-height: min(92dvh, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+}
+
+.mission1-pre-video-overlay__film {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 2px rgba(201, 168, 78, 0.42),
+    0 18px 50px rgba(0, 0, 0, 0.68);
+}
+
+.mission1-pre-video-overlay__video {
+  width: 100%;
+  max-height: min(78dvh, 680px);
+  object-fit: contain;
+  vertical-align: middle;
+  background: #000;
+}
+
+.mission1-pre-video-overlay__hint {
+  margin: 0;
+  padding: 0 0.25rem;
+  text-align: center;
+  font-size: clamp(0.78rem, 2vw, 0.95rem);
+  color: rgba(232, 220, 200, 0.92);
+  font-family: "Nunito", system-ui, sans-serif;
+  line-height: 1.35;
+}
+
+.mission1-pre-video-overlay__hint.is-hidden {
+  display: none;
+}
+
+.mission1-pre-video-overlay__actions {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mission1-pre-video-overlay__skip {
+  min-width: 10rem;
+}
+
 .mission-arcade-intro-card {
   width: min(92%, 760px);
   max-height: 94%;

@@ -1,4 +1,5 @@
 import { ensureAmbientAudioState } from "../../modules/audioManager.js";
+import { playMission1PreVideo } from "../../modules/mission1PreVideoOverlay.js";
 import {
   EXPEDITION_MISSION_TOTAL,
   getActiveStopIndexForMissions,
@@ -292,6 +293,8 @@ export function renderP04(container) {
     </section>
   `;
   let selectedStopIndex = activeStopIndex;
+  /** Evita repetir el vídeo Misión 1 en la misma visita al mapa (Iniciar misión → modal → Explorar). */
+  let mission1IntroVideoShownThisVisit = false;
   setSelectedStopIndex(selectedStopIndex);
 
   const focusChip = container.querySelector("#p04FocusChip");
@@ -457,7 +460,7 @@ export function renderP04(container) {
     });
   });
 
-  startButton?.addEventListener("click", () => {
+  startButton?.addEventListener("click", async () => {
     const stopState = getStopState(selectedStopIndex, activeStopIndex);
     if (stopState === "completed") {
       if (
@@ -474,6 +477,10 @@ export function renderP04(container) {
     if (selectedStopIndex !== activeStopIndex || stopState !== "active") {
       return;
     }
+    if (missionsCompleted === 0 && !mission1IntroVideoShownThisVisit) {
+      await playMission1PreVideo(document.body);
+      mission1IntroVideoShownThisVisit = true;
+    }
     openStopModal();
   });
 
@@ -482,7 +489,15 @@ export function renderP04(container) {
       return;
     }
     closeStopModal();
-    window.location.hash = getMissionRouteForProgress();
+    const route = getMissionRouteForProgress();
+    if (route === "#/p06" && !mission1IntroVideoShownThisVisit) {
+      playMission1PreVideo(document.body).then(() => {
+        mission1IntroVideoShownThisVisit = true;
+        window.location.hash = route;
+      });
+      return;
+    }
+    window.location.hash = route;
   });
 
   stopModal?.addEventListener("click", (event) => {
