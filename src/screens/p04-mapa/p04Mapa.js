@@ -25,8 +25,9 @@ const ROUTE_STOPS = [
     /** Choza / casa — rótulo arriba del hito */
     x: 13,
     y: 20,
-    nameX: 15,
-    nameY: 5,
+    nameX: 13,
+    /** Un poco más bajo que el borde superior para alinearlo al resto de rótulos */
+    nameY: 10,
     description: "Inicio de la expedición en la sierra sur del Ecuador.",
     tagline: "Sierra sur y orígenes del cacao",
     difficulty: "Explorador",
@@ -87,7 +88,7 @@ const ROUTE_STOPS = [
     x: 71,
     y: 64,
     nameX: 80,
-    nameY: 93,
+    nameY: 90,
     description: "Lugar clave para encontrar el rastro de la reliquia y culminar la expedición.",
     tagline: "Sitio Mayo-Chinchipe",
     difficulty: "Explorador",

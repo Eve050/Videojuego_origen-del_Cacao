@@ -236,7 +236,10 @@ body:has(.mission-arcade) {
   position: relative;
   overflow: hidden;
   width: min(94vw, 980px);
-  height: clamp(360px, 54vh, 560px);
+  height: auto;
+  aspect-ratio: 800 / 533;
+  max-height: min(56vh, 560px);
+  min-height: clamp(200px, 42vw, 280px);
   margin: 0.4rem auto 0;
 }
 
@@ -265,14 +268,14 @@ body:has(.mission-arcade) {
   position: absolute;
   z-index: 2;
   transform: translate(-50%, -50%);
-  max-width: min(32vw, 168px);
-  padding: 0.2rem 0.45rem;
+  max-width: min(30vw, 152px);
+  padding: 0.14rem 0.34rem;
   border-radius: 6px;
   text-align: center;
-  font-size: clamp(0.55rem, 1.35vw, 0.72rem);
+  font-size: clamp(0.46rem, 1.15vw, 0.64rem);
   font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.25;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
   text-transform: uppercase;
   color: #f5ecd8;
   text-shadow:
@@ -526,7 +529,10 @@ body:has(.mission-arcade) {
 .p04-map-board {
   width: 100%;
   overflow: hidden;
-  height: clamp(360px, 54vh, 520px);
+  height: auto;
+  aspect-ratio: 800 / 533;
+  max-height: min(54vh, 520px);
+  min-height: 220px;
   margin: 0;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(200, 146, 26, 0.32);
@@ -598,7 +604,6 @@ body:has(.mission-arcade) {
   margin: 0.72rem 0 0;
   color: rgba(236, 232, 220, 0.88);
   line-height: 1.45;
-  min-height: 4.2em;
 }
 
 .p04-start-button {
@@ -1069,8 +1074,10 @@ body:has(.mission-arcade) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.9rem;
-  background: rgba(0, 0, 0, 0.7);
+  padding: clamp(0.65rem, 3vw, 1.25rem);
+  background: rgba(4, 10, 8, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   pointer-events: auto;
 }
 
@@ -1080,47 +1087,147 @@ body:has(.mission-arcade) {
 
 .p04-info-modal-card {
   position: relative;
-  width: min(100%, 1040px);
-  max-height: calc(100% - 0.6rem);
+  width: min(100%, min(92vw, 520px));
+  max-height: calc(100% - 1rem);
   overflow: auto;
-  border: 3px solid #6b4a28;
-  background: linear-gradient(180deg, #121a14 0%, #0a0f0c 100%);
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.42);
-  padding: 1.2rem 1.1rem 1rem;
-  color: #f6f0df;
+  border-radius: 16px;
+  border: 2px solid rgba(196, 156, 82, 0.58);
+  background:
+    radial-gradient(ellipse 120% 85% at 50% -25%, rgba(76, 175, 126, 0.14), transparent 58%),
+    radial-gradient(ellipse 90% 55% at 100% 105%, rgba(180, 120, 48, 0.1), transparent 52%),
+    linear-gradient(168deg, #161f1a 0%, #0e1512 45%, #090d0b 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 236, 190, 0.06) inset,
+    0 24px 52px rgba(0, 0, 0, 0.58),
+    0 10px 28px rgba(0, 0, 0, 0.38);
+  padding: 1.45rem 1.35rem 1.35rem;
+  color: #f0ebe3;
 }
 
 .p04-info-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.55rem;
-  border: 2px solid #6b4a28;
-  background: #1a0e08;
-  color: #ffcc66;
-  font-weight: 800;
+  top: 0.85rem;
+  right: 0.85rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(196, 156, 82, 0.55);
+  background: linear-gradient(180deg, rgba(42, 30, 18, 0.96), rgba(20, 14, 10, 0.98));
+  color: #f2d99a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
-  width: 34px;
-  height: 30px;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
+}
+
+.p04-info-close:hover {
+  transform: scale(1.07);
+  border-color: rgba(255, 220, 160, 0.82);
+  color: #fffaf0;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.45),
+    0 0 18px rgba(255, 200, 100, 0.22);
+}
+
+.p04-info-close:focus-visible {
+  outline: 2px solid #8fd9a8;
+  outline-offset: 3px;
 }
 
 .p04-info-title {
-  margin: 0 0 0.8rem;
-  color: #6cfc8a;
-  font-weight: 900;
+  margin: 0 2.85rem 0 0;
+  font-family: var(--font-heading, "Exo 2", "Nunito", sans-serif);
+  font-weight: 800;
+  font-size: clamp(1.02rem, 3.9vw, 1.32rem);
+  letter-spacing: 0.045em;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  color: #c4efd4;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.9),
+    0 0 32px rgba(90, 190, 130, 0.22);
+}
+
+.p04-info-title::after {
+  content: "";
+  display: block;
+  margin-top: 0.55rem;
+  height: 3px;
+  max-width: 11rem;
+  border-radius: 3px;
+  background: linear-gradient(90deg, rgba(122, 186, 138, 0.95), rgba(212, 168, 74, 0.88) 55%, transparent);
+}
+
+.p04-info-title + .p04-info-text {
+  margin-top: 0.85rem;
 }
 
 .p04-info-text {
-  margin: 0.5rem 0 0.6rem;
-  color: #f4edd6;
-  line-height: 1.45;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  font-family: var(--font-body, "Nunito", sans-serif);
+  font-size: clamp(0.88rem, 2.65vw, 0.98rem);
+  color: rgba(236, 229, 216, 0.93);
+  line-height: 1.58;
+}
+
+.p04-info-text strong {
+  color: #edd89e;
+  font-weight: 800;
+}
+
+.p04-info-text em {
+  color: rgba(255, 236, 200, 0.95);
+  font-style: italic;
 }
 
 .p04-info-list {
-  margin: 0.25rem 0 0.7rem 1rem;
+  margin: 0.85rem 0 1rem;
   padding: 0;
-  line-height: 1.5;
+  list-style: none;
+  font-family: var(--font-body, "Nunito", sans-serif);
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  line-height: 1.52;
+  color: rgba(232, 225, 212, 0.94);
+}
+
+.p04-info-list li {
+  position: relative;
+  margin: 0 0 0.62rem;
+  padding: 0.52rem 0.65rem 0.52rem 1.58rem;
+  border-radius: 10px;
+  background: rgba(6, 12, 10, 0.52);
+  border: 1px solid rgba(118, 148, 124, 0.22);
+}
+
+.p04-info-list li:last-child {
+  margin-bottom: 0;
+}
+
+.p04-info-list li::before {
+  content: "";
+  position: absolute;
+  left: 0.52rem;
+  top: 0.72rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f4dc98, #b88938);
+  box-shadow: 0 0 12px rgba(240, 208, 130, 0.38);
+}
+
+.p04-info-list li strong {
+  color: #f0ddaa;
+  font-weight: 800;
 }
 
 .screen--p04 .p04-map-board {
@@ -1179,12 +1286,49 @@ body:has(.mission-arcade) {
 
 .screen--p04 .p04-stop-map-caption {
   font-family: var(--p04-pixel);
-  font-size: clamp(0.42rem, 1.1vw, 0.58rem);
-  max-width: min(36vw, 180px);
+  font-size: clamp(0.3rem, 1.85vmin, 0.46rem);
+  max-width: min(34vw, 132px);
+  padding: 0.1rem 0.26rem;
+  letter-spacing: 0.025em;
+  line-height: 1.18;
 }
 
 .screen--p04 .p04-stop-map-caption--active {
   font-family: var(--p04-pixel);
+  font-size: clamp(0.32rem, 2vmin, 0.48rem);
+  padding: 0.12rem 0.28rem;
+  max-width: min(38vw, 148px);
+}
+
+/* Loja (parada 1): más pequeña y menos protagonismo que el pill por defecto */
+.screen--p04 .p04-stop-map-caption[data-stop-index="0"] {
+  font-size: clamp(0.22rem, 1.35vmin, 0.34rem);
+  max-width: min(26vw, 92px);
+  padding: 0.06rem 0.15rem;
+  letter-spacing: 0.02em;
+}
+
+.screen--p04 .p04-stop-map-caption[data-stop-index="0"].p04-stop-map-caption--active {
+  font-size: clamp(0.24rem, 1.48vmin, 0.36rem);
+  padding: 0.07rem 0.17rem;
+  max-width: min(28vw, 100px);
+  border-width: 1px;
+  box-shadow: 0 0 10px rgba(255, 210, 80, 0.42);
+}
+
+/* Santa Ana-La Florida (última parada): un poco más compacta */
+.screen--p04 .p04-stop-map-caption[data-stop-index="4"] {
+  font-size: clamp(0.26rem, 1.58vmin, 0.4rem);
+  max-width: min(44vw, 122px);
+  padding: 0.08rem 0.2rem;
+  letter-spacing: 0.022em;
+  line-height: 1.14;
+}
+
+.screen--p04 .p04-stop-map-caption[data-stop-index="4"].p04-stop-map-caption--active {
+  font-size: clamp(0.28rem, 1.68vmin, 0.42rem);
+  padding: 0.09rem 0.22rem;
+  max-width: min(46vw, 130px);
 }
 
 .screen--p04 .p04-route-line {
@@ -1275,6 +1419,7 @@ body:has(.mission-arcade) {
   font-size: 0.82rem;
   line-height: 1.5;
   color: rgba(220, 210, 195, 0.9);
+  min-height: 0;
 }
 
 .screen--p04 .p04-start-button.btn--primary {
@@ -3850,7 +3995,40 @@ body:has(.mission-arcade) {
   }
 
   .p04-map-board {
-    height: 330px;
+    height: auto;
+    aspect-ratio: 800 / 533;
+    max-height: min(48dvh, 380px);
+    min-height: clamp(168px, 38vw, 260px);
+  }
+
+  .screen--p04 .p04-stop-map-caption {
+    font-size: clamp(0.26rem, 1.65vmin, 0.4rem);
+    max-width: min(42vw, 118px);
+    padding: 0.08rem 0.2rem;
+  }
+
+  .screen--p04 .p04-stop-map-caption[data-stop-index="0"] {
+    font-size: clamp(0.19rem, 1.15vmin, 0.3rem);
+    max-width: min(34vw, 86px);
+    padding: 0.05rem 0.12rem;
+  }
+
+  .screen--p04 .p04-stop-map-caption[data-stop-index="0"].p04-stop-map-caption--active {
+    font-size: clamp(0.21rem, 1.25vmin, 0.32rem);
+    max-width: min(36vw, 92px);
+    padding: 0.06rem 0.14rem;
+  }
+
+  .screen--p04 .p04-stop-map-caption[data-stop-index="4"] {
+    font-size: clamp(0.22rem, 1.42vmin, 0.34rem);
+    max-width: min(48vw, 108px);
+    padding: 0.06rem 0.16rem;
+  }
+
+  .screen--p04 .p04-stop-map-caption[data-stop-index="4"].p04-stop-map-caption--active {
+    font-size: clamp(0.24rem, 1.52vmin, 0.36rem);
+    max-width: min(50vw, 114px);
+    padding: 0.07rem 0.17rem;
   }
 
   .p04-progress-card {
@@ -3876,6 +4054,10 @@ body:has(.mission-arcade) {
 
   .p04-focus-card {
     width: 100%;
+  }
+
+  .screen--p04 .p04-start-button.btn--primary {
+    margin-top: 0.65rem;
   }
 
   .p04-route-strip {
