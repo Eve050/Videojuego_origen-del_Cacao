@@ -162,7 +162,7 @@ export default class Game1Scene extends Phaser.Scene {
   preload() {
     this.load.tilemapTiledJSON("game1_plaza", "/assets/tilemaps/game1-plaza.json");
     /** Ilustración Misión 1; ideal 3072×3072 según doc (contiene dentro del mundo cuadrado). */
-    this.load.image("game1_plaza_map", "/assets/images/game1/game1-plaza-map.webp");
+    this.load.image("game1_plaza_map", "/assets/images/game1/game1-plaza-map.png");
     /** Vasija Mayo Chinchipe (botella asa de estribo) — pieza final oculta en zona rocosa. */
     this.load.image("game1_vasija_mayo", "/assets/images/game1/vasija-mayo-chinchipe.png");
     this.load.audio("sfx_relic", PHASE_SFX_FILES.sfx_relic);
