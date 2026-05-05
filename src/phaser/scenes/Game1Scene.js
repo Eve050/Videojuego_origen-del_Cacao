@@ -6,6 +6,8 @@ import { completeMissionByNumber } from "../../modules/gameState.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
 import { showMissionWinModal } from "../ui/missionWinModal.js";
+import { createGameMissionHud } from "../ui/gameMissionHud.js";
+import { GAME1_MISSION } from "../data/gameMissionCopy.js";
 import {
   GAME1_WORLD_SIZE,
   GAME1_SPAWN_X,
@@ -312,6 +314,23 @@ export default class Game1Scene extends Phaser.Scene {
       .setDepth(120)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
+
+    /** Cabina / HTML táctil: MISIÓN a la derecha (minimap). Escritorio nativo: izquierda debajo de «VOLVER». */
+    const game1CabinetHud = this.registry.get("externalTouchpad") === true;
+    this.missionHud = createGameMissionHud(this, {
+      title: GAME1_MISSION.title,
+      body: GAME1_MISSION.body,
+      ...(game1CabinetHud
+        ? { x: LAYOUT.WIDTH - 18, y: 40, originX: 1, originY: 0 }
+        : { x: 18, y: 64, originX: 0, originY: 0 }),
+      buttonDepth: 121,
+      overlayDepth: 210,
+    });
+
+    this.keyMission =
+      !game1CabinetHud && this.input.keyboard
+        ? this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M)
+        : null;
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       if (typeof window !== "undefined" && this._domKeyDown) {
@@ -1061,6 +1080,7 @@ export default class Game1Scene extends Phaser.Scene {
 
     const depth = 220;
     this.mapExitLink?.setVisible(false);
+    this.missionHud?.setButtonVisible(false);
     this.hudQuizHint?.setVisible(false);
 
     const ui = showMissionWinModal(this, {
@@ -1274,6 +1294,15 @@ export default class Game1Scene extends Phaser.Scene {
       this._domResultPrev = !!this._domGame1?.result;
       return;
     }
+
+    if (
+      this.keyMission &&
+      Phaser.Input.Keyboard.JustDown(this.keyMission) &&
+      this.registry.get("externalTouchpad") !== true
+    ) {
+      this.missionHud?.toggleOverlay?.();
+    }
+
     const { vx, vy } = this.readGame1Steer();
     this.player.setVelocity(vx * this.player.speed, vy * this.player.speed);
 

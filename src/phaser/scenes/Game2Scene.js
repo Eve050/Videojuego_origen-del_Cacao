@@ -6,6 +6,8 @@ import { completeMissionByNumber } from "../../modules/gameState.js";
 import { applyAmbientZoneProfile, duckAmbientAudio } from "../../modules/audioManager.js";
 import { SFX_VOL } from "../../modules/sfxVolumes.js";
 import { showMissionWinModal } from "../ui/missionWinModal.js";
+import { createGameMissionHud } from "../ui/gameMissionHud.js";
+import { GAME2_MISSION } from "../data/gameMissionCopy.js";
 
 /** Superficie del suelo (doc técnico). */
 const GROUND_TOP_Y = 450;
@@ -806,6 +808,17 @@ export default class Game2Scene extends Phaser.Scene {
       .setDepth(22)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
+
+    this.missionHud = createGameMissionHud(this, {
+      title: GAME2_MISSION.title,
+      body: GAME2_MISSION.body,
+      x: 18,
+      y: 38,
+      originX: 0,
+      originY: 0,
+      buttonDepth: 23,
+      overlayDepth: 210,
+    });
 
     this.applyZoneVisuals();
     applyAmbientZoneProfile(this.zoneIndex, { instant: true });

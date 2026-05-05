@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { LAYOUT } from "../layout.js";
 import { SFX_VOL } from "../../modules/sfxVolumes.js";
+import { createGameMissionHud } from "../ui/gameMissionHud.js";
+import { QUIZ_MISSION_TITLE, getQuizMissionBody } from "../data/gameMissionCopy.js";
 
 const GAME1_ORDER = ["objeto-1-botella", "objeto-2-vasija", "objeto-3-turquesa"];
 
@@ -58,8 +60,10 @@ export default class QuizScene extends Phaser.Scene {
     const PCX = LAYOUT.WIDTH / 2;
     const PCY = LAYOUT.HEIGHT / 2 - 8;
     const PW = mobileQuizMode ? 500 : 1040;
-    const PH = mobileQuizMode ? 690 : 580;
+    const PH = mobileQuizMode ? 742 : 580;
     this.panelY = PCY;
+    this.quizPCX = PCX;
+    this.quizPW = PW;
 
     this.panelFrame = this.add.rectangle(PCX, PCY, PW + 10, PH + 10, 0x000000, 0).setStrokeStyle(5, 0xd4af37);
     this.panelBg = this.add.rectangle(PCX, PCY, PW, PH, 0x171109, 0.98).setStrokeStyle(2, 0x6a5528);
@@ -68,20 +72,20 @@ export default class QuizScene extends Phaser.Scene {
     const objName = q.objectLabel || q.objectKey || "Objeto";
 
     this.headerLeft = this.add.text(PCX - PW / 2 + 28, PTOP + 22, `PREGUNTA ${this.qIndex} / 3`, {
-      fontSize: mobileQuizMode ? "14px" : "17px",
+      fontSize: "17px",
       color: "#e8c058",
       fontStyle: "bold",
     });
 
     this.headerRight = this.add.text(PCX + PW / 2 - 28, PTOP + 22, `PUNTOS: ${score}`, {
-      fontSize: mobileQuizMode ? "14px" : "17px",
+      fontSize: "17px",
       color: "#e8c058",
       fontStyle: "bold",
     }).setOrigin(1, 0);
 
     const foundLine = this.add
       .text(PCX, mobileQuizMode ? PTOP + 46 : PTOP + 52, `Has encontrado: ${objName.toUpperCase()}`, {
-        fontSize: mobileQuizMode ? "14px" : "15px",
+        fontSize: mobileQuizMode ? "15px" : "15px",
         color: "#f0e8d8",
         fontStyle: "bold",
         align: "center",
@@ -91,7 +95,7 @@ export default class QuizScene extends Phaser.Scene {
     const disc = q.discoveryText || "";
     const discoveryLine = this.add
       .text(PCX, mobileQuizMode ? PTOP + 74 : PTOP + 78, disc, {
-        fontSize: mobileQuizMode ? "12px" : "13px",
+        fontSize: mobileQuizMode ? "13px" : "13px",
         color: "#c8c4b8",
         align: "center",
         wordWrap: { width: mobileQuizMode ? PW - 70 : PW - 56 },
@@ -102,21 +106,21 @@ export default class QuizScene extends Phaser.Scene {
       discoveryLine.setVisible(false);
     }
 
-    const questionY = mobileQuizMode ? PTOP + 150 : PTOP + 142;
+    const questionY = mobileQuizMode ? PTOP + 146 : PTOP + 142;
     this.add.text(PCX, questionY, q.question, {
-      fontSize: mobileQuizMode ? "18px" : "16px",
+      fontSize: mobileQuizMode ? "23px" : "16px",
       color: "#ffffff",
       align: "center",
       fontStyle: "bold",
-      wordWrap: { width: mobileQuizMode ? PW - 96 : PW - 80 },
+      wordWrap: { width: mobileQuizMode ? PW - 88 : PW - 80 },
     }).setOrigin(0.5);
 
     const layoutPos = mobileQuizMode
       ? [
-          { idx: 0, x: PCX, y: PTOP + 258 },
-          { idx: 1, x: PCX, y: PTOP + 338 },
-          { idx: 2, x: PCX, y: PTOP + 418 },
-          { idx: 3, x: PCX, y: PTOP + 498 },
+          { idx: 0, x: PCX, y: PTOP + 264 },
+          { idx: 1, x: PCX, y: PTOP + 354 },
+          { idx: 2, x: PCX, y: PTOP + 444 },
+          { idx: 3, x: PCX, y: PTOP + 534 },
         ]
       : [
           { idx: 0, x: PCX - 210, y: PTOP + 210 },
@@ -130,15 +134,15 @@ export default class QuizScene extends Phaser.Scene {
       const letter = String.fromCharCode(65 + idx);
       const opt = q.options[idx];
       const optWidth = mobileQuizMode ? PW - 50 : 400;
-      const optHeight = mobileQuizMode ? 62 : 46;
+      const optHeight = mobileQuizMode ? 76 : 46;
       const hitWidth = mobileQuizMode ? PW - 36 : 410;
-      const hitHeight = mobileQuizMode ? 66 : 52;
+      const hitHeight = mobileQuizMode ? 80 : 52;
       const bg = this.add.rectangle(x, y, optWidth, optHeight, 0x2a1d12, 1).setStrokeStyle(1, 0x7a5f3b);
       const txt = this.add
         .text(x, y, `[ ${letter} ]  ${opt}`, {
-          fontSize: mobileQuizMode ? "13px" : "14px",
+          fontSize: mobileQuizMode ? "16px" : "14px",
           color: "#f0f0e8",
-          wordWrap: { width: mobileQuizMode ? PW - 96 : 360 },
+          wordWrap: { width: mobileQuizMode ? PW - 88 : 360 },
         })
         .setOrigin(0.5);
       const zone = this.add.zone(x, y, hitWidth, hitHeight).setInteractive({ useHandCursor: true });
@@ -146,7 +150,7 @@ export default class QuizScene extends Phaser.Scene {
       this.optionRows.push({ zone, bg, txt, idx });
     }
 
-    const dotY = mobileQuizMode ? PTOP + 588 : PTOP + 350;
+    const dotY = mobileQuizMode ? PTOP + 622 : PTOP + 350;
     for (let i = 0; i < 3; i += 1) {
       const gap = mobileQuizMode ? 44 : 36;
       const r = mobileQuizMode ? 12 : 10;
@@ -155,17 +159,17 @@ export default class QuizScene extends Phaser.Scene {
     }
     this.refreshAttemptDots();
 
-    this.attemptLabel = this.add.text(PCX, mobileQuizMode ? PTOP + 616 : PTOP + 378, "INTENTOS RESTANTES", {
-      fontSize: mobileQuizMode ? "10px" : "10px",
+    this.attemptLabel = this.add.text(PCX, mobileQuizMode ? PTOP + 652 : PTOP + 378, "INTENTOS RESTANTES", {
+      fontSize: mobileQuizMode ? "13px" : "10px",
       color: "#7a7088",
     }).setOrigin(0.5);
 
     this.infoBg = this.add
       .rectangle(
         PCX,
-        mobileQuizMode ? PTOP + 628 : PTOP + 492,
+        mobileQuizMode ? PTOP + 664 : PTOP + 492,
         PW - (mobileQuizMode ? 38 : 80),
-        mobileQuizMode ? 104 : 144,
+        mobileQuizMode ? 112 : 144,
         0x24180f,
         0.95,
       )
@@ -173,10 +177,10 @@ export default class QuizScene extends Phaser.Scene {
       .setDepth(1)
       .setVisible(false);
 
-    this.feedbackYInside = mobileQuizMode ? PTOP + 610 : PTOP + 418;
-    this.feedbackYTop = mobileQuizMode ? PTOP + 564 : PTOP + 392;
+    this.feedbackYInside = mobileQuizMode ? PTOP + 646 : PTOP + 418;
+    this.feedbackYTop = mobileQuizMode ? PTOP + 586 : PTOP + 392;
     this.feedback = this.add.text(PCX, this.feedbackYInside, "", {
-      fontSize: mobileQuizMode ? "17px" : "20px",
+      fontSize: "20px",
       color: "#fff2d2",
       align: "center",
       fontFamily: "Exo 2, sans-serif",
@@ -184,32 +188,97 @@ export default class QuizScene extends Phaser.Scene {
       wordWrap: { width: mobileQuizMode ? PW - 64 : PW - 120 },
     }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 4, true, true).setVisible(false);
 
-    this.factLine = this.add.text(PCX, mobileQuizMode ? PTOP + 616 : PTOP + 484, "", {
-      fontSize: mobileQuizMode ? "12px" : "16px",
+    this.factLine = this.add.text(PCX, mobileQuizMode ? PTOP + 652 : PTOP + 484, "", {
+      fontSize: mobileQuizMode ? "13px" : "16px",
       color: "#f8ead2",
       align: "center",
       fontFamily: "Nunito, sans-serif",
       fontStyle: "bold",
-      lineSpacing: mobileQuizMode ? 0 : 4,
+      lineSpacing: mobileQuizMode ? 4 : 4,
       wordWrap: { width: mobileQuizMode ? PW - 88 : PW - 200 },
     }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 5, true, true).setVisible(false);
 
-    this.sourceLine = this.add.text(PCX, mobileQuizMode ? PTOP + 636 : PTOP + 532, "", {
-      fontSize: mobileQuizMode ? "9px" : "13px",
+    this.sourceLine = this.add.text(PCX, mobileQuizMode ? PTOP + 672 : PTOP + 532, "", {
+      fontSize: mobileQuizMode ? "10px" : "13px",
       color: "#f8ead2",
       align: "center",
       fontFamily: "Nunito, sans-serif",
       fontStyle: "bold",
-      lineSpacing: mobileQuizMode ? 0 : 4,
+      lineSpacing: mobileQuizMode ? 3 : 4,
       wordWrap: { width: mobileQuizMode ? PW - 146 : PW - 260 },
     }).setOrigin(0.5).setDepth(3).setShadow(0, 2, "#000000", 5, true, true).setVisible(false);
 
     this.unlockHint = this.add.text(PCX, PTOP + PH - 22, "Al responder correctamente: DATO CIENTÍFICO DESBLOQUEADO", {
-      fontSize: mobileQuizMode ? "12px" : "14px",
+      fontSize: "14px",
       color: "#ffd46b",
       fontStyle: "bold",
       fontFamily: "Exo 2, sans-serif",
     }).setOrigin(0.5).setDepth(2).setShadow(0, 1, "#000000", 4, true, true);
+
+    this.missionHud = createGameMissionHud(this, {
+      title: QUIZ_MISSION_TITLE,
+      body: () => getQuizMissionBody(this),
+      x: mobileQuizMode ? PCX + PW / 2 - 26 : PCX - PW / 2 + 26,
+      y: mobileQuizMode ? PTOP + 26 : PTOP + 48,
+      originX: mobileQuizMode ? 1 : 0,
+      originY: 0,
+      buttonDepth: 25,
+      overlayDepth: 220,
+      panelMaxW: mobileQuizMode ? Math.min(PW - 24, 440) : 520,
+    });
+  }
+
+  /**
+   * Coloca el dato y "Fuente" bajo el feedback y el marco dorado SIEMPRE debajo del texto "¡Correcto!",
+   * sin que el borde atraviese el mensaje (antes el min-height inflaba el rectángulo hacia arriba).
+   */
+  layoutFactSourceStack() {
+    const fb = this.feedback;
+    const fact = this.factLine;
+    const srcLine = this.sourceLine;
+    const bg = this.infoBg;
+    if (!fb?.visible || !fact?.visible || !bg?.visible) return;
+
+    const cx = this.quizPCX;
+    const mobile = this.mobileQuizMode;
+
+    /** Margen entre el borde inferior del mensaje y el borde superior del cuadro dorado */
+    const gapBelowFeedback = mobile ? 16 : 18;
+    const padMid = mobile ? 12 : 10;
+    const padBot = mobile ? 14 : 16;
+    /** Aire dentro del cuadro, sobre el párrafo del dato */
+    const innerTop = mobile ? 12 : 14;
+
+    const fbHalf = ((fb.height ?? fb.displayHeight) || 26) * 0.5;
+    const feedbackBottom = fb.y + fbHalf;
+    const bgTop = feedbackBottom + gapBelowFeedback;
+
+    const fh = (fact.height ?? fact.displayHeight) || 28;
+    fact.setPosition(cx, bgTop + innerTop + fh * 0.5);
+
+    let contentBottom = fact.y + fh * 0.5;
+
+    const srcText = (srcLine.text ?? "").trim();
+    if (srcLine.visible && srcText.length > 0) {
+      const sh = (srcLine.height ?? srcLine.displayHeight) || 20;
+      srcLine.setPosition(cx, contentBottom + padMid + sh * 0.5);
+      contentBottom = srcLine.y + sh * 0.5;
+    }
+
+    const minH = mobile ? 96 : 124;
+    let bgBottom = contentBottom + padBot;
+    if (bgBottom - bgTop < minH) {
+      bgBottom = bgTop + minH;
+    }
+
+    let bgH = bgBottom - bgTop;
+    const maxH = mobile ? 260 : 240;
+    bgH = Math.min(bgH, maxH);
+    const bgMid = bgTop + bgH * 0.5;
+    const bgW = mobile ? this.quizPW - 38 : this.quizPW - 80;
+
+    bg.setPosition(cx, bgMid);
+    bg.setSize(bgW, bgH);
   }
 
   refreshAttemptDots() {
@@ -288,6 +357,7 @@ export default class QuizScene extends Phaser.Scene {
         this.factLine.setText(`${q.fact}`);
         this.sourceLine.setVisible(true);
         this.sourceLine.setText(`Fuente: ${this.formatSourceLine(src)}`);
+        this.time.delayedCall(0, () => this.layoutFactSourceStack());
       });
       this.time.delayedCall(4200, () => this.close());
       return;
@@ -353,8 +423,9 @@ export default class QuizScene extends Phaser.Scene {
     this.unlockHint?.setVisible(false);
     this.factLine.setVisible(true);
     this.factLine.setText(`${q.fact}`);
-    this.sourceLine.setVisible(true);
+    this.sourceLine.setVisible(false);
     this.sourceLine.setText("");
+    this.time.delayedCall(0, () => this.layoutFactSourceStack());
     this.time.delayedCall(4200, () => this.close());
   }
 

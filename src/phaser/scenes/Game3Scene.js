@@ -6,6 +6,8 @@ import { exitToMainMap } from "../data/introCopy.js";
 import { duckAmbientAudio } from "../../modules/audioManager.js";
 import { PHASE_SFX_FILES, SFX_VOL } from "../../modules/sfxVolumes.js";
 import { showMissionWinModal } from "../ui/missionWinModal.js";
+import { createGameMissionHud } from "../ui/gameMissionHud.js";
+import { GAME3_MISSION_TITLE, getGame3MissionBody } from "../data/gameMissionCopy.js";
 
 /**
  * Laberinto ampliado (~5–8 min a ritmo calmado). Leyenda: # muro · o grano · . vacío · p pieza · * poder · V vasija.
@@ -428,6 +430,7 @@ export default class Game3Scene extends Phaser.Scene {
     this.hudRight?.setVisible(false);
     this.hudTime?.setVisible(false);
     this.mazeMapExitText?.setVisible(false);
+    this.missionHud?.setButtonVisible(false);
     this.mazeStickBase?.setVisible(false);
     this.mazeStickThumb?.setVisible(false);
 
@@ -972,6 +975,17 @@ export default class Game3Scene extends Phaser.Scene {
       .setDepth(25)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
+
+    this.missionHud = createGameMissionHud(this, {
+      title: GAME3_MISSION_TITLE,
+      body: () => getGame3MissionBody(this),
+      x: 18,
+      y: LAYOUT.GAME_TOP + 12,
+      originX: 0,
+      originY: 0,
+      buttonDepth: 26,
+      overlayDepth: 215,
+    });
 
     this.hint = this.add
       .text(this.offsetX + mazePxW / 2, LAYOUT.HINT_TOP + 16, "", {
