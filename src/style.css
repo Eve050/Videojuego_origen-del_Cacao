@@ -4685,9 +4685,25 @@ body:has(.mission-arcade) {
 
 /* -------- P10 Certificado (honor, marco dorado) -------- */
 .screen--p10 {
-  display: grid;
-  place-items: center;
-  padding: clamp(1rem, 4vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* Una columna con scroll suave si falta alto (Safari/Mac barra dinámica). */
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding:
+    max(env(safe-area-inset-top), clamp(0.5rem, 2.5vh, 1.35rem))
+    clamp(0.85rem, 4vw, 1.75rem)
+    max(env(safe-area-inset-bottom), clamp(0.65rem, 3vh, 1.5rem));
+  box-sizing: border-box;
   background:
     radial-gradient(ellipse 90% 70% at 50% 100%, rgba(0, 0, 0, 0.45), transparent 55%),
     linear-gradient(180deg, rgba(4, 12, 8, 0.75) 0%, rgba(8, 18, 12, 0.82) 100%),
@@ -4696,13 +4712,27 @@ body:has(.mission-arcade) {
   background-position: center;
 }
 
+body:has(.screen--p10) {
+  overflow-x: hidden;
+}
+
 .p10-stack {
   width: min(100%, 520px);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1.35rem;
+  gap: clamp(0.55rem, 2vh, 1.2rem);
+  flex-shrink: 0;
+  margin-top: auto;
+  margin-bottom: auto;
   animation: p10StackIn 0.75s var(--ease-smooth) both;
+}
+
+/* Botones y estado siempre visibles como bloque (no se aplastan). */
+.p10-status,
+.p10-actions-row,
+.p10-back-link {
+  flex-shrink: 0;
 }
 
 @keyframes p10StackIn {
@@ -5069,6 +5099,117 @@ body:has(.mission-arcade) {
 
 .p10-back-link:hover {
   color: rgba(232, 200, 120, 0.85);
+}
+
+/* P10 — laptops / Mac Safari (altura limitada): compactar para ver botones sin depender del zoom */
+@media (max-height: 900px) {
+  .screen--p10 .p10-stack {
+    gap: 0.65rem;
+  }
+
+  .screen--p10 .p10-cert-inner {
+    padding: 1.1rem 1.1rem 0.95rem;
+  }
+
+  .screen--p10 .p10-hero-title {
+    margin-top: 0.28rem;
+    font-size: clamp(1.42rem, 5vw, 2rem);
+  }
+
+  .screen--p10 .p10-cert-body {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .screen--p10 .p10-cert-badge {
+    margin-top: 0.6rem;
+  }
+
+  .screen--p10 .p10-seal-block {
+    margin-top: 0.6rem;
+  }
+
+  .screen--p10 .p10-seal-art {
+    width: 60px;
+    height: 60px;
+  }
+
+  .screen--p10 .p10-cert-footer {
+    margin-top: 0.7rem;
+    padding-top: 0.6rem;
+  }
+}
+
+@media (max-height: 760px) {
+  .screen--p10 .p10-stack {
+    gap: 0.42rem;
+  }
+
+  .screen--p10 .p10-cert-inner {
+    padding: 0.82rem 0.82rem 0.72rem;
+  }
+
+  .screen--p10 .p10-hero-kicker {
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+  }
+
+  .screen--p10 .p10-hero-title {
+    font-size: clamp(1.22rem, 4.5vw, 1.72rem);
+  }
+
+  .screen--p10 .p10-cert-name {
+    margin-top: 0.42rem;
+    font-size: clamp(1.05rem, 4vw, 1.48rem);
+  }
+
+  .screen--p10 .p10-cert-body {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .screen--p10 .p10-cert-badge-text {
+    padding: 0.34rem 0.78rem;
+    font-size: 0.6rem;
+  }
+
+  .screen--p10 .p10-seal-art {
+    width: 50px;
+    height: 50px;
+  }
+
+  .screen--p10 .p10-seal-icon {
+    font-size: 1.2rem;
+  }
+
+  .screen--p10 .p10-status {
+    padding: 0.42rem 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .screen--p10 .p10-btn {
+    padding: 0.58rem 0.48rem;
+    font-size: 0.6rem;
+  }
+
+  .screen--p10 .p10-back-link {
+    font-size: 0.64rem;
+    margin-top: 0;
+    padding: 0.22rem;
+  }
+}
+
+@media (max-height: 640px) {
+  .screen--p10 .p10-cert-shell {
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.32));
+  }
+
+  .screen--p10 .p10-corner {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 @media (max-width: 480px) {
