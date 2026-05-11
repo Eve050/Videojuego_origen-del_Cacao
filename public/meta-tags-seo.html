@@ -1,0 +1,214 @@
+<!-- ============================================================
+  META ETIQUETAS SEO — juego.elorigendelcacao.com
+  Videojuego educativo: La Domesticación del Cacao
+
+  ESTE REPO USA VITE (SPA): las etiquetas activas están en index.html
+  en la raíz del proyecto. Este archivo es referencia / copia de trabajo.
+
+  Si migrás a Next.js:
+  ▸ App Router  → exporta el objeto `metadata` desde app/layout.tsx
+  ▸ Pages Router → usa el componente <Head> en pages/index.tsx
+  ============================================================ -->
+
+
+<!-- ===========================================================
+  ✅ VERSIÓN A — APP ROUTER  (app/layout.tsx)
+  =========================================================== -->
+<!--
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://juego.elorigendelcacao.com'),
+
+  title: {
+    default: 'Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador',
+    template: '%s | Videojuego La Domesticación del Cacao',
+  },
+
+  description:
+    'Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo. Recorre el sitio arqueológico Santa Ana–La Florida de la cultura Mayo-Chinchipe en Palanda, Ecuador.',
+
+  keywords: [
+    'videojuego domesticación del cacao',
+    'juego educativo cacao',
+    'juego cultura Mayo Chinchipe',
+    'juego arqueológico Ecuador',
+    'la domesticación del cacao',
+    'juego interactivo cacao ancestral',
+    'videojuego historia del cacao',
+    'Santa Ana La Florida juego',
+    'Palanda Ecuador videojuego',
+    'juego educativo arqueología',
+    'origen del cacao juego',
+    'Theobroma cacao historia interactiva',
+  ],
+
+  authors: [
+    {
+      name: 'Plan Binacional de Desarrollo de la Región Fronteriza Ecuador-Perú, Capítulo Ecuador',
+      url: 'https://elorigendelcacao.com',
+    },
+  ],
+
+  alternates: {
+    canonical: 'https://juego.elorigendelcacao.com/',
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+    },
+  },
+
+  openGraph: {
+    type: 'website',
+    url: 'https://juego.elorigendelcacao.com/',
+    siteName: 'Videojuego La Domesticación del Cacao',
+    locale: 'es_EC',
+    title: 'Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador',
+    description:
+      'Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo. Recorre el sitio arqueológico Santa Ana–La Florida de la cultura Mayo-Chinchipe en Palanda, Ecuador.',
+    images: [
+      {
+        url: '/images/portada-videojuego.png',
+        width: 1200,
+        height: 630,
+        alt: 'Videojuego educativo La Domesticación del Cacao – Cultura Mayo-Chinchipe, Palanda, Ecuador',
+      },
+    ],
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador',
+    description:
+      'Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo en Palanda, Ecuador.',
+    images: [
+      {
+        url: '/images/portada-videojuego.png',
+        alt: 'Videojuego educativo La Domesticación del Cacao – Cultura Mayo-Chinchipe',
+      },
+    ],
+  },
+}
+-->
+
+
+<!-- ===========================================================
+  ✅ VERSIÓN B — PAGES ROUTER  (pages/index.tsx)
+  =========================================================== -->
+<!--
+import Head from 'next/head'
+
+<Head>
+  <title>Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador</title>
+  <meta name="description" content="Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo. Recorre el sitio arqueológico Santa Ana–La Florida de la cultura Mayo-Chinchipe en Palanda, Ecuador." />
+  <meta name="keywords" content="videojuego domesticación del cacao, juego educativo cacao, juego cultura Mayo Chinchipe, juego arqueológico Ecuador, la domesticación del cacao, juego interactivo cacao ancestral, videojuego historia del cacao, Santa Ana La Florida juego, Palanda Ecuador videojuego, origen del cacao juego" />
+  <meta name="author" content="Plan Binacional de Desarrollo de la Región Fronteriza Ecuador-Perú, Capítulo Ecuador" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta httpEquiv="content-language" content="es-EC" />
+  <link rel="canonical" href="https://juego.elorigendelcacao.com/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://juego.elorigendelcacao.com/" />
+  <meta property="og:site_name" content="Videojuego La Domesticación del Cacao" />
+  <meta property="og:locale" content="es_EC" />
+  <meta property="og:title" content="Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador" />
+  <meta property="og:description" content="Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo. Recorre el sitio arqueológico Santa Ana–La Florida de la cultura Mayo-Chinchipe en Palanda, Ecuador." />
+  <meta property="og:image" content="https://juego.elorigendelcacao.com/images/portada-videojuego.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Videojuego educativo La Domesticación del Cacao – Cultura Mayo-Chinchipe, Palanda, Ecuador" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Videojuego La Domesticación del Cacao | Cultura Mayo-Chinchipe, Ecuador" />
+  <meta name="twitter:description" content="Juega gratis y descubre la historia de la domesticación del cacao más antigua del mundo en Palanda, Ecuador." />
+  <meta name="twitter:image" content="https://juego.elorigendelcacao.com/images/portada-videojuego.png" />
+  <meta name="twitter:image:alt" content="Videojuego educativo La Domesticación del Cacao – Cultura Mayo-Chinchipe" />
+</Head>
+-->
+
+
+<!-- ===========================================================
+  ✅ DATOS ESTRUCTURADOS JSON-LD
+  =========================================================== -->
+
+<!-- Videojuego educativo -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "La Domesticación del Cacao – Videojuego Interactivo",
+  "alternateName": "Videojuego El Origen del Cacao",
+  "url": "https://juego.elorigendelcacao.com/",
+  "description": "Videojuego educativo gratuito donde el jugador recorre el territorio de la cultura Mayo-Chinchipe, descubre artefactos arqueológicos del sitio Santa Ana–La Florida y aprende sobre la domesticación del cacao más antigua del mundo en Palanda, Ecuador.",
+  "image": "https://juego.elorigendelcacao.com/images/portada-videojuego.png",
+  "genre": ["Educativo", "Aventura", "Historia", "Arqueología"],
+  "inLanguage": "es",
+  "isAccessibleForFree": true,
+  "gamePlatform": "Web Browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Web",
+  "keywords": "domesticación del cacao, cultura Mayo-Chinchipe, sitio arqueológico Ecuador, Palanda, cacao ancestral, videojuego educativo",
+  "about": {
+    "@type": "Thing",
+    "name": "La domesticación del cacao",
+    "description": "Proceso por el cual la cultura Mayo-Chinchipe domesticó el Theobroma cacao hace 5.500 años en el sitio arqueológico Santa Ana–La Florida, Palanda, Ecuador."
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Plan Binacional de Desarrollo de la Región Fronteriza Ecuador-Perú, Capítulo Ecuador",
+    "url": "https://elorigendelcacao.com/"
+  },
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "El Origen del Cacao",
+    "url": "https://elorigendelcacao.com/"
+  }
+}
+</script>
+
+<!-- Enlace entre el subdominio y el sitio principal -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Videojuego La Domesticación del Cacao",
+  "url": "https://juego.elorigendelcacao.com/",
+  "description": "Videojuego educativo interactivo sobre la domesticación del cacao más antigua del mundo. Cultura Mayo-Chinchipe, Palanda, Ecuador.",
+  "inLanguage": "es-EC",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "El Origen del Cacao",
+    "url": "https://elorigendelcacao.com/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Plan Binacional de Desarrollo de la Región Fronteriza Ecuador-Perú, Capítulo Ecuador",
+    "url": "https://elorigendelcacao.com/"
+  }
+}
+</script>
+
+<!-- ============================================================
+  FIN DEL ARCHIVO
+
+  CHECKLIST PARA EL DESARROLLADOR:
+  ─────────────────────────────────
+  □ Meta tags aplicados en index.html (este proyecto Vite)
+  □ Subir sitemap.xml como /public/sitemap.xml
+  □ Subir robots.txt como /public/robots.txt
+  □ Verificar que la imagen /images/portada-videojuego.png
+    existe en el proyecto (ajustar el nombre si es diferente)
+  □ Registrar juego.elorigendelcacao.com en Google Search Console
+    como propiedad separada
+  □ En Search Console del subdominio: Sitemaps → enviar sitemap.xml
+  □ Inspección de URLs → https://juego.elorigendelcacao.com/
+    → "Solicitar indexación"
+  ============================================================ -->

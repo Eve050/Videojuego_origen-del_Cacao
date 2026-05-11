@@ -1,3 +1,20 @@
+# robots.txt — juego.elorigendelcacao.com
+# ─────────────────────────────────────────────────────────────
+# Este proyecto es Vite (SPA estático). Archivo en /public → sirve en la raíz.
+#
+# Quedará disponible en:
+#   https://juego.elorigendelcacao.com/robots.txt
+#
+# Si migrás a Next.js (App Router), podés usar app/robots.ts equivalente.
+# ─────────────────────────────────────────────────────────────
+
+# Permite a todos los buscadores indexar el videojuego
 User-agent: *
 Allow: /
+
+# Rutas típicas que no hace falta indexar (Next.js; aquí no aplican pero no molestan)
+Disallow: /api/
+Disallow: /_next/
+
+# Sitemap del subdominio del videojuego
 Sitemap: https://juego.elorigendelcacao.com/sitemap.xml

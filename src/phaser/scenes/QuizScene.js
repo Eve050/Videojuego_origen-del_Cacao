@@ -75,13 +75,15 @@ export default class QuizScene extends Phaser.Scene {
       fontSize: "17px",
       color: "#e8c058",
       fontStyle: "bold",
-    });
+    }).setDepth(28);
 
     this.headerRight = this.add.text(PCX + PW / 2 - 28, PTOP + 22, `PUNTOS: ${score}`, {
       fontSize: "17px",
       color: "#e8c058",
       fontStyle: "bold",
-    }).setOrigin(1, 0);
+    })
+      .setOrigin(1, 0)
+      .setDepth(28);
 
     const foundLine = this.add
       .text(PCX, mobileQuizMode ? PTOP + 46 : PTOP + 52, `Has encontrado: ${objName.toUpperCase()}`, {
@@ -215,14 +217,16 @@ export default class QuizScene extends Phaser.Scene {
       fontFamily: "Exo 2, sans-serif",
     }).setOrigin(0.5).setDepth(2).setShadow(0, 1, "#000000", 4, true, true);
 
+    /** MISIÓN: botón mini, esquina superior derecha; en escritorio bajo texto discovery para no tapar la pregunta */
     this.missionHud = createGameMissionHud(this, {
       title: QUIZ_MISSION_TITLE,
       body: () => getQuizMissionBody(this),
-      x: mobileQuizMode ? PCX + PW / 2 - 26 : PCX - PW / 2 + 26,
-      y: mobileQuizMode ? PTOP + 26 : PTOP + 48,
-      originX: mobileQuizMode ? 1 : 0,
+      x: PCX + PW / 2 - 8,
+      y: mobileQuizMode ? PTOP + 50 : PTOP + 96,
+      originX: 1,
       originY: 0,
-      buttonDepth: 25,
+      compactButton: "mini",
+      buttonDepth: 24,
       overlayDepth: 220,
       panelMaxW: mobileQuizMode ? Math.min(PW - 24, 440) : 520,
     });

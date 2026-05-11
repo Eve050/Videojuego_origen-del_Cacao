@@ -1,9 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<!--
+  SITEMAP.XML — juego.elorigendelcacao.com
+  ─────────────────────────────────────────────────────────────
+  Archivo en /public del proyecto (Vite):
+    /public/sitemap.xml
+
+  Quedará disponible en:
+    https://juego.elorigendelcacao.com/sitemap.xml
+
+  Registrar el subdominio en Google Search Console → Sitemaps → sitemap.xml
+  ─────────────────────────────────────────────────────────────
+-->
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- PÁGINA PRINCIPAL DEL VIDEOJUEGO -->
   <url>
     <loc>https://juego.elorigendelcacao.com/</loc>
     <lastmod>2025-04-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
+
+    <image:image>
+      <image:loc>https://juego.elorigendelcacao.com/images/portada-videojuego.png</image:loc>
+      <image:title>Videojuego La Domesticación del Cacao – Cultura Mayo-Chinchipe</image:title>
+      <image:caption>Videojuego educativo interactivo sobre la domesticación del cacao más antigua del mundo. Cultura Mayo-Chinchipe, Palanda, Ecuador.</image:caption>
+    </image:image>
+
   </url>
+
+  <!--
+    Si el videojuego tiene páginas adicionales (instrucciones,
+    créditos, galería, etc.), añádelas aquí. Ejemplo:
+
+  <url>
+    <loc>https://juego.elorigendelcacao.com/instrucciones</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://juego.elorigendelcacao.com/creditos</loc>
+    <lastmod>2025-04-28</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  -->
+
 </urlset>

@@ -81,7 +81,8 @@ function measureTextBlock(scene, style, content) {
  *   buttonDepth?: number,
  *   overlayDepth?: number,
  *   panelMaxW?: number,
- * }} opts
+ *   compactButton?: boolean | 'mini',
+ * }} opts — `mini`: botón extra pequeño (p. ej. quiz sin tapar texto).
  */
 export function createGameMissionHud(scene, opts) {
   const {
@@ -96,10 +97,13 @@ export function createGameMissionHud(scene, opts) {
     buttonDepth = 121,
     overlayDepth = 190,
     panelMaxW = 508,
+    compactButton = false,
   } = opts;
 
-  const btnW = 108;
-  const btnH = 30;
+  const mini = compactButton === "mini";
+  const compact = compactButton === true || mini;
+  const btnW = mini ? 72 : compact ? 88 : 108;
+  const btnH = mini ? 22 : compact ? 26 : 30;
   const cxBtn = x + (0.5 - originX) * btnW;
   const cyBtn = y + (0.5 - originY) * btnH;
 
@@ -111,7 +115,7 @@ export function createGameMissionHud(scene, opts) {
 
   const btnTxt = scene.add
     .text(cxBtn, cyBtn, "MISIÓN", {
-      fontSize: "11px",
+      fontSize: mini ? "9px" : compact ? "10px" : "11px",
       color: "#e8c058",
       fontFamily: "Exo 2, sans-serif",
       fontStyle: "bold",
@@ -121,7 +125,7 @@ export function createGameMissionHud(scene, opts) {
     .setDepth(buttonDepth + 1);
 
   const hit = scene.add
-    .zone(cxBtn, cyBtn, btnW + 10, btnH + 6)
+    .zone(cxBtn, cyBtn, btnW + (compact ? (mini ? 6 : 8) : 10), btnH + (compact ? (mini ? 4 : 4) : 6))
     .setScrollFactor(0)
     .setDepth(buttonDepth + 2)
     .setInteractive({ useHandCursor: true });
