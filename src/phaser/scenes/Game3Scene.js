@@ -30,6 +30,11 @@ const MAZE_L1 = [
 ];
 
 const TILE = 36;
+/**
+ * Recorte visual del área de juego (opcional). `"none"` = rectángulo original sin máscara ni bisel extra.
+ */
+const MAZE_VIEWPORT_MASK = "none";
+
 /** Guía tipográfica: pixel = HUD corto; heading = títulos; body = lectura. */
 const FONT = {
   pixel: '"Press Start 2P", monospace',
@@ -128,6 +133,42 @@ export default class Game3Scene extends Phaser.Scene {
     const c = Phaser.Math.Clamp(Math.floor((x - this.offsetX) / TILE), 0, this.maze[0].length - 1);
     const r = Phaser.Math.Clamp(Math.floor((y - this.offsetY) / TILE), 0, this.maze.length - 1);
     return { r, c };
+  }
+
+  attachToMazeViewport(go) {
+    if (go && this.mazeViewportRoot) {
+      this.mazeViewportRoot.add(go);
+    }
+  }
+
+  /**
+   * Máscara alineada al fondo del maze (`mazePxW + 8` × `rows*TILE + 8`): cabe dentro del “cuadro” de juego.
+   * @param {number} mazePxW
+   * @param {number} rows
+   */
+  finalizeMazePlayfieldMask(mazePxW, rows) {
+    if (!this.mazeViewportRoot) return;
+    const mw = mazePxW + 8;
+    const mh = rows * TILE + 8;
+    const cx = this.offsetX + mazePxW / 2;
+    const cy = this.offsetY + (rows * TILE) / 2;
+    const x = cx - mw / 2;
+    const y = cy - mh / 2;
+    const cornerR = Math.min(40, Math.max(12, Math.floor(Math.min(mw, mh) / 12)));
+
+    const maskGfx = this.add.graphics({ x: 0, y: 0 });
+    maskGfx.fillStyle(0xffffff, 1);
+    maskGfx.fillRoundedRect(x, y, mw, mh, cornerR);
+    maskGfx.setVisible(false);
+    this.mazeViewportRoot.setMask(maskGfx.createGeometryMask());
+    this.mazeRoundMaskShape = maskGfx;
+
+    const bezel = this.add.graphics({ x: 0, y: 0 }).setScrollFactor(0).setDepth(23);
+    bezel.lineStyle(4, WALL_COLOR_BORDER, 0.92);
+    bezel.strokeRoundedRect(x, y, mw, mh, cornerR);
+    bezel.lineStyle(1.5, 0x140818, 0.42);
+    bezel.strokeRoundedRect(x + 2, y + 2, mw - 4, mh - 4, Math.max(6, cornerR - 2));
+    this.mazeRoundBezel = bezel;
   }
 
   onMazeDomKey(ev, isDown) {
@@ -302,6 +343,9 @@ export default class Game3Scene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(19);
+    this.attachToMazeViewport(burst);
+    this.attachToMazeViewport(ring);
+    this.attachToMazeViewport(lbl);
 
     this.tweens.add({
       targets: burst,
@@ -610,12 +654,18 @@ export default class Game3Scene extends Phaser.Scene {
     this.offsetX = Math.max(10, Math.floor((leftMax - mazePxW) / 2));
     this.offsetY = LAYOUT.GAME_TOP + (LAYOUT.GAME_H - rows * TILE) / 2;
 
+    this.mazeViewportRoot =
+      MAZE_VIEWPORT_MASK !== "none" ? this.add.container(0, 0).setDepth(0) : null;
+    this.mazeRoundMaskShape = null;
+    this.mazeRoundBezel = null;
+
     this.drawChrome();
 
     this.mazeBg = this.add
       .rectangle(this.offsetX + mazePxW / 2, this.offsetY + (rows * TILE) / 2, mazePxW + 8, rows * TILE + 8, 0x120820, 1)
       .setStrokeStyle(3, WALL_COLOR_BORDER)
       .setDepth(0);
+    this.attachToMazeViewport(this.mazeBg);
 
     this.walls = this.physics.add.staticGroup();
     for (let r = 0; r < rows; r += 1) {
@@ -632,7 +682,7 @@ export default class Game3Scene extends Phaser.Scene {
             w.refreshBody();
           }
           if ((r + c) % 5 === 0) {
-            this.add
+            const deco = this.add
               .text(wx, wy, "◆", {
                 fontSize: `${Math.round(TILE * 0.22)}px`,
                 color: "#9f87d8",
@@ -640,8 +690,16 @@ export default class Game3Scene extends Phaser.Scene {
               })
               .setOrigin(0.5)
               .setDepth(2);
+            this.attachToMazeViewport(deco);
           }
         }
+      }
+    }
+
+    if (this.mazeViewportRoot) {
+      for (const wall of this.walls.getChildren()) {
+        this.mazeViewportRoot.add(wall);
+        if (typeof wall.refreshBody === "function") wall.refreshBody();
       }
     }
 
@@ -665,6 +723,7 @@ export default class Game3Scene extends Phaser.Scene {
       this.player.body.setCollideWorldBounds(false);
       this.player.body.setAllowGravity(false);
     }
+    this.attachToMazeViewport(this.player);
     this.physics.add.collider(this.player, this.walls);
 
     const kb = this.input.keyboard;
@@ -736,6 +795,7 @@ export default class Game3Scene extends Phaser.Scene {
     const vy = this.offsetY + this.vasijaCell.r * TILE + TILE / 2;
 
     this.vasijaGlow = this.add.circle(vx, vy, 24, 0xffdc66, 0.18).setDepth(2);
+    this.attachToMazeViewport(this.vasijaGlow);
     this.tweens.add({
       targets: this.vasijaGlow,
       scale: { from: 0.94, to: 1.1 },
@@ -746,6 +806,7 @@ export default class Game3Scene extends Phaser.Scene {
     });
 
     this.vasijaIcon = this.add.sprite(vx, vy, "ph_vessel").setScale(1.05).setDepth(3).setAngle(0);
+    this.attachToMazeViewport(this.vasijaIcon);
 
     this.poderLabel = this.add
       .text(vx, vy - 44, "PODER ANCESTRAL", {
@@ -756,19 +817,10 @@ export default class Game3Scene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setDepth(4);
-
-    this.metaVasijaLabel = this.add
-      .text(vx, vy + 30, "VASIJA → META FINAL", {
-        fontSize: "8px",
-        color: "#e8c896",
-        fontStyle: "bold",
-        fontFamily: FONT.pixel,
-      })
-      .setOrigin(0.5)
-      .setDepth(4);
+    this.attachToMazeViewport(this.poderLabel);
 
     this.tweens.add({
-      targets: [this.poderLabel, this.metaVasijaLabel],
+      targets: this.poderLabel,
       alpha: { from: 0.65, to: 1 },
       duration: 750,
       yoyo: true,
@@ -780,6 +832,7 @@ export default class Game3Scene extends Phaser.Scene {
     if (this.vasijaSensor.body) {
       this.vasijaSensor.body.setCircle(18);
     }
+    this.attachToMazeViewport(this.vasijaSensor);
 
     this.beans = this.physics.add.group();
     this.pieces = this.physics.add.group();
@@ -793,6 +846,7 @@ export default class Game3Scene extends Phaser.Scene {
           const pod = this.physics.add.sprite(px, py, "ph_pellet");
           pod.body.setImmovable(true);
           pod.body.setAllowGravity(false);
+          pod.body.setCircle(4);
           pod.setDepth(2);
           this.beans.add(pod);
         }
@@ -810,6 +864,18 @@ export default class Game3Scene extends Phaser.Scene {
 
     this.trimBeansForLevel();
     this.createPowerPods();
+
+    if (this.mazeViewportRoot) {
+      for (const b of this.beans.getChildren()) {
+        this.mazeViewportRoot.add(b);
+      }
+      for (const p of this.pieces.getChildren()) {
+        this.mazeViewportRoot.add(p);
+      }
+      for (const pod of this.powerPods.getChildren()) {
+        this.mazeViewportRoot.add(pod);
+      }
+    }
 
     const types = ["KUNKU", "SUMAK", "ALLPA", "WASI"];
     const spawnRc = [
@@ -875,6 +941,12 @@ export default class Game3Scene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(5);
       g.guardianLabel = label;
+      this.attachToMazeViewport(g);
+      this.attachToMazeViewport(label);
+    }
+
+    if (MAZE_VIEWPORT_MASK === "rounded") {
+      this.finalizeMazePlayfieldMask(mazePxW, rows);
     }
 
     this.physics.add.overlap(this.player, this.guardianGroup, (_p, g) => {
@@ -976,13 +1048,28 @@ export default class Game3Scene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => exitToMainMap());
 
+    /** MISIÓN abajo para no tapar vasija / etiquetas del laberinto; en móvil con stick, esquina inferior derecha. */
+    const missionBottomY = LAYOUT.HEIGHT - 18;
+    const missionStickConflict =
+      this.isMobileMazeUi && this.registry.get("externalTouchpad") !== true;
+
     this.missionHud = createGameMissionHud(this, {
       title: GAME3_MISSION_TITLE,
       body: () => getGame3MissionBody(this),
-      x: 18,
-      y: LAYOUT.GAME_TOP + 12,
-      originX: 0,
-      originY: 0,
+      ...(missionStickConflict
+        ? {
+            x: LAYOUT.WIDTH - 22,
+            y: missionBottomY,
+            originX: 1,
+            originY: 1,
+            compactButton: true,
+          }
+        : {
+            x: 22,
+            y: missionBottomY,
+            originX: 0,
+            originY: 1,
+          }),
       buttonDepth: 26,
       overlayDepth: 215,
     });

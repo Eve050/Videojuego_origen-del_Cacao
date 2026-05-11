@@ -159,7 +159,7 @@ export function renderMissionArcade(container, missionNumber) {
   }
 
   container.innerHTML = `
-    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""}${useMobileSplit && missionNumber === 1 ? " mission-arcade--mobile-split-game1" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""} ${useMobileMaze ? "mission-arcade--mobile-maze" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
+    <section class="mission-arcade ${useMobileSplit ? "mission-arcade--mobile-split" : ""}${useMobileSplit && missionNumber === 1 ? " mission-arcade--mobile-split-game1" : ""} ${useMobileRunner ? "mission-arcade--mobile-runner" : ""} ${useMobileMaze ? "mission-arcade--mobile-maze" : ""}${missionNumber === 3 ? " mission-arcade--game3" : ""}" aria-label="Minijuego arcade misión ${missionNumber}">
       <div class="mission-arcade-vignette" aria-hidden="true"></div>
       <header class="mission-arcade-top">
         <p class="mission-arcade-brand">EL ENIGMA DE SANTA ANA · LA FLORIDA</p>

@@ -5694,6 +5694,31 @@ body:has(.screen--phaser-lab) {
   justify-content: center;
 }
 
+/**
+ * Misión 3 (Cacao maze): esquinas redondeadas del “televisor” / lienzo (solo CSS sobre el host del canvas).
+ */
+.mission-arcade--game3 .mission-arcade-screen-wrap {
+  border-radius: clamp(14px, 2.4vw, 22px);
+}
+
+.mission-arcade--game3 .mission-arcade-crt {
+  border-radius: clamp(12px, 2vw, 18px);
+  overflow: hidden;
+}
+
+.mission-arcade--game3 .mission-arcade-phaser-host {
+  border-radius: clamp(10px, 1.6vw, 16px);
+  overflow: hidden;
+}
+
+.mission-arcade--game3 .mission-arcade-phaser-host canvas {
+  border-radius: clamp(10px, 1.6vw, 16px);
+}
+
+.mission-arcade--game3 .mission-arcade-scanlines {
+  border-radius: clamp(12px, 2vw, 18px);
+}
+
 .mission-arcade-intro {
   position: absolute;
   inset: 0;

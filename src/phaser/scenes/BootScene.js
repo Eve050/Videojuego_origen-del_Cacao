@@ -165,7 +165,15 @@ export default class BootScene extends Phaser.Scene {
     mk("ph_collect", 28, 28, 0xc8921a);
     mk("ph_guardian", 28, 28, 0x8b2942);
     mk("ph_wall", 32, 32, 0x4a3728);
-    mk("ph_wall_maze", 32, 32, 0x5a2a8a);
+
+    /** Muros Cacao Maze: bloque circular (estilo Pac-Man, encaja en rejilla 32×32). */
+    const wm = this.make.graphics({ x: 0, y: 0, add: false });
+    wm.fillStyle(0x5a2a8a, 1);
+    wm.fillCircle(16, 16, 14);
+    wm.lineStyle(2, 0x8b68d8, 0.92);
+    wm.strokeCircle(16, 16, 14);
+    wm.generateTexture("ph_wall_maze", 32, 32);
+    wm.destroy();
 
 
     const rock = this.make.graphics({ x: 0, y: 0, add: false });
@@ -200,7 +208,14 @@ export default class BootScene extends Phaser.Scene {
     pg.generateTexture("ph_pod_gold", 36, 40);
     pg.destroy();
 
-    mk("ph_pellet", 10, 10, 0xff9933);
+    /** Grano / pellet del laberinto: disco redondo (no cuadrado). */
+    const pelletG = this.make.graphics({ x: 0, y: 0, add: false });
+    pelletG.fillStyle(0xff9933, 1);
+    pelletG.fillCircle(5, 5, 4.5);
+    pelletG.fillStyle(0xffddaa, 0.55);
+    pelletG.fillCircle(4, 4, 1.6);
+    pelletG.generateTexture("ph_pellet", 10, 10);
+    pelletG.destroy();
     mk("ph_piece", 22, 22, 0x4a90c8);
 
     const ex = this.make.graphics({ x: 0, y: 0, add: false });

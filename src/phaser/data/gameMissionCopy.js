@@ -26,7 +26,7 @@ export function getGame3MissionBody(scene) {
       "Nivel final · laberinto cultural.\n\n" +
       "• Recoge todos los orbes ancestrales para completar la misión.\n" +
       "• Evita a los guardianes; el poder dorado activa un modo cacería temporal.\n" +
-      "• Al cumplir los objetivos, alcanza la vasija ritual."
+      "• Al cumplir los objetivos, completa el nivel final."
     );
   }
   return (
