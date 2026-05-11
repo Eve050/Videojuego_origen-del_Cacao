@@ -5880,15 +5880,36 @@ body:has(.screen--phaser-lab) {
 }
 
 .mission-arcade-panel {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem 1rem;
+  gap: 0.5rem 0.75rem;
   flex-shrink: 0;
   margin-top: 0.45rem;
   padding-top: 0.45rem;
   border-top: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+.mission-arcade-panel-side {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.mission-arcade-panel-side--start {
+  justify-content: flex-start;
+}
+
+.mission-arcade-panel-side--end {
+  justify-content: flex-end;
+}
+
+.mission-arcade-panel-center {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem 0.65rem;
 }
 
 /* Game over misión 2 — capa HTML centrada sobre el CRT (clics fiables) */
@@ -6009,7 +6030,9 @@ body:has(.screen--phaser-lab) {
   }
 }
 
-.mission-arcade-exit {
+/* Pie cabina: mismo aspecto dorado para pantalla completa y salir */
+.mission-arcade-exit,
+.mission-arcade-fs {
   font-family: "Nunito", sans-serif;
   font-weight: 800;
   font-size: 0.72rem;
@@ -6022,9 +6045,11 @@ body:has(.screen--phaser-lab) {
   background: linear-gradient(180deg, #c9a060, #8a6230);
   border: 2px solid #5a4020;
   box-shadow: 0 4px 0 #3a2810;
+  touch-action: manipulation;
 }
 
-.mission-arcade-exit:hover {
+.mission-arcade-exit:hover,
+.mission-arcade-fs:hover {
   filter: brightness(1.08);
 }
 

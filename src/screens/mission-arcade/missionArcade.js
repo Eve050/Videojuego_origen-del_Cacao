@@ -229,16 +229,78 @@ export function renderMissionArcade(container, missionNumber) {
           </div>
         </div>
         <footer class="mission-arcade-panel">
-          <span class="mission-arcade-led">1UP</span>
-          <span class="mission-arcade-led mission-arcade-led--blink">INSERT COIN</span>
-          <button type="button" class="mission-arcade-exit" id="missionArcadeExit">Salir al mapa</button>
+          <div class="mission-arcade-panel-side mission-arcade-panel-side--start">
+            <button type="button" class="mission-arcade-fs" id="missionArcadeFullscreen" aria-pressed="false">
+              Pantalla completa
+            </button>
+          </div>
+          <div class="mission-arcade-panel-center">
+            <span class="mission-arcade-led">1UP</span>
+            <span class="mission-arcade-led mission-arcade-led--blink">INSERT COIN</span>
+          </div>
+          <div class="mission-arcade-panel-side mission-arcade-panel-side--end">
+            <button type="button" class="mission-arcade-exit" id="missionArcadeExit">Salir al mapa</button>
+          </div>
         </footer>
       </div>
     </section>
   `;
   const sectionEl = container.querySelector(".mission-arcade");
 
-  const exitToMap = () => {
+  const fsBtn = container.querySelector("#missionArcadeFullscreen");
+  /** @type {{ syncFsLabel: () => void } | null} */
+  let fullscreenUiHooks = null;
+
+  const getFullscreenElement = () =>
+    document.fullscreenElement ?? document.webkitFullscreenElement ?? document.msFullscreenElement ?? null;
+
+  const requestFullscreenEl = async (el) => {
+    const req = el.requestFullscreen ?? el.webkitRequestFullscreen ?? el.msRequestFullscreen;
+    if (req) await req.call(el);
+  };
+
+  const exitFullscreenDoc = async () => {
+    const ex = document.exitFullscreen ?? document.webkitExitFullscreen ?? document.msExitFullscreen;
+    if (ex) await ex.call(document);
+  };
+
+  if (fsBtn && sectionEl) {
+    const syncFsLabel = () => {
+      const active = getFullscreenElement() === sectionEl;
+      fsBtn.textContent = active ? "Salir pantalla completa" : "Pantalla completa";
+      fsBtn.setAttribute("aria-pressed", active ? "true" : "false");
+    };
+    fullscreenUiHooks = { syncFsLabel };
+    fsBtn.addEventListener("click", async () => {
+      try {
+        if (getFullscreenElement() === sectionEl) {
+          await exitFullscreenDoc();
+        } else {
+          await requestFullscreenEl(sectionEl);
+        }
+      } catch {
+        /* algunos navegadores bloquean fullscreen sin gesto de usuario */
+      }
+      syncFsLabel();
+    });
+    document.addEventListener("fullscreenchange", syncFsLabel);
+    document.addEventListener("webkitfullscreenchange", syncFsLabel);
+    syncFsLabel();
+  }
+
+  const exitToMap = async () => {
+    try {
+      if (sectionEl && getFullscreenElement() === sectionEl) {
+        await exitFullscreenDoc();
+      }
+    } catch {
+      /* ignorar */
+    }
+    if (fullscreenUiHooks) {
+      document.removeEventListener("fullscreenchange", fullscreenUiHooks.syncFsLabel);
+      document.removeEventListener("webkitfullscreenchange", fullscreenUiHooks.syncFsLabel);
+      fullscreenUiHooks = null;
+    }
     resetTouchpadState();
     if (typeof window !== "undefined" && window.__enigmaQuizVisibilityHandler) {
       window.removeEventListener("enigma-quiz-visibility", window.__enigmaQuizVisibilityHandler);

@@ -34,8 +34,12 @@ const AUTO_OPEN_QUIZ_WORLD_DIST = 52;
 /** Vasija y cacao: rampa de escala lejos → cerca al acercarse al jugador. */
 const VASIJA_DIST_FULL_FAR = 380;
 const VASIJA_DIST_GROW_END = AUTO_OPEN_QUIZ_WORLD_DIST + 12;
-const VASIJA_SCALE_FAR_MUL = 1;
-const VASIJA_SCALE_NEAR_MUL = 2.08;
+/** Objetivos Misión 1: más visibles a distancia y al acercarse. */
+const VASIJA_SCALE_FAR_MUL = 1.14;
+const VASIJA_SCALE_NEAR_MUL = 2.22;
+/** Pulso suave de escala sobre cacao/vasija (se multiplica con rampa por distancia). */
+const COLLECTIBLE_PULSE_AMP = 0.038;
+const COLLECTIBLE_PULSE_SPEED = 0.0036;
 
 /**
  * Minijuego 1 — El Origen del Cacao (doc §2.x).
@@ -304,7 +308,7 @@ export default class Game1Scene extends Phaser.Scene {
 
     this.mapExitLink = this.add
       .text(18, 40, "VOLVER AL MAPA", {
-        fontSize: "11px",
+        fontSize: "13px",
         color: "#c8921a",
         fontStyle: "bold",
         fontFamily: "Exo 2, sans-serif",
@@ -831,13 +835,17 @@ export default class Game1Scene extends Phaser.Scene {
             })()
           : raw;
 
-      const shadow = this.add.ellipse(def.x, def.shadowY, 58, 16, 0x081210, 0.4).setDepth(4);
+      const shW = this.currentLevel === 1 ? 74 : 58;
+      const shH = this.currentLevel === 1 ? 19 : 16;
+      const shadow = this.add.ellipse(def.x, def.shadowY, shW, shH, 0x081210, 0.52).setDepth(4);
       this.levelCollectibleDecor.push(shadow);
       if (def.kind === "cacao") {
         const cacao = this.add.sprite(def.x, def.y, "ph_g1_cacao");
-        cacao.setScale(1.05);
+        cacao.setScale(this.currentLevel === 1 ? 1.38 : 1.05);
         cacao.setDepth(5);
-        this.decorateCollectible(cacao, def.qid, 68, 88, "cacao");
+        const ir = this.currentLevel === 1 ? 84 : 68;
+        const pr = this.currentLevel === 1 ? 104 : 88;
+        this.decorateCollectible(cacao, def.qid, ir, pr, "cacao");
         cacao.setData("collectibleShadow", shadow);
         cacao.setData("proximityShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
       } else if (def.kind === "bottle") {
@@ -848,14 +856,16 @@ export default class Game1Scene extends Phaser.Scene {
       } else if (def.kind === "vasija") {
         const key = this.textures.exists("game1_vasija_mayo") ? "game1_vasija_mayo" : "ph_vessel";
         const vasija = this.add.sprite(def.x, def.y, key);
-        const targetW = 78;
+        const targetW = this.currentLevel === 1 ? 106 : 78;
         if (vasija.width > 0) {
           vasija.setScale(targetW / vasija.width);
         } else {
           vasija.setScale(key === "game1_vasija_mayo" ? 0.31 : 1.52);
         }
         vasija.setDepth(5);
-        this.decorateCollectible(vasija, def.qid, 52, 78, "vasija");
+        const vir = this.currentLevel === 1 ? 66 : 52;
+        const vpr = this.currentLevel === 1 ? 96 : 78;
+        this.decorateCollectible(vasija, def.qid, vir, vpr, "vasija");
         vasija.setData("collectibleShadow", shadow);
         vasija.setData("proximityShadowBaseScale", { x: shadow.scaleX || 1, y: shadow.scaleY || 1 });
       } else {
@@ -906,9 +916,10 @@ export default class Game1Scene extends Phaser.Scene {
       });
     } else if (kind === "cacao") {
       const y0 = sprite.y;
+      const bob = this.currentLevel === 1 ? 6 : 4;
       this.tweens.add({
         targets: sprite,
-        y: y0 - 4,
+        y: y0 - bob,
         duration: 1100,
         yoyo: true,
         repeat: -1,
@@ -918,7 +929,7 @@ export default class Game1Scene extends Phaser.Scene {
     } else if (kind === "vasija") {
       this.tweens.add({
         targets: sprite,
-        alpha: { from: 0.9, to: 1 },
+        alpha: { from: this.currentLevel === 1 ? 0.82 : 0.9, to: 1 },
         duration: 2600,
         yoyo: true,
         repeat: -1,
@@ -932,12 +943,12 @@ export default class Game1Scene extends Phaser.Scene {
   setupHudAndMinimap() {
     const hudFont = "Press Start 2P, monospace";
     this.hudPts = this.add
-      .text(18, 16, "", { fontSize: "14px", color: "#ffdd66", fontStyle: "bold", fontFamily: hudFont })
+      .text(18, 16, "", { fontSize: "17px", color: "#ffdd66", fontStyle: "bold", fontFamily: hudFont })
       .setScrollFactor(0)
       .setDepth(110);
 
     this.hudObj = this.add
-      .text(LAYOUT.WIDTH / 2, 16, "", { fontSize: "14px", color: "#f0f4e8", fontStyle: "bold", fontFamily: hudFont })
+      .text(LAYOUT.WIDTH / 2, 16, "", { fontSize: "17px", color: "#f0f4e8", fontStyle: "bold", fontFamily: hudFont })
       .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(110);
@@ -946,7 +957,7 @@ export default class Game1Scene extends Phaser.Scene {
     /** Área: a la izquierda del minimapa, sin chocar con VOLVER (esquina sup. izq.) */
     this.hudArea = this.add
       .text(mx - 10, 16, "", {
-        fontSize: "11px",
+        fontSize: "13px",
         color: "#c8d4b8",
         fontStyle: "bold",
         fontFamily: hudFont,
@@ -959,8 +970,8 @@ export default class Game1Scene extends Phaser.Scene {
 
     this.hudArea.setText(AREA_LABEL);
     this.hudQuizHint = this.add
-      .text(LAYOUT.WIDTH / 2, 41, "Preguntas: acércate al objeto y pulsa E o haz clic en él.", {
-        fontSize: "10px",
+      .text(LAYOUT.WIDTH / 2, 44, "Preguntas: acércate al objeto y pulsa E o haz clic en él.", {
+        fontSize: "13px",
         color: "#92a898",
         fontFamily: "Nunito, sans-serif",
         align: "center",
@@ -1011,7 +1022,7 @@ export default class Game1Scene extends Phaser.Scene {
       .setDepth(112)
       .setInteractive({ useHandCursor: true });
     this.add
-      .text(ax, ay, "ACCION", { fontSize: "14px", color: "#fff8f0", fontStyle: "bold" })
+      .text(ax, ay, "ACCION", { fontSize: "17px", color: "#fff8f0", fontStyle: "bold" })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(113);
@@ -1210,12 +1221,16 @@ export default class Game1Scene extends Phaser.Scene {
         );
       }
 
-      c.setScale(base * mul);
+      const pulse =
+        this.currentLevel === 1
+          ? 1 + COLLECTIBLE_PULSE_AMP * Math.sin(this.time.now * COLLECTIBLE_PULSE_SPEED)
+          : 1;
+      c.setScale(base * mul * pulse);
 
       const shadow = c.getData("collectibleShadow");
       const shBase = c.getData("proximityShadowBaseScale");
       if (shadow && shadow.active && shBase) {
-        shadow.setScale(shBase.x * mul, shBase.y * mul);
+        shadow.setScale(shBase.x * mul * pulse, shBase.y * mul * pulse);
       }
     }
 
